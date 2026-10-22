@@ -1,0 +1,23 @@
+name: Content or navigation correction
+description: Report a specific issue with a page, link, rendering, or import.
+title: '[Content]: '
+body:
+  - type: input
+    id: location
+    attributes:
+      label: Affected file or page
+      description: Include a repository path or link.
+    validations:
+      required: true
+  - type: textarea
+    id: issue
+    attributes:
+      label: What needs correcting?
+      description: Explain the current behavior and the expected correction.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Supporting reference or reproduction
+      description: Add a source, minimal example, or renderer/import details when applicable.
