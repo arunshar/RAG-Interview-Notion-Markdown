@@ -45,7 +45,7 @@ The full lesson stays inside this library. Learn better catalog labels, balance 
 | Tied input embedding | The vocabulary embedding reused by the output head | It maps contextual states back onto vocabulary dimensions |
 | Gaussian Error Linear Unit (GELU) | The nonlinearity inside the MLM transform block | It is part of the unchanged pre-training head SPLADE reuses |
 | Layer normalization (LayerNorm) | A normalization step inside the MLM transform block | It is part of the per-position vocabulary scorer |
-| ReLU | $`\operatorname{ReLU}(x)=\max(0,x)`$ | Nonpositive logits become zero; shared-parameter updates can later reactivate a coordinate |
+| ReLU | $`\mathop{\mathrm{ReLU}}\nolimits(x)=\max(0,x)`$ | Nonpositive logits become zero; shared-parameter updates can later reactivate a coordinate |
 | Log compression $`\ln(1+x)`$ | Applying $`\ln(1+x)`$ for $`x\ge0`$ | It is unbounded and sublinear, not a finite cap; sum pooling still adds repeated contributions |
 | Sum pooling | Adding one term’s contribution across token positions | It returns one sparse document weight per vocabulary entry |
 | Max pooling | Keeping the strongest position for each vocabulary term | It improved one Microsoft Machine Reading Comprehension (MS MARCO) result, but the source says the gain is not universal |
@@ -88,8 +88,8 @@ The full lesson stays inside this library. Learn better catalog labels, balance 
 | MaxSim score $`S(q,d)`$ | $`S(q,d)=\sum_i\max_j E_{qi}^{\mathsf T}E_{dj}`$ | It preserves per-query-row local evidence; fixed token-ANN depths need not recover its global top documents |
 | Approximate nearest-neighbor (ANN) search | Approximate search for close vectors | Candidate generation can miss documents with strong aggregate MaxSim even if each individual token probe is accurate |
 | Inverted file index with product quantization (IVF-PQ) | A partitioned compressed vector index | Original end-to-end ColBERT used it for candidate generation |
-| $`\operatorname{Recall}@1000`$ | The fraction of gold-relevant passages retained among the first thousand | Reranking the same thousand cannot change their set recall; evaluate the final smaller cutoff separately |
-| $`\operatorname{MRR}@10`$ | The mean reciprocal rank of the first relevant passage, set to zero beyond rank ten | Scores are fractions in $`[0,1]`$; one scaled MRR point is an absolute $`0.01`$ change |
+| $`\mathop{\mathrm{Recall}}\nolimits@1000`$ | The fraction of gold-relevant passages retained among the first thousand | Reranking the same thousand cannot change their set recall; evaluate the final smaller cutoff separately |
+| $`\mathop{\mathrm{MRR}}\nolimits@10`$ | The mean reciprocal rank of the first relevant passage, set to zero beyond rank ten | Scores are fractions in $`[0,1]`$; one scaled MRR point is an absolute $`0.01`$ change |
 | Ablation | A controlled component change under a stated recipe | It measures a conditional difference, not an additive causal share or the ceiling of another architecture |
 | Representation granularity | Keeping one representation or multiple token representations per passage | It produced the largest reported drop among these specific ColBERT ablations, not a universal ranking of design choices |
 | Query augmentation | Adding extra query-side rows beyond literal tokens | ColBERT obtains it from contextualized \[MASK\] positions |
@@ -113,13 +113,13 @@ The full lesson stays inside this library. Learn better catalog labels, balance 
 | MiniLM | The 22-million-parameter cross-encoder teacher in ColBERTv2 | It supplies soft scores for denoised distillation |
 | Kullback-Leibler (KL) divergence | A loss that matches two score distributions | ColBERTv2 uses it over 64-way tuples |
 | Denoised distillation | Teacher training that reduces noisy binary-label effects | The source credits it, not compression, for ColBERTv2’s quality gain |
-| $`\operatorname{NDCG}@10`$ | A discounted, ideal-normalized top-ten gain metric | A reported scaled-point aggregate gain does not rule out important cohort regressions |
+| $`\mathop{\mathrm{NDCG}}\nolimits@10`$ | A discounted, ideal-normalized top-ten gain metric | A reported scaled-point aggregate gain does not rule out important cohort regressions |
 | Cosine similarity | For nonzero vectors, normalized inner product in $`[-1,1]`$ | It is not a calibrated relevance probability; raw dense dot products need not have this bound |
 | Min-max normalization | Rescaling a nonconstant list window to $`[0,1]`$ | It depends on window extremes and needs a zero-range fallback and a missing-list policy |
 | Convex combination | A weighted sum whose nonnegative weights total one | It can outperform RRF after sound normalization and in-domain tuning |
 | Fusion weight $`\alpha`$ | The sparse share $`\alpha\in[0,1]`$ in a two-list convex combination | Tune with independent in-domain judgments and important slices, not on the final test set |
 | Rank | A one-based document position within one returned list | Define treatment of tied input scores and absent documents |
-| RRF score $`\operatorname{RRF}(d)`$ and ranks $`r_\ell(d)`$ | A sum of reciprocal-rank contributions from lists in which the document appears | It avoids raw-score scale matching, but is not a confidence or independence model |
+| RRF score $`\mathop{\mathrm{RRF}}\nolimits(d)`$ and ranks $`r_\ell(d)`$ | A sum of reciprocal-rank contributions from lists in which the document appears | It avoids raw-score scale matching, but is not a confidence or independence model |
 | Rank constant $`\kappa`$, list count $`L`$ and depth $`m`$ | Nonnegative offset $`\kappa`$, number of lists $`L`$ and per-list depth $`m`$ | The constant, depth and list weights jointly affect head rank versus agreement |
 | Raw score $`s_\ell(d)`$ and fusion weight $`\alpha`$ | An individual retriever score and the sparse share of score fusion | Normalization and held-out validation matter; a bounded score is not automatically calibrated |
 | Weighted RRF | RRF with nonnegative list weights $`\omega_\ell`$ | Weights can be validated or learned; they do not automatically correct correlated errors |
@@ -133,7 +133,7 @@ The full lesson stays inside this library. Learn better catalog labels, balance 
 Use decimal $`\mathrm{kB},\mathrm{MB},\mathrm{GB},\mathrm{TB}`$ for powers of ten and binary $`\mathrm{KiB},\mathrm{MiB},\mathrm{GiB}`$ for powers of two: $`1\,\mathrm{GB}=10^9\,\mathrm B`$ and $`1\,\mathrm{GiB}=2^{30}\,\mathrm B`$. fp32 and fp16 use $`4\,\mathrm B`$ and $`2\,\mathrm B`$ per value. One multiply-accumulate (MAC) counts as two FLOPs in the work proxies. Vector or posting payloads exclude dictionaries, source text, graph links, identifiers not already counted, allocation, replicas and runtime buffers unless stated. Keep full precision until reporting; $`\approx`$ marks rounding or modeling approximation.
 For sparse examples, let $`\mathcal V`$ be the vocabulary with size $`V=\lvert\mathcal V\rvert=30{,}522`$, $`N=8{,}841{,}823`$, $`p_j=\Pr(w_j^d>0)`$ and $`q_j=\Pr(w_j^q>0)`$ describe document and query activation profiles. Thus $`0\le p_j,q_j\le1`$ and $`\bar u_d=\sum_jp_j`$ is average nonzero count. Learned mean weight $`\mu_j=\mathbb E[w_j^d]`$ is not generally $`p_j`$. The exhaustive posting-work proxy $`N\sum_jq_jp_j`$ is distinct from actual latency with pruning, query encoding, score accumulation and top-result selection.
 For the late-interaction payload examples, use the separately stipulated rounded corpus $`N_c=8.8\times10^6`$, $`n_d=68`$ indexed token vectors per passage, $`N_q=32`$ query positions and projection width $`h_c=128`$. Do not silently mix this with the exact sparse corpus count. A BERT-base encoder has $`P=110\times10^6`$ parameters; $`2PT`$ forward FLOPs for $`T`$ processed positions is approximate and omits attention-length effects, projections and other work. Lengths omit any additional special tokens unless included in the stipulated count. Dividing work by hardware rates is not a measured latency, physical lower bound or request-percentile guarantee.
-MRR is a fraction: $`\operatorname{MRR}@10=Q^{-1}\sum_{i=1}^{Q}\mathbf1[r_i\le10]/r_i`$, with zero contribution if no relevant result is found, where $`r_i`$ is the first relevant one-based rank. One scaled MRR point is $`0.01`$ on this scale; relative loss instead divides an absolute score change by a specified baseline. Passage recall, answer-hit accuracy and ANN neighbor recall have different reference sets and denominators. The cited scores, ablations and latency profiles are reported inputs; they are not all one matched experiment.
+MRR is a fraction: $`\mathop{\mathrm{MRR}}\nolimits@10=Q^{-1}\sum_{i=1}^{Q}\mathbf1[r_i\le10]/r_i`$, with zero contribution if no relevant result is found, where $`r_i`$ is the first relevant one-based rank. One scaled MRR point is $`0.01`$ on this scale; relative loss instead divides an absolute score change by a specified baseline. Passage recall, answer-hit accuracy and ANN neighbor recall have different reference sets and denominators. The cited scores, ablations and latency profiles are reported inputs; they are not all one matched experiment.
 In fusion, use $`\kappa\ge0`$ for the RRF rank constant, $`m`$ for list depth and $`L`$ for list count, distinct from BM25 $`k_1`$, projection width and rerank depth. A document absent from a truncated list contributes zero; ranks are one-based, with a declared deterministic tie policy. Min-max normalization requires a nonzero score range and a documented constant-list fallback. Normalized or fused scores are not automatically probabilities. Historical software, benchmark and hardware assertions remain reported source claims, not independent verification.
 ### 21.1 SPLADE: MLM-predicted term importance and implicit expansion
 #### The shared sparse scoring form
@@ -141,43 +141,53 @@ In fusion, use $`\kappa\ge0`$ for the RRF rank constant, $`m`$ for list depth an
 - **Why:** Sparse dot-product scoring supports inverted lists, with contributions only from nonzero query dimensions and stored nonzero document dimensions.
 - **Scope:** Real BM25 analyzers need not use WordPiece; sharing the scoring shape does not make every implementation's vocabulary or posting format identical.
 - **Cost:** Exhaustively visiting eligible postings is one work model. Dynamic pruning, quantization and top-result selection change execution cost.
+
 $$
 s(q,d)=\sum_{j=1}^{V}w_j^q w_j^d.
 $$
+
 For one unfielded BM25 variant, let $`f_{j,d}`$ be analyzed term count, $`L_d`$ document length, $`\overline L>0`$ average length, $`k_1>0`$ and $`0\le b_{\mathrm{BM25}}\le1`$. Use the guarded positive IDF convention from Chapters 18 and 20, and ignore query-frequency weighting in this particular decomposition:
+
 $$
 w_j^d=\begin{cases}\displaystyle\frac{f_{j,d}(k_1+1)}{f_{j,d}+k_1(1-b_{\mathrm{BM25}}+b_{\mathrm{BM25}}L_d/\overline L)},&f_{j,d}>0,\\0,&f_{j,d}=0.\end{cases}
 $$
+
+
 $$
-w_j^q=\operatorname{IDF}_+(j)\mathbf1[j\in q],\qquad\operatorname{IDF}_+(j)=\ln\frac{N+1}{n_j+0.5}.
+w_j^q=\mathop{\mathrm{IDF}}\nolimits_+(j)\mathbf1[j\in q],\qquad\mathop{\mathrm{IDF}}\nolimits_+(j)=\ln\frac{N+1}{n_j+0.5}.
 $$
+
 - **What:** A zero document term count contributes zero under this lexical variant; learned expansion changes that literal-support property.
 - **Why:** An exact posting match is evidence of analyzed term occurrence, not proof of relevance. BM25 can use other query terms and length effects, but does not itself contextualize the word “bank.”
 - **Failure case:** A relevant passage may paraphrase all informative query terms and have no analyzed overlap. Translation, expansion or another retrieval route changes that premise.
 - **Reported scenario:** The opening example gives BM25 request $`p_{99}=40\,\mathrm{ms}`$ and an audited unacceptable-candidate rate $`12\%`$. These are scenario observations, not consequences of the formula or a general BM25 failure rate.
 #### Discrete expansion versus direct vocabulary weighting
 - **Discrete expansion:** The cited docT5query configuration generates forty possible queries, appends their text and indexes it with BM25. Generation settings change the resulting corpus and term counts. Ordinary backpropagation does not pass directly through discrete decoding, although other training estimators or surrogates are possible.
-- **Reported result:** The chapter gives $`\operatorname{MRR}@10=0.277`$ versus BM25 $`0.184`$ in that comparison; do not combine these automatically with the separate ColBERT baseline.
+- **Reported result:** The chapter gives $`\mathop{\mathrm{MRR}}\nolimits@10=0.277`$ versus BM25 $`0.184`$ in that comparison; do not combine these automatically with the separate ColBERT baseline.
 - **Direct weights:** SPLADE's MLM vocabulary head scores vocabulary pieces at contextual positions, so absent pieces can receive weight without generating a string. This is one expansion parameterization, not a theorem that no other architecture can expand absent terms.
 - **Intermediate size:** At $`n=128`$ and $`V=30{,}522`$, there are $`nV=3{,}906{,}816`$ logits, or $`15.627264\,\mathrm{MB}`$ if materialized in fp32. Implementation and streaming can change peak memory.
+
 $$
 \ell_{ij}=\left\langle T(h_i),E_j\right\rangle+b_j,\qquad h_i,E_j\in\mathbb R^{768}.
 $$
+
 Here $`T`$ is the MLM dense/GELU/LayerNorm transform, $`E_j`$ the tied vocabulary embedding and $`b_j`$ its output bias. The position set used for pooling must follow the attention and special-token policy; padding positions must not accidentally create indexed terms.
 #### Exact zeros, saturation, and pooling
 - **What:** ReLU sets nonpositive logits to zero. For positive logits, $`\ln(1+\ell)`$ grows sublinearly but remains unbounded; its derivative is $`1/(1+\ell)`$.
 - **Why:** Exact output zeros can be omitted from the inverted index. The log transform reduces marginal scale, not the total number of active dimensions.
 - **Limit:** ReLU can leave many positives, and sum pooling still adds repeated contributions. It does not impose a posting budget or a hard per-term cap.
 - **Cost:** Sparse serving does not imply sparse indexing computation: the vocabulary head can still be dense.
+
 $$
 a_{ij}=\ln\!\left(1+\max(0,\ell_{ij})\right),\qquad w_j^d=\sum_{i=1}^{n}a_{ij}.
 $$
+
 Five logits equal to twelve have raw sum $`60`$, versus $`5`$ for five logits equal to one, a raw ratio $`12`$. Transformed sums are $`5\ln13\approx12.824746787`$ and $`5\ln2\approx3.465735903`$, ratio $`\ln13/\ln2\approx3.700439718`$. The transform compresses the ratio; doubling the number of identical positions still doubles either sum-pooled weight.
-Pooling removes explicit position indexing only after contextual encoding, so the output is a vocabulary-weight vector rather than a literal order-free input model. A max-pooled variant uses $`w_j^d=\max_i a_{ij}`$. The chapter reports $`\operatorname{MRR}@10`$ changing from $`0.322`$ to $`0.340`$ for a cited variant, but not reproducing universally. Treat the result as a reported configuration comparison, not proof that max pooling always wins or that pooling alone explains every v2 gain.
+Pooling removes explicit position indexing only after contextual encoding, so the output is a vocabulary-weight vector rather than a literal order-free input model. A max-pooled variant uses $`w_j^d=\max_i a_{ij}`$. The chapter reports $`\mathop{\mathrm{MRR}}\nolimits@10`$ changing from $`0.322`$ to $`0.340`$ for a cited variant, but not reproducing universally. Treat the result as a reported configuration comparison, not proof that max pooling always wins or that pooling alone explains every v2 gain.
 #### Training and interpretability
 - **Training:** The cited SPLADE v1 recipe uses in-batch candidates and one BM25-mined hard negative per query. Mask known positives and duplicates; mined candidates are not exhaustively judged negatives.
 - **Objective:** Ranking supervision can train the vocabulary weights end to end, with ReLU's local zero derivatives and shared parameters accounted for. It does not automatically enforce sparsity or calibrated expansion.
-- **Reported results:** The chapter gives $`\operatorname{MRR}@10=0.322`$ for v1 and $`0.368`$ for a distilled v2 configuration, versus $`0.184`$ BM25 and $`0.277`$ docT5query in that comparison. Distillation, training and architecture changes must not all be attributed to one pooling operation.
+- **Reported results:** The chapter gives $`\mathop{\mathrm{MRR}}\nolimits@10=0.322`$ for v1 and $`0.368`$ for a distilled v2 configuration, versus $`0.184`$ BM25 and $`0.277`$ docT5query in that comparison. Distillation, training and architecture changes must not all be attributed to one pooling operation.
 SPLADE coordinates are inspectable vocabulary pieces, not necessarily whole readable words or a faithful explanation of the complete ranking decision. The source suggests reviewing the top twenty coordinates on a few hundred documents. Check context, negation, brands and unsupported expansions against judgments; deleting a coordinate can remove useful matches too. An expanded posting does not certify that its label literally occurred in the source.
 #### Worked index economics
 For a payload example use $`N=8{,}841{,}823`$, $`V=30{,}522`$ and $`8\,\mathrm B`$ per posting: a four-byte document identifier plus four-byte weight. Assume forty stored BM25 terms per passage. To make the query arithmetic explicit, the following table uses uniform activation across the vocabulary, not an observed natural-language frequency distribution. For the unregularized row, $`p_j=0.30`$ gives average $`0.30V=9{,}156.6`$ active dimensions; its fractional totals are expected quantities, not literal fractional records.
@@ -199,44 +209,59 @@ An average of one hundred sixty nonzeros—four times the forty-term baseline—
 - **What:** Let $`p_j`$ be corpus activation probability and $`q_j`$ query activation probability. An exhaustive traversal opens list $`j`$ with probability $`q_j`$ and its modeled length is $`Np_j`$.
 - **Why:** Expected posting visits depend on the product of the two profiles, not just their separate nonzero totals. One posting contribution uses one MAC in this proxy.
 - **Scope:** Corpus frequencies can be fixed empirical fractions; query randomness supplies the expectation. Dynamic skipping, caches, score quantization and query encoding are not counted.
+
 $$
 C_{\mathrm{post}}=N\sum_{j=1}^{V}q_jp_j\quad\text{MACs per query}.
 $$
+
 The exact $`\ell_0`$ support count is piecewise constant and has zero derivative almost everywhere, so naive gradient descent on it is unsuitable. The identity $`\mathbb E\lVert w^d\rVert_0=\sum_jp_j=\bar u_d`$ is about nonzero indicators, not an identity for $`\ell_1`$ weight mass. With arbitrary nonnegative weights, shrinking every positive weight reduces $`\ell_1`$ without changing any support. Calling $`\ell_1`$ the tightest convex relaxation needs a domain: on a bounded unit $`\ell_\infty`$ box it is the convex envelope of $`\ell_0`$, not an unqualified statement on unbounded weights. Support budgets still require measurements, thresholds or further assumptions.
 For the following tractable toy only, assume proportional activation profiles $`q_j=(\bar u_q/\bar u_d)p_j`$, with $`\bar u_d>0`$ and probabilities remaining in $`[0,1]`$. The worked case has $`\bar u_q=30<160=\bar u_d`$, so the query constraint is feasible. This assumption is not implied by the FLOPS penalty:
+
 $$
 q_j=\frac{\bar u_q}{\bar u_d}p_j.
 $$
+
 Then expected cost and effective support become:
+
 $$
 C_{\mathrm{post}}=\frac{N\bar u_q\bar u_d}{m_{\mathrm{eff}}(p)}.
 $$
+
+
 $$
 m_{\mathrm{eff}}(p)=\frac{\left(\sum_jp_j\right)^2}{\sum_jp_j^2},\qquad\sum_jp_j>0.
 $$
+
 Cauchy–Schwarz gives $`m_{\mathrm{eff}}(p)\le V`$, with equality for equal nonzero popularity across all vocabulary coordinates. Also $`\sum_jp_j^2\le\sum_jp_j=\bar u_d`$ because $`p_j\le1`$, so $`m_{\mathrm{eff}}(p)\ge\max(1,\bar u_d)`$. At $`\bar u_d=160`$, the tight minimum is $`160`$, achieved by one hundred sixty always-active dimensions. Thus the maximum cost ratio between feasible profiles at these fixed proportional counts is $`30{,}522/160=190.7625`$, not the vocabulary size. Against the specific $`m_{\mathrm{eff}}=4{,}000`$ comparison below, the greatest possible ratio is $`25`$.
 #### Why a Zipfian profile is expensive
 An uncapped reciprocal profile has harmonic sums $`H_V=\sum_{j=1}^{V}1/j\approx10.903435060`$ and $`H_V^{(2)}=\sum_{j=1}^{V}1/j^2\approx1.644901304`$. Its scale-invariant effective support is $`H_V^2/H_V^{(2)}\approx72.274790`$. This is a valid concentration statistic for arbitrary nonnegative weights, but not a feasible probability profile at mean support one hundred sixty: normalization would require $`p_1=160/H_V\approx14.674275>1`$. The previous fifty-six-fold posting-cost example therefore mixed weight mass with activation probabilities.
 A feasible concentrated example is $`p_j=\min(1,c/j)`$, choosing $`c`$ so $`\sum_jp_j=160`$. Numerically $`c\approx19.168819842`$; the first nineteen probabilities equal one. Then $`\sum_jp_j^2\approx37.827100078`$ and $`m_{\mathrm{eff}}(p)\approx676.763483`$. This is a constructed capped-Zipf example, not a theorem that an $`\ell_1`$-trained model must learn this profile. Harmonic approximations include finite-size terms; do not replace $`H_V`$ by $`\ln V+\gamma`$ as an exact equality.
 #### FLOPS as load balancing
 For a batch of $`B`$ nonnegative document-weight vectors, define a mean weight and the named FLOPS surrogate. These are real weights, not automatically binary activation probabilities:
+
 $$
 \bar a_j=\frac1B\sum_{b=1}^{B}w_j^{(b)}.
 $$
+
+
 $$
 \mathcal R_{\mathrm{FLOPS}}=\sum_{j=1}^{V}\bar a_j^2.
 $$
+
 For this penalty, $`\partial\mathcal R_{\mathrm{FLOPS}}/\partial w_j^{(b)}=2\bar a_j/B`$. For $`\mathcal R_1=B^{-1}\sum_{b,j}w_j^{(b)}`$, the derivative on a positive weight is $`1/B`$. Mean weights $`2.0`$ and $`0.05`$ therefore have a fortyfold FLOPS derivative ratio before coefficients and the activation chain rule. The pressure is on output weights; derivatives through ReLU/log pooling and shared encoder parameters are different quantities.
-For $`B>1`$, squaring the mean introduces cross-document coupling. Under IID batches, $`\mathbb E[\bar a_j^2]=\mu_j^2+\operatorname{Var}(w_j)/B`$, not exactly $`\mu_j^2`$. Batch size one lacks cross-document coupling. Finite-batch variance, active-weight magnitudes and the query/document relation all affect how this surrogate translates into support and real posting traffic.
+For $`B>1`$, squaring the mean introduces cross-document coupling. Under IID batches, $`\mathbb E[\bar a_j^2]=\mu_j^2+\mathop{\mathrm{Var}}\nolimits(w_j)/B`$, not exactly $`\mu_j^2`$. Batch size one lacks cross-document coupling. Finite-batch variance, active-weight magnitudes and the query/document relation all affect how this surrogate translates into support and real posting traffic.
 For a nonzero mean-weight vector $`\mu`$, define $`m_{\mathrm{eff}}(\mu)=(\sum_j\mu_j)^2/\sum_j\mu_j^2`$. At fixed mean $`\ell_1`$ mass $`M_1=\sum_j\mu_j`$, the population mean-square term is $`M_1^2/m_{\mathrm{eff}}(\mu)`$, so minimizing it spreads that weight mass. Equating this with $`\bar u_d^2/m_{\mathrm{eff}}(p)`$ additionally needs binary weights or a fixed common active amplitude. Arbitrary SPLADE weights need not satisfy it. FLOPS can encourage sparsity and load balance but does not guarantee a fixed support count, profile proportionality or latency optimum.
 #### Separate query and document penalties
+
 $$
 \mathcal L=\mathcal L_{\mathrm{rank}}+\lambda_q\mathcal R_{\mathrm{FLOPS}}(q)+\lambda_d\mathcal R_{\mathrm{FLOPS}}(d),\qquad\lambda_q,\lambda_d\ge0.
 $$
+
 Document support affects persistent postings and traffic; query support affects posting traffic and transient query work. Both sides can affect relevance, encoder cost and caches. The source suggests trying $`\lambda_q`$ roughly an order of magnitude above $`\lambda_d`$ when query latency binds, but the coefficients depend on loss normalization, weight scales, parameter sharing and task. Stronger query regularization does not automatically leave the document profile unchanged in a shared encoder; measure both after training.
 The all-zero output minimizes either nonnegative penalty. A strictly negative logit has zero local derivative through ReLU, but this alone does not make a vocabulary dimension permanently dead: shared parameters can move from other examples, and optimizer state or weight decay can change logits. A completely inactive model can be locally stuck if every training gradient reaches only these zero-derivative paths and no other update acts. The source describes a quadratic regularization warm-up; trying the first ten to fifteen percent of steps is a scheduling heuristic, not a guarantee against collapse or proof that full initial regularization always kills outputs.
 #### Worked cost profiles
 Use the exact sparse corpus $`N=8{,}841{,}823`$, average document support $`\bar u_d=160`$ and query support $`\bar u_q=30`$. Keep proportional probability profiles explicit; this is a different query support from the preceding one-hundred-coordinate payload example.
+
 $$
 N\bar u_q\bar u_d=(8{,}841{,}823)(30)(160)=42{,}440{,}750{,}400.
 $$
@@ -256,33 +281,39 @@ Report document/query support distributions, activation-based effective support,
 #### Locate the architectural gap
 - **Architecture:** A single-vector bi-encoder scores two query-independent-side vectors. A standard cross-encoder jointly conditions token states on the current query/document pair; reusable final document states are therefore unavailable in that baseline, even though raw text and some preprocessing can be cached.
 - **Representation limit:** A simple mean gives equal coefficients to contextual token vectors, not necessarily equal semantic importance to the original words. Contextual states can already encode salience. A single vector is a bottleneck, but its width alone does not prove a fixed quality gap.
-- **Reported comparison:** The chapter gives cross-encoder $`\operatorname{MRR}@10=0.347`$ and $`10{,}700\,\mathrm{ms}`$ at candidate depth one thousand. Keep measured configuration and approximate work models distinct.
+- **Reported comparison:** The chapter gives cross-encoder $`\mathop{\mathrm{MRR}}\nolimits@10=0.347`$ and $`10{,}700\,\mathrm{ms}`$ at candidate depth one thousand. Keep measured configuration and approximate work models distinct.
+
 $$
 s_{\mathrm{bi}}(q,d)=\eta_Q(q)^{\mathsf T}\eta_D(d).
 $$
+
 #### Keep token vectors and interact late
 - **What:** ColBERT independently encodes the two texts, projects token states to $`h_c=128`$ and normalizes nonzero token vectors. A zero vector or empty document requires an explicit masking/fallback policy rather than division by zero or a maximum of an empty set.
 - **Query positions:** The cited recipe augments queries to $`N_q=32`$ positions with mask tokens. These contextual outputs are not zero-padding vectors.
 - **Why:** Documents remain precomputable, while query-token-specific matching is delayed until scoring. Contextual encoding still precedes the late interaction.
 - **Cost:** Payload scales with indexed document-token count and vector width/precision, not merely passage count.
+
 $$
 S(q,d)=\sum_{i=1}^{N_q}\max_{1\le j\le n_d}\left\langle E_{qi},E_{dj}\right\rangle.
 $$
+
 For a single query row, suppose a document of $`68`$ vectors has one similarity $`0.95`$ and the other $`67`$ similarities $`0.10`$. Replacing its maximum by its mean yields:
+
 $$
 \frac{0.95+67(0.10)}{68}=\frac{7.65}{68}=0.1125.
 $$
+
 A comparison row with all similarities $`0.10`$ scores $`0.10`$. Maximum similarity has ratio $`0.95/0.10=9.5`$ and additive gap $`0.85`$, while the mean has ratio $`1.125`$ and gap $`0.0125`$. These are similarity-score comparisons, not likelihood ratios or calibrated evidence. With one strong cell and a fixed background, the mean gap shrinks as $`0.85/n_d`$. MaxSim can also match several query tokens to the same document token and does not itself enforce joint factual consistency.
 #### End-to-end candidate generation
 A token-driven candidate stage can issue ANN probes for query vectors, map hits to passages, deduplicate and rescore their union with MaxSim. This changes the first-stage candidate set; it does not remove all coverage ceilings. A fixed probe depth is not guaranteed to retrieve the global MaxSim winner. For example, take orthogonal unit query vectors $`e_1,e_2`$, two single-token distractors $`e_1,e_2`$, and a single-token relevant document $`(e_1+e_2)/\sqrt2`$. That document has total score $`\sqrt2>1`$, but each query token's nearest single token is its corresponding distractor. Two top-one probes omit the highest-scoring document.
-The source reports end-to-end $`\operatorname{Recall}@1000=96.8\%`$ versus BM25-candidate reranking $`81.4\%`$. If a reranker receives and returns exactly the same thousand documents, its recall at that same depth is unchanged by reordering. At smaller output depths ranking can help. Token ANN, filters and later pruning impose their own candidate-survival limits, and passage recall is not numerically a universal NDCG ceiling.
+The source reports end-to-end $`\mathop{\mathrm{Recall}}\nolimits@1000=96.8\%`$ versus BM25-candidate reranking $`81.4\%`$. If a reranker receives and returns exactly the same thousand documents, its recall at that same depth is unchanged by reordering. At smaller output depths ranking can help. Token ANN, filters and later pruning impose their own candidate-survival limits, and passage recall is not numerically a universal NDCG ceiling.
 #### Worked architecture costs
 For matched work proxies use $`N_c=8.8\times10^6`$, $`n_d=68`$, $`N_q=32`$, $`h_c=128`$, fp16 token vectors, $`P=110\times10^6`$ and a fixed candidate depth $`K_r=1{,}000`$. The cross-encoder proxy processes $`32+68=100`$ positions per pair, with any extra special positions omitted. Token candidate generation, projection/normalization, maximum reductions, data movement and selection are not included in the dot-product FLOP formulas.
 
 
 | Architecture | Online arithmetic | Stored bytes per passage | Reported behavior |
 | --- | --- | --- | --- |
-| Cross-encoder | $`K_r2P(N_q+n_d)=2.2\times10^{13}`$ FLOPs | No reusable final query-conditioned vectors; source/cache storage remains | Reported $`10{,}700\,\mathrm{ms}`$ and $`\operatorname{MRR}@10=0.347`$, not derived from this proxy |
+| Cross-encoder | $`K_r2P(N_q+n_d)=2.2\times10^{13}`$ FLOPs | No reusable final query-conditioned vectors; source/cache storage remains | Reported $`10{,}700\,\mathrm{ms}`$ and $`\mathop{\mathrm{MRR}}\nolimits@10=0.347`$, not derived from this proxy |
 | ColBERT | $`7.04\times10^9+557{,}056{,}000=7{,}597{,}056{,}000`$ FLOPs | $`68(128)(2)=17{,}408\,\mathrm B`$ | Reported reranking time $`61\,\mathrm{ms}`$; ANN generation is a separate stage |
 | Single-vector bi-encoder | $`7.04\times10^9+2(1{,}000)(768)=7{,}041{,}536{,}000`$ FLOPs | $`768(4)=3{,}072\,\mathrm B`$ in the DPR fp32 example | Submillisecond dot scoring, where reported, excludes query encoding and full retrieval |
 
@@ -293,11 +324,11 @@ The reported latency ratio is $`10{,}700/61\approx175.409836`$. Dividing an unma
 Token payload is $`68(128)(2)=17{,}408\,\mathrm B`$ per passage. The width-$`768`$ fp32 single-vector example is $`3{,}072\,\mathrm B`$, giving ratio $`17/3\approx5.666667`$. At the rounded corpus $`N_c`$, totals are $`153{,}190{,}400{,}000\,\mathrm B\approx142.669678\,\mathrm{GiB}`$ and $`27{,}033{,}600{,}000\,\mathrm B\approx25.177002\,\mathrm{GiB}`$. The comparison deliberately uses different widths/precisions and excludes auxiliary index structures; it is not a universal multi-vector multiplier.
 At fixed passage count and storage format, doubling indexed token count doubles raw multi-vector payload. A single-vector payload stays constant only if chunk count and width remain fixed; longer chunks can change tokenization limits, quality and serving work.
 For $`N_c`$ and sixty-eight vectors per passage, width-$`128`$ fp32 payload is $`285.339355\,\mathrm{GiB}`$ and width-$`24`$ fp16 payload is $`26.750565\,\mathrm{GiB}`$, ratio $`10.666667`$. The source's rounded reported footprints are $`286`$ and $`27\,\mathrm{GiB}`$, a ratio approximately $`10.592593`$; do not equate rounded empirical totals with the exact toy count. This change includes both width and precision. Holding fp16 fixed, width $`128\to24`$ gives ratio $`5.333333`$ instead.
-The cited quality operating points are $`\operatorname{MRR}@10=0.349`$ and $`0.339`$, an absolute loss $`0.010`$, or one scaled MRR point. Relative loss from the larger baseline is $`0.010/0.349\approx2.865330\%`$; relative gain of the larger over the smaller is $`0.010/0.339\approx2.949853\%`$. These are different denominators and are not a universal marginal price of dimensions.
+The cited quality operating points are $`\mathop{\mathrm{MRR}}\nolimits@10=0.349`$ and $`0.339`$, an absolute loss $`0.010`$, or one scaled MRR point. Relative loss from the larger baseline is $`0.010/0.349\approx2.865330\%`$; relative gain of the larger over the smaller is $`0.010/0.339\approx2.949853\%`$. These are different denominators and are not a universal marginal price of dimensions.
 The source reports end-to-end retrieval at $`458\,\mathrm{ms}`$ versus reranking at $`61\,\mathrm{ms}`$, ratio approximately $`7.508197`$ for those configurations. End-to-end retrieval replaces the BM25 candidate ceiling with token-search and pruning constraints; it does not eliminate candidate loss. A sub-hundred-millisecond target may motivate shallow reranking, but nominal or average measurements do not establish a request-tail SLO. The source's roughly one-million-chunk affordability boundary is a workload heuristic; evaluate payload, all-in index size, candidate coverage and measured latency.
 ### 21.4 The three ablations that show what makes ColBERT work
 #### Read controlled deletions correctly
-The chapter reports all three variants reranking BM25's top thousand passages on MS MARCO development data, with full $`\operatorname{MRR}@10=0.349`$. The following differences use that baseline and a fractional MRR scale. They are separate reported ablations, not additive causal allocations or a complete factorial experiment.
+The chapter reports all three variants reranking BM25's top thousand passages on MS MARCO development data, with full $`\mathop{\mathrm{MRR}}\nolimits@10=0.349`$. The following differences use that baseline and a fractional MRR scale. They are separate reported ablations, not additive causal allocations or a complete factorial experiment.
 
 
 | Controlled deletion | MRR@10 | Absolute drop | Relative drop | What it isolates |
@@ -310,6 +341,7 @@ The chapter reports all three variants reranking BM25's top thousand passages on
 Against the separately reported BM25 $`0.187`$ baseline in this comparison, the full model gains $`0.349-0.187=0.162`$ and the pooled variant $`0.285-0.187=0.098`$. Token collapse loses $`0.064/0.162\approx39.506173\%`$ of that measured improvement. This is a descriptive gain ratio, not a fraction of all useful knowledge or a universal attribution of architectural value.
 The absolute-drop ratio is $`0.064/0.018\approx3.555556`$; using the rounded relative percentages gives a less precise comparison. In this recipe the token-collapse ablation loses more than the mean-score ablation. A fixed representation cannot recover a distinction if it maps the relevant inputs identically, but this does not prove which distinctions another trained representation can preserve, or that granularity and aggregation have independent effects.
 A literal grid-based mean implementation still computes the same dot-product grid, but the chapter's unweighted row-mean score has an exact real-arithmetic factorization:
+
 $$
 \begin{aligned}
 S_{\mathrm{mean}}(q,d)
@@ -318,6 +350,7 @@ S_{\mathrm{mean}}(q,d)
   \left(\frac1{n_d}\sum_jE_{dj}\right).
 \end{aligned}
 $$
+
 For this score alone, precompute the document mean and score one vector pair; retaining the full token grid is unnecessary. Do not renormalize pooled vectors and claim the same score, because document-dependent norm changes can change ranks. Finite-precision pooling introduces its own numerical differences. If a separate token-ANN candidate stage is retained, it may still need token vectors; scorer and candidate-index storage must be distinguished. Thus “mean saves zero storage and zero FLOPs” is not a mathematical consequence of the stated score. MaxSim's nonlinearity prevents this simple factorization and preserves per-query-token best matches.
 Mask-augmentation positions pass through the contextual encoder and can learn useful latent query features; they are not guaranteed literal synonyms predicted by pre-training alone. One independently supplied, compatible query vector adds $`n_dh_c`$ dot-product MACs per candidate, plus maximum/accumulation work. Re-encoding an augmented text can also change every original query vector, unlike merely appending a fixed vector after encoding. End-to-end token retrieval may require new ANN probes and a changed candidate union. Document-side expansion likewise changes stored vectors/postings and indexing work. Evaluate arbitrary term-table or centroid-vector additions for training compatibility rather than assume equivalence to the cited mask ablation.
 #### Price each deletion
@@ -328,7 +361,7 @@ For consistent payload arithmetic, use the fp16 width-$`128`$ baseline $`142.669
 - **Augmentation proxy:** If processed query positions drop from thirty-two to eight, including the chosen special-token policy, the encoder proxy becomes $`1.76\times10^9`$ FLOPs and token-dot work $`139{,}264{,}000`$, total $`1.899264\times10^9`$, exactly one quarter of this matched proxy. Eight query words plus extra positions are a different length.
 For an Amdahl-style scenario, hold the reported $`48\,\mathrm{ms}`$ gathering/transfer component fixed and suppose the affected $`13\,\mathrm{ms}`$ component becomes four times faster. Then time would be $`48+13/4=51.25\,\mathrm{ms}`$, saving $`9.75\,\mathrm{ms}`$ or $`15.983607\%`$ of the baseline. This is conditional arithmetic, not a measured new latency or a universal upper bound derived from FLOPs. The reported augmentation score drop is $`1.719198\%`$ relative MRR, a different metric. Fixed shapes can aid batching, but modern ragged kernels and changed candidate counts require benchmarking.
 For a precomputed appended query vector, the extra dot work is $`2(68)(128)=17{,}408`$ FLOPs per candidate and $`17{,}408{,}000`$ over a thousand candidates. That is approximately $`0.229141\%`$ of $`7.597056\times10^9`$. It excludes producing/normalizing that vector, row maxima, extra token probes, candidate changes and data movement; it is not the percentage of end-to-end latency.
-These ablations do not prove all single-vector retrieval is $`18.338109\%`$ worse. The source reports ANCE $`\operatorname{MRR}@10=0.330`$ with a different training/negative recipe. A one-vector footprint is one sixty-eighth of the token payload only at the same width-$`128`$ fp16 format; the width-$`768`$ fp32 payload is smaller by a factor $`5.666667`$. Do not assign the former ratio to ANCE without specifying its dimensions and precision. A width-$`24`$ fp16 token payload is $`26.750565\,\mathrm{GiB}`$, but fitting a $`30\,\mathrm{GiB}`$ device/index budget still depends on auxiliary structures and runtime memory. Measure the relevant candidate and final-quality differences rather than apply a universal one-to-two-recall-point cutoff or assume short texts erase every architecture gap.
+These ablations do not prove all single-vector retrieval is $`18.338109\%`$ worse. The source reports ANCE $`\mathop{\mathrm{MRR}}\nolimits@10=0.330`$ with a different training/negative recipe. A one-vector footprint is one sixty-eighth of the token payload only at the same width-$`128`$ fp16 format; the width-$`768`$ fp32 payload is smaller by a factor $`5.666667`$. Do not assign the former ratio to ANCE without specifying its dimensions and precision. A width-$`24`$ fp16 token payload is $`26.750565\,\mathrm{GiB}`$, but fitting a $`30\,\mathrm{GiB}`$ device/index budget still depends on auxiliary structures and runtime memory. Measure the relevant candidate and final-quality differences rather than apply a universal one-to-two-recall-point cutoff or assume short texts erase every architecture gap.
 ### 21.5 Making multi-vector affordable: ColBERTv2 and PLAID
 #### Factor shared identity from contextual detail
 The rounded corpus $`N_c=8.8\times10^6`$ with sixty-eight stored vectors per passage has $`T_c=N_cn_d=598{,}400{,}000`$ token vectors. A width-$`128`$ fp16 vector is $`256\,\mathrm B`$. Actual filtered/tokenized lengths vary; all following totals condition on this average and format.
@@ -336,20 +369,26 @@ The rounded corpus $`N_c=8.8\times10^6`$ with sixty-eight stored vectors per pas
 - **Why:** If within-cluster residuals have a smaller useful range than raw coordinates, low-bit residual coding can reduce distortion at a given size. This is a distributional advantage to measure, not a guarantee for every domain.
 - **Limit:** Direct coordinate quantization can lose important detail, but it is not mathematically required to fail; error depends on scaling, codebook and retrieval margins. Residual quantization is also lossy.
 - **Cost:** Two bits give four code levels per dimension, with packing and metadata assumptions stated below.
+
 $$
 v=C_{t(v)}+r,\qquad\widehat v=C_{t(v)}+Q_b(r).
 $$
+
+
 $$
-r=v-C_{t(v)},\qquad t(v)\in\operatorname*{arg\,min}_{c}\lVert v-C_c\rVert_2^2.
+r=v-C_{t(v)},\qquad t(v)\in\mathop{\mathrm{arg\,min}}_{c}\lVert v-C_c\rVert_2^2.
 $$
+
 With $`K_c=2^{18}=262{,}144`$ centroids, a packed identifier needs at least eighteen bits; this example stores it in $`4\,\mathrm B`$. A two-bit width-$`128`$ residual uses $`128(2)/8=32\,\mathrm B`$, so a record is $`36\,\mathrm B`$ rather than $`256\,\mathrm B`$, a payload-only factor $`256/36\approx7.111111`$. Assuming fp16 centroids, the shared codebook is $`(262{,}144)(128)(2)=67{,}108{,}864\,\mathrm B=64\,\mathrm{MiB}`$, approximately $`0.311520\%`$ of compressed token payload. Scale tables, offsets and other metadata are not included.
 The source relates this design to centroid/residual quantization and reports little or no measured quality loss in a comparison. Quality neutrality is not guaranteed by the representation identity. Residual drift, clipping, codebook mismatch and reconstruction/normalization policies can change ranks.
 For unit query rows and document-vector perturbations $`e_j=\widehat v_j-v_j`$ measured after the scoring pipeline's normalization policy, a useful bound is
+
 $$
 \left|S(q,\widehat d)-S(q,d)\right|
 \le\sum_{i=1}^{N_q}\max_j|E_{qi}^{\mathsf T}e_j|
 \le N_q\max_j\lVert e_j\rVert_2.
 $$
+
 If both documents have error at most $`\varepsilon`$ per vector, an original score gap greater than $`2N_q\varepsilon`$ is sufficient to preserve their order. Smaller gaps need not flip, but are not protected by this bound. This is a deterministic error statement under its norm assumptions, not a benchmark guarantee.
 #### Reuse centroids in the PLAID funnel
 1. Score the $`N_q`$ query vectors against the shared centroid table, then probe selected centroid lists and map hits to candidate passages. Candidate generation still reads the required posting metadata; “no residuals” does not mean “no other reads.”
@@ -375,34 +414,44 @@ Under that stipulated $`U`$, full compressed-record reads are $`341.112305\,\mat
 These are not all-in traffic totals. If both paths additionally read one cold $`64\,\mathrm{MiB}`$ codebook, the corresponding ratio becomes approximately $`3.969713`$. Centroid scores, posting metadata, code lookup, temporary buffers and reconstructed-vector writes matter too; merely writing the sixty-four fp16 reconstructed passages is $`1{,}114{,}112\,\mathrm B`$. Actual cache reuse and kernels determine reads and writes. Do not infer a ninefold latency improvement from the record-size ratio.
 The payload reduction lies within the source's reported six-to-tenfold ColBERTv2 size range. The source also reports up to sevenfold GPU and forty-fivefold CPU latency gains for PLAID in particular comparisons. A scoped record-traffic ratio does not establish or decompose those gains. Candidate pruning, cache behavior, batching, codebooks, CPU kernels and reshape/padding overhead all require profiling; their relative effects are not proved by the size arithmetic alone.
 #### Quality, bit width, and codebook limits
-Do not assign a training-quality gain to compression. The source reports $`\operatorname{MRR}@10`$ changing from $`0.360`$ to $`0.397`$ with a denoised-distillation recipe using a twenty-two-million-parameter MiniLM teacher and a KL loss over sixty-four-way tuples. That is not a controlled proof that quantization improves relevance. One-bit residuals have two levels per coordinate rather than four, and use $`4+16=20\,\mathrm B`$ per token record. The payload is $`11.146069\,\mathrm{GiB}`$, or $`11.208569\,\mathrm{GiB}`$ with this codebook, saving $`8.916855\,\mathrm{GiB}`$ versus two-bit records. Halving the bit count does not imply halving numerical error or “precision”; distortion depends on quantizer and scale. Choose bit width from measured retrieval, including out-of-domain behavior.
+Do not assign a training-quality gain to compression. The source reports $`\mathop{\mathrm{MRR}}\nolimits@10`$ changing from $`0.360`$ to $`0.397`$ with a denoised-distillation recipe using a twenty-two-million-parameter MiniLM teacher and a KL loss over sixty-four-way tuples. That is not a controlled proof that quantization improves relevance. One-bit residuals have two levels per coordinate rather than four, and use $`4+16=20\,\mathrm B`$ per token record. The payload is $`11.146069\,\mathrm{GiB}`$, or $`11.208569\,\mathrm{GiB}`$ with this codebook, saving $`8.916855\,\mathrm{GiB}`$ versus two-bit records. Halving the bit count does not imply halving numerical error or “precision”; distortion depends on quantizer and scale. Choose bit width from measured retrieval, including out-of-domain behavior.
 At $`K_c=2^{18}`$, centroid-dot work is $`2(32)(262{,}144)(128)=2{,}147{,}483{,}648`$ FLOPs, approximately $`30.504029\%`$ of the $`7.04\times10^9`$ query-encoder proxy. At $`K_c=2^{20}`$ it becomes $`8{,}589{,}934{,}592`$ FLOPs, approximately $`122.016116\%`$ of that proxy, before list traversal and scoring. Centroid count, list imbalance and token count create a work/coverage trade-off, not a fixed “few thousand per cell” rule. Instrument gold-passage survival against an exhaustive scoring reference on the same candidate set and also measure the initial candidate-stage loss; testing only survivors hides earlier omissions. Final MRR alone cannot identify the failed stage.
 ### 21.6 Hybrid retrieval and Reciprocal Rank Fusion
 #### Why raw score fusion fails
 Hybrid retrieval can help when dense and lexical paths have complementary errors, but neither “dense for meaning” nor “BM25 for codes” guarantees a slice win. The source's deployment vignette reports a four-point aggregate NDCG change alongside exact-string regressions; audit the relevant cohorts and candidate coverage.
-BM25 is not normalized to a global probability scale. For the positive-IDF variant and a fixed finite query, however, its score is bounded: $`0\le s_{\mathrm{BM25}}(q,d)\le(k_1+1)\sum_{j\in q}\operatorname{IDF}_+(j)`$. Calling every fixed-query BM25 score unbounded ignores term-frequency saturation. Unit-vector cosine lies in $`[-1,1]`$, while an unnormalized dense dot product has a different range. An uncalibrated sum can be dominated by scale; it is not mathematically impossible to work, but needs explicit weighting and validation.
+BM25 is not normalized to a global probability scale. For the positive-IDF variant and a fixed finite query, however, its score is bounded: $`0\le s_{\mathrm{BM25}}(q,d)\le(k_1+1)\sum_{j\in q}\mathop{\mathrm{IDF}}\nolimits_+(j)`$. Calling every fixed-query BM25 score unbounded ignores term-frequency saturation. Unit-vector cosine lies in $`[-1,1]`$, while an unnormalized dense dot product has a different range. An uncalibrated sum can be dominated by scale; it is not mathematically impossible to work, but needs explicit weighting and validation.
 For a list with score range $`s_{\max}>s_{\min}`$, min-max normalization is $`\widehat s=(s-s_{\min})/(s_{\max}-s_{\min})`$. It preserves ordering within that window and is invariant to positive affine score changes, but it is not probability calibration. Specify a constant-list fallback if the range is zero and how absent documents are handled; the worked example assigns missing-list contribution zero. A convex combination then uses $`0\le\alpha\le1`$:
+
 $$
 s_{\mathrm{mix}}(d)=\alpha\widehat s_{\mathrm{sparse}}(d)+(1-\alpha)\widehat s_{\mathrm{dense}}(d),\qquad\alpha\in[0,1].
 $$
+
 The same raw score $`18.2`$ maps to $`(18.2-6.1)/(31.4-6.1)\approx0.478260870`$ in the first window and $`(18.2-12.4)/(31.4-12.4)\approx0.305263158`$ in the shorter window. That is a decrease $`0.172997712`$ in normalized-score units, or $`36.172249\%`$ relative to the first value. Window selection and outliers affect these values. Every nonconstant-list maximum becomes one, but other normalized gaps can still differ; it is not true that min-max erases all confidence-margin information.
 Raw rank summation assigns the same numerical rank difference to positions one/two and sixty-one/sixty-two. That is a design choice rather than a theorem that it must fail. Missing-list penalties and ties are additional choices; reciprocal ranks offer another rank-sensitive weighting.
 #### RRF and the meaning of the rank constant
+
 $$
-\operatorname{RRF}(d)=\sum_{\ell:d\in L_\ell}\frac1{\kappa+r_\ell(d)},\qquad\kappa\ge0.
+\mathop{\mathrm{RRF}}\nolimits(d)=\sum_{\ell:d\in L_\ell}\frac1{\kappa+r_\ell(d)},\qquad\kappa\ge0.
 $$
+
 Here $`L_\ell`$ is a truncated ranked list, distinct from its list-count parameter $`L`$. A document must be in the candidate union to be scored, and tied input scores need a declared rank policy. Within one list, define $`w(r)=1/(\kappa+r)`$. Its ratio to a rank-one vote is:
+
 $$
 \frac{w(r)}{w(1)}=\frac{\kappa+1}{\kappa+r}.
 $$
+
 This ratio reaches one half at $`r=\kappa+2`$ when that is an available integer rank. The rank constant controls the relative strength of a deep vote versus a top vote; it is not probability calibration or an assumption that different lists are independent.
 Compare a document at the same rank $`r`$ in all $`L`$ equally weighted lists with a different document at rank one in exactly one list and absent from the others. Only under that equal-rank/solo-hit comparison does the condition become:
+
 $$
 \frac{L}{\kappa+r}>\frac1{\kappa+1}.
 $$
+
+
 $$
 r<L(\kappa+1)-\kappa.
 $$
+
 For $`L=2,\kappa=60`$, common equal rank $`r\le61`$ strictly wins and $`r=62`$ ties the solo top hit. For $`L=2,\kappa=0`$, common rank one wins and common rank two ties. Unequal-rank agreement can also win: ranks one and one hundred contribute $`1+1/100>1`$ at zero constant. For three-way equal-rank agreement with $`\kappa=60`$, ranks through $`122`$ win and rank $`123`$ ties. These are not thresholds for every arbitrary combination of ranks or list weights.
 At $`m=100,\kappa=60`$, the within-list top/bottom vote ratio is $`(\kappa+m)/(\kappa+1)=160/61\approx2.622951`$. At $`\kappa=0`$ it is $`100`$, so list-head rank differences are much stronger, but agreement still matters. For $`\kappa=5`$, two-way equal-rank agreement ties a solo top hit at rank seven, and the within-list ratio is $`105/6=17.5`$. These describe truncated list weights, not confidence or the expected benefit of another retriever.
 #### Worked fusion example
@@ -427,9 +476,11 @@ For a concrete head reversal, a document at ranks two/one hundred scores $`1/62+
 The source reports tuned convex combinations outperforming RRF in an in-domain comparison and sensitivity to constants/depth. A few hundred labeled queries is a tuning-budget heuristic, not a guarantee of statistical sufficiency or generalization. Use independent validation, relevant slices and uncertainty rather than retune on the final test set.
 RRF uses ranks, so different positive monotone transformations of raw scores leave its result unchanged when ranks/ties are preserved. It discards raw margins: a top sparse score with a large gap and one with a small gap both contribute $`1/61`$ at $`\kappa=60`$. For candidate-union documents with $`L=2,m=100`$, scores lie in $`[1/160,2/61]`$, whose bound ratio is $`320/61\approx5.245902`$; documents outside the union have zero. Log the raw fused score for diagnostics if useful, but do not label it a correctness probability. A score threshold or a separate calibrated confidence model requires held-out task-specific validation, not this range alone.
 Weighted RRF can assign nonnegative list weights $`\omega_\ell`$. This is another design/tuning choice, not an independence correction by itself:
+
 $$
-\operatorname{RRF}_{\omega}(d)=\sum_{\ell:d\in L_\ell}\frac{\omega_\ell}{\kappa+r_\ell(d)},\qquad\omega_\ell\ge0.
+\mathop{\mathrm{RRF}}\nolimits_{\omega}(d)=\sum_{\ell:d\in L_\ell}\frac{\omega_\ell}{\kappa+r_\ell(d)},\qquad\omega_\ell\ge0.
 $$
+
 Choose or learn weights on held-out final ranking/answer quality and important cohorts, with coverage checks; isolated slice recall alone does not identify the best fusion weights. BM25 and SPLADE can be correlated, but measure that correlation and their actual errors rather than assume the learned sparse path is just a duplicate lexical vote.
 With three lists and $`\kappa=60`$, rank $`123`$ is the tie point for a document present at that same rank in all three. A document appearing only in the two lexical lists still has two votes, so its equal-rank tie against one solo dense top hit remains rank $`62`$, not $`123`$. Hierarchical family fusion or weights such as $`(\omega_{\mathrm{BM25}},\omega_{\mathrm{SPLADE}},\omega_{\mathrm{dense}})=(0.5,0.5,1)`$ can limit the family's total voting budget, but change the algorithm and are not guaranteed quality improvements.
 Generated-query variants can use the same fusion formula, yet correlated rewrites are not independent evidence. Repeated passages and original/translated copies need deduplication and access checks. If every path retrieves the same unsupported near miss, agreement does not supply the missing fact or certify answer correctness.
@@ -449,6 +500,7 @@ flowchart TD
 ```
 Figure $`21.1`$: In the worked $`128`$-position, $`V=30{,}522`$ setup, the MLM head produces $`3{,}906{,}816`$ signed logits. The pretrained head is adapted by retrieval training; absent vocabulary terms can receive positive weights without generating strings. ReLU creates zeros for nonpositive logits, while $`\ln(1+x)`$ compresses positive values without bounding them. Sum/max pooling supplies one coordinate per term. Zero final coordinates have no postings, but computing the encoder/head was not free. Vocabulary coordinates offer inspection handles, not a certified faithful explanation.
 ### Figure 21.2
+
 $$
 \begin{aligned}
 \frac{\partial\mathcal L_{\ell_1}}{\partial a_{bj}}&=\frac1B\quad(a_{bj}>0),&
@@ -460,6 +512,7 @@ C_{\mathrm{cap}}&\approx62{,}711{,}348.155\ \mathrm{MAC/query},&C_{\mathrm{bal}}
 \frac{C_{\mathrm{cap}}}{C_{\mathrm{bal}}}&\approx5.910484.
 \end{aligned}
 $$
+
 Figure $`21.2`$: The derivative comparison is with respect to positive output weights, before penalty multipliers and the encoder chain rule. A squared batch-mean weight penalty is not identically a probability penalty. For the two feasible activation profiles shown, use $`N=8{,}841{,}823`$, $`\bar u_q=30`$, $`\bar u_d=160`$ and $`q_j=(30/160)p_j`$. The posting proxy is $`N\bar u_q\bar u_d/m_{\mathrm{eff}}`$ and differs by about $`5.910484`$ times. The former $`m_{\mathrm{eff}}\approx72`$ example at mass $`160`$ violated $`p_j\le1`$; its claimed roughly fifty-sixfold gap was not valid under that model. These profiles illustrate a mechanism, not inevitable outcomes of particular penalties.
 ### Figure 21.3
 ```mermaid
@@ -489,7 +542,7 @@ Figure $`21.3`$: At depth $`1{,}000`$, $`N_q=32,n_d=68,h_c=128`$ and encoder siz
 
 | Panel | Rows and columns | Cells that enter the score | Result |
 | --- | --- | --- | --- |
-| a. Full ColBERT | Query-token rows by document-token columns | One row maximum per query row, then sum | $`\operatorname{MRR}@10=0.349`$ |
+| a. Full ColBERT | Query-token rows by document-token columns | One row maximum per query row, then sum | $`\mathop{\mathrm{MRR}}\nolimits@10=0.349`$ |
 | b. \[CLS\] pooled pair | Token grid replaced by a pooled pair | One pooled-vector dot | $`0.285`$; $`18.338109\%`$ relative loss |
 | c. Mean instead of max | The stated row-mean dot score factorizes | Sum query rows dotted with the document mean; token grid need not be materialized for this scorer | $`0.331`$; $`5.157593\%`$ relative loss |
 | d. No query augmentation | Remove contextualized augmentation rows under the stated length policy | Maxima over remaining processed query rows | $`0.343`$; $`1.719198\%`$ relative loss |
@@ -534,6 +587,7 @@ $$
 \end{array}
 \end{aligned}
 $$
+
 Figure $`21.6`$: At $`\kappa=60`$, two equal rank-$`62`$ votes tie a solo rank-one vote; common rank $`61`$ strictly wins. At $`\kappa=0`$, an individual rank-$`62`$ vote is $`1/62`$ of a rank-one vote, but cross-list agreement still contributes. The example fused order is $`d_C>d_D>(d_A=d_B)`$ at the first constant and $`(d_A=d_B)>d_C>d_D`$ at zero. A deterministic ordering inside the solo-hit tie is not a mathematical score difference. Deeper windows can change existing head scores and even reverse the winner.
 ## Whiteboard pack
 ### What to draw
@@ -544,16 +598,16 @@ Figure $`21.6`$: At $`\kappa=60`$, two equal rank-$`62`$ votes tie a solo rank-o
 5. Draw the token grid and one maximum per query row for MaxSim. Add that the pure mean-dot alternative factorizes, while fixed token-ANN probes can miss the global MaxSim winner.
 6. Draw a centroid address plus a quantized residual. Mark the reconstruction lossy and show candidate/quantization losses separately.
 7. Draw the PLAID funnel with the separately stipulated $`146{,}112`$-candidate scenario and $`64`$ final reconstructed-vector survivors. Do not turn a mean posting-list size into a maximum.
-8. Draw rank lists entering $`\operatorname{RRF}(d)=\sum_{\ell:d\in L_\ell}1/(\kappa+r_\ell(d))`$. Mark one-based ranks, absence, ties, list depth and weights; agreement is not correctness confidence.
+8. Draw rank lists entering $`\mathop{\mathrm{RRF}}\nolimits(d)=\sum_{\ell:d\in L_\ell}1/(\kappa+r_\ell(d))`$. Mark one-based ranks, absence, ties, list depth and weights; agreement is not correctness confidence.
 ### Spoken script
 SPLADE keeps an inverted index while learning vocabulary weights, including terms absent from the literal passage. ReLU can create zeros; log compression is not a finite cap. Posting cost depends on the joint query/document activation profiles, not just average nonzeros, and squared mean-weight regularization is a useful proxy rather than exact support accounting. ColBERT precomputes document token vectors and scores local evidence with MaxSim, at a token-storage and candidate-search cost. Candidate coverage and final ranking remain separate. Centroid/residual compression is lossy; PLAID uses cheap proxy stages before scoring retained reconstructed vectors, with stage loss and traffic measured explicitly. RRF combines ranks without requiring raw-score scale matching, but its depth, weights and tie policies matter and its score is not a correctness probability.
 ## Interview traps
 ### 1. Why can equally sparse SPLADE models have very different query costs?
 Average support fixes $`\sum_jp_j`$, while the posting proxy is $`C=N\sum_jp_jq_j`$. When $`q`$ is proportional to $`p`$, cost depends on $`m_{\mathrm{eff}}`$. At document mass $`160`$, probabilities require $`m_{\mathrm{eff}}\ge160`$, so the former effective-support-$`72`$ example was infeasible. A valid capped Zipf profile has $`m_{\mathrm{eff}}\approx676.763483`$ and about $`5.910484`$ times the cost of the stated $`4{,}000`$-effective-support profile. FLOPS regularizes mean learned weights, not binary support directly; measure actual support, overlap, pruning and tail latency.
 ### 2. What is late about ColBERT, and when would you not use it?
-Document vectors do not depend on the query until late interaction, so they can be precomputed. A cross-encoder instead recomputes a joint state per pair. Choose based on candidate coverage, final ranking quality, memory, serving latency and operational budget. A reranker cannot recover passages missing from its fixed candidate pool; reranking the same thousand does not change $`\operatorname{Recall}@1000`$, though smaller-cutoff ranking can improve. Token-ANN candidate limits and lossy compression need their own recall checks rather than an assumption that late interaction guarantees global coverage.
+Document vectors do not depend on the query until late interaction, so they can be precomputed. A cross-encoder instead recomputes a joint state per pair. Choose based on candidate coverage, final ranking quality, memory, serving latency and operational budget. A reranker cannot recover passages missing from its fixed candidate pool; reranking the same thousand does not change $`\mathop{\mathrm{Recall}}\nolimits@1000`$, though smaller-cutoff ranking can improve. Token-ANN candidate limits and lossy compression need their own recall checks rather than an assumption that late interaction guarantees global coverage.
 ### 3. What do the three ColBERT ablations actually prove?
-The reported ablations lose $`18.338109\%,5.157593\%,1.719198\%`$ relative $`\operatorname{MRR}@10`$ for pooling, mean scoring and no augmentation under one recipe. They do not prove a universal architecture ordering or additive causal shares. The pure mean-dot score can aggregate document vectors and factorize, so its efficiency gain is not necessarily zero. The reported ANCE score $`0.330`$ uses another training recipe and cannot be assigned a width-$`128`$ fp16 footprint without specifying that format. Compare matched inputs, candidate coverage and serving budgets.
+The reported ablations lose $`18.338109\%,5.157593\%,1.719198\%`$ relative $`\mathop{\mathrm{MRR}}\nolimits@10`$ for pooling, mean scoring and no augmentation under one recipe. They do not prove a universal architecture ordering or additive causal shares. The pure mean-dot score can aggregate document vectors and factorize, so its efficiency gain is not necessarily zero. The reported ANCE score $`0.330`$ uses another training recipe and cannot be assigned a width-$`128`$ fp16 footprint without specifying that format. Compare matched inputs, candidate coverage and serving budgets.
 ### 4. Why does ColBERTv2 use a centroid plus residual, and why does PLAID keep the centroid stage?
 The centroid identifier preserves a codebook address exactly, not a token's semantic identity; its quantized residual reconstructs the vector approximately. That approximation can change ranks, and centroid pruning can discard relevant passages before final scoring. In the separately assumed $`U=146{,}112`$ candidate scenario, scoped record reads change from $`341.112305`$ to $`38.050781\,\mathrm{MiB}`$, excluding codebook and other traffic. Preserve the funnel only when measured stage survival, final quality and real latency justify it. No arithmetic here proves lossless compression or an all-in ninefold speedup.
 ### 5. When does RRF lose to score fusion, and what happens when you add SPLADE to BM25 plus dense retrieval?
@@ -707,7 +761,7 @@ RRF is a useful label-free starting point, not an always-winning default. Tuned 
 | $`2^{18}`$-centroid scan | $`2{,}147{,}483{,}648`$ FLOPs; $`30.504029\%`$ | Centroid-dot work relative to the query-encoder proxy |
 | $`2^{20}`$-centroid scan | $`8{,}589{,}934{,}592`$ FLOPs; $`122.016116\%`$ | Centroid-dot work alone exceeds that query-encoder proxy |
 | Hybrid quality story | $`4`$ scaled NDCG points | Deployment vignette aggregate gain does not preclude exact-string slice regressions |
-| Cosine bounds | $`-1\le\operatorname{cos}(q,d)\le1`$ | Unit-vector cosine bound; fixed finite-query positive-IDF BM25 is also bounded, but differently scaled |
+| Cosine bounds | $`-1\le\mathop{\mathrm{cos}}\nolimits(q,d)\le1`$ | Unit-vector cosine bound; fixed finite-query positive-IDF BM25 is also bounded, but differently scaled |
 | Min-max depth shift | $`0.478260870\to0.305263158`$ | Same raw $`18.2`$; decrease $`0.172997712`$ normalized units or $`36.172249`$ percent relative |
 | Min-max windows | $`[6.1,31.4]`$ and $`[12.4,31.4]`$ | Illustrative different normalization windows, not probability scales |
 | RRF starting constant | $`\kappa=60`$ | Historical untuned starting point, not a universal optimum |
@@ -730,7 +784,7 @@ RRF is a useful label-free starting point, not an always-winning default. Tuned 
 | Labeled tuning point | A few hundred judged queries | Source tuning-budget heuristic; adequacy depends on slices, uncertainty and generalization |
 | RRF score band | $`[1/160,2/61]`$ within the candidate union | Two lists, constant sixty, depth one hundred; outside-union scores are zero |
 | RRF dynamic range | $`320/61\approx5.245902`$ | Ratio of those union-score bounds for that configuration, not a universal cross-query confidence scale |
-| Uncalibrated confidence threshold | $`\operatorname{RRF}(d)>0.02`$ is not a correctness probability | Such a threshold can be empirically validated for an operational task; the range alone neither justifies nor universally forbids it |
+| Uncalibrated confidence threshold | $`\mathop{\mathrm{RRF}}\nolimits(d)>0.02`$ is not a correctness probability | Such a threshold can be empirically validated for an operational task; the range alone neither justifies nor universally forbids it |
 
 
 [00-START-HERE](../00-START-HERE.md) · [01-READING-ROUTES](../01-READING-ROUTES.md) · [20\_dense\_retrieval](20_dense_retrieval.md) · [22\_reranking](22_reranking.md)

@@ -109,22 +109,28 @@ Choose the number of predicted queries from measured reachability and quality, n
 ### 29.2 doc2query and vocabulary mismatch
 #### What
 BM25 scores query terms against a document as follows.
+
 $$
-\operatorname{BM25}(q,d)=\sum_{t\in\mathcal T(q)} I(t)\frac{f_{t,d}(k_1+1)}{f_{t,d}+k_1(1-b+bL_d/\overline L)},\qquad I(t)=\ln\!\frac{N+1}{\operatorname{df}(t)+0.5}.
+\mathop{\mathrm{BM25}}\nolimits(q,d)=\sum_{t\in\mathcal T(q)} I(t)\frac{f_{t,d}(k_1+1)}{f_{t,d}+k_1(1-b+bL_d/\overline L)},\qquad I(t)=\ln\!\frac{N+1}{\mathop{\mathrm{df}}\nolimits(t)+0.5}.
 $$
-This variant uses distinct analyzed query terms $`\mathcal T(q)`$ without a separate query-frequency factor, raw document counts $`f_{t,d}`$, lengths $`L_d`$, mean $`\overline L`$, $`k_1>0`$ and $`0\le b\le1`$. The positive-IDF convention is $`\ln(1+(N-\operatorname{df}(t)+0.5)/(\operatorname{df}(t)+0.5))`$. Other BM25 variants differ. Expansion changes term counts, document frequencies and mean length as well as candidates. doc2query trains query prediction from passage-query pairs; the chapter reports a T5 follow-up, docTTTTTquery, with stronger lexical-retrieval results. Diversity or benefit is empirical, not guaranteed by the name of the generator.
+
+This variant uses distinct analyzed query terms $`\mathcal T(q)`$ without a separate query-frequency factor, raw document counts $`f_{t,d}`$, lengths $`L_d`$, mean $`\overline L`$, $`k_1>0`$ and $`0\le b\le1`$. The positive-IDF convention is $`\ln(1+(N-\mathop{\mathrm{df}}\nolimits(t)+0.5)/(\mathop{\mathrm{df}}\nolimits(t)+0.5))`$. Other BM25 variants differ. Expansion changes term counts, document frequencies and mean length as well as candidates. doc2query trains query prediction from passage-query pairs; the chapter reports a T5 follow-up, docTTTTTquery, with stronger lexical-retrieval results. Diversity or benefit is empirical, not guaranteed by the name of the generator.
 #### Why
 A standard inverted index finds candidate documents through query-term postings before scoring. A document absent from every queried posting list has no route through those lists, rather than merely a low positive score. Other candidate sources or zero-score tie handling can behave differently. Adding “reset” and “password” can make a relevant article reachable, but reaching it does not guarantee a useful rank or relevance. The source reports approximately $`10\%`$ to $`20\%`$ one-keyword agreement in Furnas and colleagues’ study; that finding motivates vocabulary mismatch but does not mathematically establish an impossibility bound for synonym lists.
 #### Failure without it
 PRF can fail when the first pass misses useful evidence, can drift from a short ambiguous query, and adds query-time work. It does not necessarily require a reranker or fail on every mismatch. Dense and lexical systems can both be tested with expansion. Generated terms can become stale or misleading and change unrelated term weights, so evaluate freshness, candidate coverage and ranking separately.
 #### Cost and complexity
-Before expansion, take $`N=10{,}000`$, $`\overline L=150`$, $`L_d=120`$, $`\operatorname{df}(\text{reset})=500`$ and $`\operatorname{df}(\text{password})=300`$. Both target term counts in this article are zero. For an internally consistent local example, expand only this article with the eight analyzed tokens “how to reset password after an account lockout,” each target term occurring once. Then $`L_d=128`$, $`\overline L=150.0008`$, and the document frequencies become $`501`$ and $`301`$. This stipulated analyzer/counting example is not the result of appending both of the earlier multi-question strings. Use $`k_1=1.2`$ and $`b=0.75`$.
+Before expansion, take $`N=10{,}000`$, $`\overline L=150`$, $`L_d=120`$, $`\mathop{\mathrm{df}}\nolimits(\text{reset})=500`$ and $`\mathop{\mathrm{df}}\nolimits(\text{password})=300`$. Both target term counts in this article are zero. For an internally consistent local example, expand only this article with the eight analyzed tokens “how to reset password after an account lockout,” each target term occurring once. Then $`L_d=128`$, $`\overline L=150.0008`$, and the document frequencies become $`501`$ and $`301`$. This stipulated analyzer/counting example is not the result of appending both of the earlier multi-question strings. Use $`k_1=1.2`$ and $`b=0.75`$.
+
 $$
 I(\text{reset})=\ln\!\frac{10{,}001}{501.5}\approx2.992836760.
 $$
+
+
 $$
 I(\text{password})=\ln\!\frac{10{,}001}{301.5}\approx3.501670351.
 $$
+
 The updated length factor is $`0.25+0.75(128/150.0008)\approx0.889996587`$. Each term’s multiplier is $`2.2/(1+1.2\times0.889996586\ldots)\approx1.063831894`$, so the new score is approximately $`6.909063802`$, versus zero before expansion. Expanding other articles would require their updated frequencies and mean length too; the old corpus statistics cannot silently be reused as exact values.
 Separately, ten sampled twelve-token queries for each of ten thousand articles produce $`1.2\times10^6`$ output tokens, excluding prompts, failed generations and indexing work. The chapter-reported MS MARCO MRR@10 change from $`0.184`$ to $`0.277`$ is $`0.093`$ MRR units and approximately $`50.543478\%`$ relative, not a $`50\%`$ absolute accuracy gain or a controlled guarantee for another corpus. The ranking formula can stay the same even though its input statistics change. Index literal text first for near-real-time ingestion and evaluate the backfilled expansion.
 ### 29.3 InPars: contrasting good and bad generated queries
@@ -140,9 +146,11 @@ This specific three-shot layout requires three curated good questions, while the
 ### 29.4 Promptagator: retrieval tasks are not one task
 #### What
 Each task $`T`$ defines a binary relevance relation.
+
 $$
 R_T(q,d)\in\{0,1\}\quad\text{for a declared binary relevance definition}.
 $$
+
 An underlying benchmark may have graded judgments; binarization and the positive/negative policy must be declared. A task-specific retriever can train on $`(q,d^+,d^-)`$ using that relation. The chapter describes Promptagator as starting from two to eight examples, generating task-matched pairs over unlabeled documents, training a preliminary retriever, keeping pairs whose source is recovered, and training the final retriever afresh on survivors. “Afresh” means not continuing the fitted filter checkpoint; it need not mean random initialization rather than a pretrained base.
 #### Why
 Answer relevance, claim evidence, entity relevance and counter-argument quality are different targets. MS MARCO is not merely a topical-overlap task. FEVER-style retrieval seeks evidence that can support or refute a claim. Entity retrieval concerns relevant entities/descriptions for an information need, not every passage mentioning a name. ArguAna seeks suitable counter-arguments, not arbitrary stance opposition. A relevance loss never shown a distinction does not directly supervise it, though pretraining or transfer may still generalize.
@@ -160,12 +168,16 @@ Run this algorithm in order.
 4. Keep the pair if its source appears within the declared top-$`K`$, with tie/duplicate handling specified.
 5. Train the final retriever from a fresh declared initialization on survivors, retaining independent production-like evaluation.
 Let $`\pi`$ be the sound-pair population fraction, $`\alpha=\Pr(\text{keep}\mid\text{sound})`$ and $`\beta=\Pr(\text{keep}\mid\text{broken})`$. With retention $`r`$ and positive $`r`$ for conditional precision,
+
 $$
 r=\pi\alpha+(1-\pi)\beta.
 $$
+
+
 $$
 \pi_{\mathrm{keep}}=\frac{\pi\alpha}{r},\qquad\pi_{\mathrm{keep}}-\pi=\frac{\pi(1-\pi)(\alpha-\beta)}{r}.
 $$
+
 For $`0<\pi<1`$ and $`r>0`$, retained precision strictly improves if and only if $`\alpha>\beta`$. At $`\pi=0`$ or $`\pi=1`$ it cannot strictly improve, and at $`r=0`$ retained precision is undefined. Audit estimates of these rates carry sampling uncertainty and may shift after the retriever or corpus changes.
 #### Why
 The round trip measures source recoverability under a particular filter, not answerability, truth or usefulness. Some wrong positives can give harmful gradients, but label noise does not force every individual update to be harmful. Increasing $`K`$ creates nested accepted sets only with the same ranked results and tie policy; it can rescue valid duplicate collisions while admitting broken pairs. The chapter traces this idea to round-trip consistency in synthetic QA and its retrieval use in Promptagator.
@@ -181,13 +193,17 @@ At $`r=0.6`$, generation-only cost per usable pair is $`\$0.00045`$, or $`\$0.00
 ### 29.6 Multilingual and conversational extensions
 #### What
 For language $`l`$, define a summary generator and a query generator. A summary-only pipeline specifies its own conditional model:
+
 $$
 p_{\mathrm{pipe}}(q_l\mid d_l)=\sum_s p_{\mathrm{query}}(q_l\mid s)\,p_{\mathrm{summary}}(s\mid d_l),\qquad p_{\mathrm{one\ summary}}(q_l\mid d_l)=p_{\mathrm{query}}(q_l\mid\hat s).
 $$
+
 The first equation is a normalized pipeline model, not an identity for an arbitrary true query distribution: it assumes the query stage uses the summary rather than the full passage. A chosen summary $`\hat s`$ may be decoded or sampled; calling it the exact MAP summary requires that inference rule. Replacing the sum by one summary has no automatic error bound. Summaries can omit or invent relevant facts. The source reports SWIM-IR experiments across thirty-three languages with passages near $`120`$ tokens, summaries near $`30`$ and queries near $`25`$. Whether this improves target-language quality is empirical. For conversation, define
+
 $$
-H_t=(q_1,a_1,\ldots,q_{t-1},a_{t-1}),\qquad \operatorname{score}(H_t,q_t,d).
+H_t=(q_1,a_1,\ldots,q_{t-1},a_{t-1}),\qquad \mathop{\mathrm{score}}\nolimits(H_t,q_t,d).
 $$
+
 History can be passed directly or through a query rewrite/summary. The chapter describes CONVERSER as generating complete dialogues from a few example dialogues and reports competitive retrieval results in its settings. Such results do not establish that every later turn is context-dependent or that every generated conversation is valid.
 #### Why
 Summary-mediated generation can separate fact selection from phrasing and make the selected content inspectable. True isolation to a thirty-token summary requires a second call or an explicit masking/interface constraint; an autoregressive call that emits a summary and then a query can still attend to its original passage. Single-step prompting does not mathematically forbid anaphora or ellipsis, though a self-contained-query instruction is not a reliable source of well-grounded dialogue turns. Supply history and audit actual context dependence when that is the task.
@@ -203,9 +219,11 @@ Of $`2{,}000`$ independently reviewed items, eight seeds per language use $`96`$
 ### 29.7 Synthetic data: the right question is how, not whether
 #### What
 Let $`P^*`$ denote production query/passage/relevance data and $`P_G`$ the generator-induced distribution for a fixed corpus and prompt. Human collection is also a sampling design, not automatically production-representative. The opening example reports a $`4.1`$-point recall@5 gain on a synthetic benchmark after $`118{,}000`$ training pairs, with five hundred real tickets from three customers available. Inspect support/shift, feedback and adaptive evaluation selection separately. For an intent of probability $`p_G`$ under IID generator draws,
+
 $$
 \Pr(\text{at least one occurrence})=1-(1-p_G)^n\approx1-e^{-np_G}.
 $$
+
 The exponential approximation is useful for small $`p_G`$ in its appropriate range; the exact expression is available. A production intent with mass $`p^*`$ need not have generator mass $`p_G=p^*`$. If $`p_G=0`$, increasing generation count never samples it. Dependence, deduplication and prompt-specific concentration can invalidate the IID coverage calculation.
 #### Why
 For $`n=100{,}000`$, generator masses $`10^{-5}`$, $`10^{-6}`$ and $`10^{-4}`$ have appearance probabilities approximately $`0.632122398`$, $`0.095162627`$ and $`0.999954623`$. At $`10^{-7}`$ the probability is still $`0.009950167`$, not a certain deletion. The scale $`1/n`$ marks roughly sixty-three-percent appearance, not a hard floor or reliable coverage guarantee. Ninety-five-percent appearance instead requires $`p_G\ge1-0.05^{1/n}`$, about $`2.9956874\times10^{-5}`$ here.
@@ -215,16 +233,20 @@ An open-loop frozen generator avoids recursive self-consumption, but can still p
 One-pass filtering is not automatically safe, and repeated filtering is not inevitably destructive. Evaluate label quality, coverage and distribution shift independently of the cycle diagram. Avoid circular claims where the evaluated model writes or filters its own success criterion. Freeze and version a held-out evaluation procedure before inspecting candidate-system results; tune prompts/checkpoints on a separate development set and report the number of tried alternatives. A separate corpus split helps prevent leakage but does not by itself remove generator bias or selection on the reported test. Self-generated stress cases can be useful with independent adjudication, not as an unqualified substitute for production evaluation.
 #### Cost and complexity
 For paired binary outcomes define $`D_i=1`$ when system A alone succeeds, $`D_i=-1`$ when B alone succeeds, and zero otherwise. Let $`p_{10}`$ and $`p_{01}`$ be those probabilities, $`v=p_{10}+p_{01}`$ the discordance and $`\Delta=p_{10}-p_{01}`$. Under IID pairs,
+
 $$
-\operatorname{Var}(D_i)=v-\Delta^2,\qquad\operatorname{SE}(\overline D)=\sqrt{\frac{v-\Delta^2}{N}}\approx\sqrt{\frac vN}\quad\text{near }\Delta=0.
+\mathop{\mathrm{Var}}\nolimits(D_i)=v-\Delta^2,\qquad\mathop{\mathrm{SE}}\nolimits(\overline D)=\sqrt{\frac{v-\Delta^2}{N}}\approx\sqrt{\frac vN}\quad\text{near }\Delta=0.
 $$
+
 At $`N=500`$, $`v=0.20`$, the null approximation is $`0.020`$, or two percentage points of standard error. For eight independent centered unit normals, the expected maximum is about $`1.423600306`$, below $`\sqrt{2\ln8}\approx2.039333980`$. Equal-effect independent normal estimates with standard error $`0.020`$ therefore have illustrative expected selection inflation $`0.028472006`$, about $`2.847201`$ points.
 Prompts often share questions and errors, true prompt effects may differ, and the normal model is an approximation. Subtracting that expected inflation from this particular $`4.1`$-point headline gives a numerical residual near $`1.252799`$ points, not a valid unbiased estimate, confidence interval or proof the gain is false. Use an independent locked test or a selection-aware procedure.
 For one fixed comparison with gap $`0.015`$, $`v=0.20`$ and five hundred IID pairs, the model standard error is about $`0.019988747`$ and nominal ninety-five-percent half-width $`0.039177224`$. Thus “$`1.5\pm2.0`$ points” describes roughly one standard error, not a ninety-five-percent interval; the corresponding illustration is about $`[-2.418,5.418]`$ percentage points. Estimated discordance and clustering add uncertainty.
 A commonly used approximate two-sided paired-test planning calculation for effect $`\delta`$, significance $`0.05`$ and power $`0.80`$ is
+
 $$
 \begin{aligned}N_{\mathrm{plan}}&\approx\frac{(z_{0.975}+z_{0.80})^2v}{\delta^2},\\v&=0.20,\quad\delta=0.015,\\N_{\mathrm{plan}}&\approx6{,}976.781986,\qquad N=\lceil N_{\mathrm{plan}}\rceil=6{,}977.\end{aligned}
 $$
+
 Using full normal quantiles gives $`6{,}977`$; substituting the rounded $`1.96`$ and $`0.84`$ gives $`6{,}968.888889`$ and ceiling $`6{,}969`$. Both motivate roughly seven thousand, not a universal lower bound or a guaranteed powered test. Alternative/null variances, exact paired tests, correlation, multiple comparisons and deployment slices can change the requirement. A powered synthetic test targets its synthetic distribution unless production transfer is separately established.
 At eight hundred input and twenty-five output tokens, priced $`\$3`$ and $`\$15`$ per million, generation costs $`\$0.002775`$ per query: $`\$19.361175`$ for $`6{,}977`$ or $`\$19.425\approx\$19.43`$ for seven thousand. Seven thousand human judgments at $`\$1.50`$ cost $`\$10{,}500`$; the same-count generation-only price ratio is $`540.540541`$. Independent gold answers, passage judgments, filtering, training and evaluation are not free, and cheaper sampling does not establish equivalent validity.
 Reserve the one-hundred-twenty-real-query calibration anchor from training and prompt selection. If query-to-passage Jaccard overlap has standard deviation $`0.12`$, its IID mean standard error is $`0.12/\sqrt{120}\approx0.010954451`$ and nominal ninety-five-percent half-width about $`0.021470330`$, not $`0.011`$. The reported means $`0.38`$ synthetic versus $`0.11`$ real can flag lexical shift, but uncertainty for their difference needs both sample sizes/variances and appropriate dependence assumptions. Neither statistic alone establishes the cause of a chunking gain. The source’s semantic-chunking explanation is an empirical interpretation to validate.
@@ -232,21 +254,29 @@ For three hundred IID items, the maximum single-accuracy ninety-five-percent hal
 ### 29.8 Gold, silver, bronze: label provenance and teacher-mode limits
 #### What
 Fix the input population, gold-label convention and teacher sampling protocol. Define $`t_y(x)=\Pr(l_T=y\mid x)`$; temperature or prompt changes define a new distribution or a declared mixture. Expert adjudication is a valuable reference, not a proof that all labels are unambiguous. One-draw teacher accuracy is
+
 $$
 a_T=\mathbb E_X\!\left[t_{l^*(X)}(X)\right]=\Pr(l_T(X)=l^*(X)).
 $$
-With a fixed deterministic tie rule, let $`m_T(x)=\operatorname*{arg\,max}_y t_y(x)`$ and $`S=\{x:m_T(x)\ne l^*(x)\}`$. This is the population wrong-mode set, not the set that happens to vote wrongly in three draws. Define $`\epsilon_{\mathrm{sys}}=\Pr_X(S)`$, $`\epsilon_{\mathrm{noise}}=\Pr(l_T\ne l^*,X\notin S)`$ and $`c_S=\Pr(l_T=l^*,X\in S)`$. Then
+
+With a fixed deterministic tie rule, let $`m_T(x)=\mathop{\mathrm{arg\,max}}_y t_y(x)`$ and $`S=\{x:m_T(x)\ne l^*(x)\}`$. This is the population wrong-mode set, not the set that happens to vote wrongly in three draws. Define $`\epsilon_{\mathrm{sys}}=\Pr_X(S)`$, $`\epsilon_{\mathrm{noise}}=\Pr(l_T\ne l^*,X\notin S)`$ and $`c_S=\Pr(l_T=l^*,X\in S)`$. Then
+
 $$
 1-a_T=\epsilon_{\mathrm{sys}}-c_S+\epsilon_{\mathrm{noise}}.
 $$
+
 The missing term $`c_S`$ matters because a teacher can sometimes give the correct label even where its most likely label is wrong. Under idealized population-risk consistency, sufficient coverage/capacity, a strictly proper probabilistic loss and successful optimization, pure distillation recovers the teacher distribution, with hard prediction following its tie-broken mode:
+
 $$
 \hat t_y(x)\longrightarrow t_y(x),\qquad\hat y(x)=m_T(x).
 $$
+
 Its resulting hard-label accuracy is
+
 $$
 a_M\longrightarrow1-\epsilon_{\mathrm{sys}}=a_T+\epsilon_{\mathrm{noise}}-c_S.
 $$
+
 #### Why
 This pure mode-following limit can be above or below one-draw teacher accuracy. For example, a three-label teacher with probabilities $`(0.35,0.40,0.25)`$ and label one true is correct in $`35\%`$ of draws, while its hard mode is always wrong. The simpler identity $`a_M=a_T+\epsilon_{\mathrm{noise}}`$ needs $`c_S=0`$, a special assumption not identified by three repeats. Finite-sample regularization, pretrained knowledge, auxiliary objectives, gold data or external evidence can produce a student that does not imitate the teacher mode. Thus this is not a universal accuracy ceiling. The chapter reports Burns and colleagues’ weak-to-strong experiments and roughly eighty-percent gap recovery under a particular auxiliary-confidence setup; preserve their benchmark definition and do not treat that different training objective as a proof of pure-distillation behavior. Redundancy depends on conditional error distributions and dependence, not merely teacher headcount.
 #### Failure without it
@@ -259,9 +289,11 @@ For a second filter, let $`\rho_{\mathrm{ret}}`$ be the fraction of the seventee
 At the explicit assumptions $`\rho_{\mathrm{ret}}=0.4`$, $`\nu=0`$, $`\eta=0`$, the second filter leaves $`67`$ correct and $`6.8`$ wrong per original hundred, or $`147{,}600`$ expected retained pairs. Precision is $`67/73.8\approx90.785908\%`$, an increase of about $`12.878931`$ points on a changed retained population. This is distinct from the ideal selector’s $`91.2\%`$ full-population accuracy. Assuming no false rejection of correct pairs is a substantive audit target, not a property of using a different teacher family.
 Three draws for each of $`200{,}000`$ candidates require $`600{,}000`$ calls. At four hundred input and thirty output tokens each, the totals are $`240\times10^6`$ input and $`18\times10^6`$ output positions. At $`\$0.25`$ and $`\$1.25`$ per million, respectively, this is $`\$82.50`$ for one family’s three-draw corpus pass, not a single-draw pass; a single draw costs $`\$27.50`$. Two complete family passes cost $`\$165`$. If the second family is called three times only for the first filter’s retained eighty-six percent, it costs $`\$70.95`$ and the combined bill is $`\$153.45`$. Generation, label scoring, filtering, curation and model training must not be conflated.
 Expert review of $`200{,}000`$ pairs at two minutes each takes $`6{,}666.666667`$ hours and costs $`\$400{,}000`$ at $`\$60`$ per hour, or $`4{,}848.484848`$ times the one-family three-draw bill, before quality differences. A two-thousand-pair expert audit takes $`66.666667`$ hours and costs $`\$4{,}000`$. Under an IID Bernoulli correctness model near $`p=0.8`$, its standard error is
+
 $$
-\operatorname{SE}(\hat p)\approx\sqrt{\frac{p(1-p)}n}=\sqrt{\frac{0.16}{2{,}000}}\approx0.008944272.
+\mathop{\mathrm{SE}}\nolimits(\hat p)\approx\sqrt{\frac{p(1-p)}n}=\sqrt{\frac{0.16}{2{,}000}}\approx0.008944272.
 $$
+
 The nominal ninety-five-percent normal half-width is about $`0.017530451`$, or $`1.753045`$ percentage points; reference-label uncertainty and clustering require additional treatment. The source’s two-size-increases/one-point audit trigger is a heuristic. Execution checks and exact gold answers can provide a distinct signal, but incomplete unit tests, exact-match aliases and verifier errors still matter. A source-recovery check is the same retrievability test analyzed above, not an independent correctness certificate. The source describes Adaptive-RAG’s cheapest-gold-matching-pipeline labels and verifiable-reward training; their guarantees depend on the actual target and verifier. “Verifier error plus generator variance” is not a general additive accuracy bound. Preserve the source’s Promptagator year discrepancy (2022 versus 2023) as a citation inconsistency rather than silently resolving it without the references.
 ## Diagrams
 ### Figure 29.1
@@ -383,9 +415,11 @@ Figure $`29.6`$: Acyclic generation avoids one feedback mechanism but is not aut
 
 Table $`29.2`$: Provenance helps design an audit, but a tier label does not determine the joint error distribution or the value of redundancy. Measure conditional accuracy, agreement, coverage and selection on the actual task.
 ### Figure 29.7
+
 $$
 \begin{array}{lrrl}\text{Selected labels}&\text{Correct}&\text{Wrong}&\text{Precision}\\\text{First filter}&67&19&67/86\approx77.906977\%\\\text{Second filter, assumed rates}&67&6.8&67/73.8\approx90.785908\%\end{array}
 $$
+
 Figure $`29.7`$: Counts are expected mass per one hundred original candidates in a separately adjudicated label-selection scenario, not percentages of one unchanged retained set. The second row assumes no correct-label rejection, complete removal of the two residual noise errors and forty-percent survival of seventeen persistent-error labels. It retains $`73.8\%`$ of original candidates versus $`86\%`$ in the first row. These precision values are not student ceilings or deductions from three repeats. Separately, an ideal population selector with wrong-mode mass $`0.22`$ and conditional overlap $`0.4`$ would have $`91.2\%`$ accuracy under its oracle assumptions.
 ## Whiteboard pack
 ### What to draw

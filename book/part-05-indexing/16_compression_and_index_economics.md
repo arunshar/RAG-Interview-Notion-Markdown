@@ -99,37 +99,54 @@ Storage is decimal unless explicitly binary: $`1\,\mathrm{kB}=10^3\,\mathrm B`$,
 ### 16.1 Product quantization and the $`\frac{k^m}{km}`$ argument
 #### What
 A flat quantizer chooses a nearest centroid from a finite codebook, with a tie rule:
+
 $$
-q_C(x)\in\operatorname*{arg\,min}_{c\in C}\lVert x-c\rVert_2^2,\qquad C=\{c_1,\ldots,c_k\}\subset\mathbb R^d.
+q_C(x)\in\mathop{\mathrm{arg\,min}}_{c\in C}\lVert x-c\rVert_2^2,\qquad C=\{c_1,\ldots,c_k\}\subset\mathbb R^d.
 $$
+
 A fixed-length index costs $`\lceil\log_2 k\rceil`$ bits. Codebook fitting minimizes average squared reconstruction error, for example on a training sample:
+
 $$
 \min_{C:\lvert C\rvert=k}\ \frac1{n_{\mathrm{train}}}\sum_{i=1}^{n_{\mathrm{train}}}\lVert x_i-q_C(x_i)\rVert_2^2.
 $$
+
 Lloyd’s $`k`$-means algorithm is a local heuristic. The source cites exact Euclidean sum-of-squares clustering as NP-hard even for $`k = 2`$ in general dimension.
 A flat $`b`$-bit code needs $`2^b`$ centroids. At $`b = 32`$ and $`d = 768`$:
+
 $$
 2^{32}(768)(4\,\mathrm B)=13{,}194{,}139{,}533{,}312\,\mathrm B\approx13.1941\,\mathrm{TB}.
 $$
+
 Against the modeled ten-million-vector corpus of $`30.72\,\mathrm{GB}`$, that flat codebook alone is about $`429.50`$ times larger. A library warning heuristic of $`39`$ training points per centroid would request:
+
 $$
 39(2^{32})=167{,}503{,}724{,}544\ \text{training vectors}\approx1.67504\times10^{11}.
 $$
+
 PQ splits $`x`$ into $`m`$ equal contiguous subvectors when $`m\mid d`$, and fits $`k`$ sub-centroids per block. Its separately stored fixed-width subcodes have length:
+
 $$
 c(x)=(i_1,\ldots,i_m),\qquad b_{\mathrm{code}}=m\lceil\log_2 k\rceil\ \text{bits}.
 $$
+
 Its representable code count, stored sub-centroid count, and stored coordinates are:
+
 $$
 k^m,\qquad km,\qquad km\frac{d}{m} = kd.
 $$
+
 At $`d = 768`$, $`m = 96`$, and $`k = 256`$:
+
 $$
 \frac{d}{m}=8,\qquad \text{code}=96\ \text{B},\qquad \frac{3{,}072}{96}=32.
 $$
+
+
 $$
 256^{96}=2^{768}\approx1.55252\times10^{231}.
 $$
+
+
 $$
 \begin{aligned}
  km&=256(96)=24{,}576\quad\text{sub-centroids},\\
@@ -137,26 +154,33 @@ $$
  M_C&=196{,}608(4\,\mathrm B)=786{,}432\,\mathrm B=768\,\mathrm{KiB}.
  \end{aligned}
 $$
+
 #### Why
 The $`m`$ factor cancels from codebook memory. Code reach grows exponentially with $`m`$ while the stored codebook remains $`k d`$ floats. The vector remains $`768`$-dimensional.
 OPQ learns an orthogonal transform $`R`$, with $`R^{\mathsf T}R=I`$, before quantizing $`Rx`$. The rotation preserves Euclidean distances before quantization and can improve how variance and dependence fit the product blocks. It does not guarantee equal block variances or optimal recall. A dense transform stores $`768^2\times4=2{,}359{,}296\,\mathrm B`$ and costs about $`768^2=589{,}824`$ MACs per query; training and preprocessing costs should be measured. Already whitened inputs do not prove OPQ is useless.
 #### Failure without it
 For the same $`32`$-bit code, PQ can use $`m=4,k=256`$. Its codebook uses $`768\,\mathrm{KiB}`$, while the flat $`2^{32}`$-centroid alternative uses approximately $`13.1941\,\mathrm{TB}`$. The $`39`$-per-centroid heuristic is $`9{,}984`$ training vectors per subspace, generally reusing the same training vectors across subspaces; it is not a theorem or $`m`$ disjoint training sets. The analogous flat heuristic is about $`1.67504\times10^{11}`$ vectors.
 The flat-to-product codebook-memory ratio at the same $`k^m`$ representable labels is:
+
 $$
 \frac{k^m d}{kd}=k^{m-1}=256^3=16{,}777{,}216\approx1.67772\times10^7.
 $$
+
 PQ restricts reconstruction cells to products of subspace cells, so their boundaries cannot be placed independently in full space. The very large code count does not prove that all labels are useful or equally likely. Measure recall and reconstruction distortion against the embedding distribution, especially at low rates such as below $`0.5`$ bits per dimension; that value is a source heuristic, not a mathematical failure threshold.
 #### Cost and complexity
 ADC builds:
+
 $$
 T[j,\ell]=\lVert y_j-c_\ell^{(j)}\rVert_2^2.
 $$
+
 There are $`mk`$ entries and $`kd`$ coordinate accumulations. Direct squared-distance evaluation uses a subtraction, square and accumulation per coordinate; a norm-plus-dot-product implementation has a nominal $`kd`$ MACs, about $`2kd`$ FLOPs, plus norm/combination terms. Each candidate needs $`m`$ table lookups and approximately $`m`$ additions. These are different work types.
 For $`d=768,m=96,k=256`$, the table has $`24{,}576`$ entries, $`98{,}304\,\mathrm B=96\,\mathrm{KiB}`$ at float32. The nominal dot-product portion is $`196{,}608`$ MACs, or $`393{,}216`$ FLOPs. If one ignores table loads, norm terms, selection and bandwidth, a proxy comparing $`2kd+nm`$ with $`2dn`$ gives:
+
 $$
 n>\frac{2kd}{2d-m}=\frac{393{,}216}{1{,}440}\approx273.0667\quad\Longrightarrow\quad n\ge274.
 $$
+
 SDC also quantizes the query. It saves no database-code bytes, but can exploit a query code and precomputed symmetric code distances in some workflows. Neither ADC nor SDC has a universal additive positive-bias formula for deterministic centroid quantization; the error algebra and assumptions are given below.
 #### Worked numbers and decisions
 - HNSW-Flat with $`10^7`$ float32 vectors and $`M=32`$ has $`30.72\,\mathrm{GB}`$ of vectors plus approximately $`2.601290\,\mathrm{GB}`$ of allocated link slots under the layer convention below, or $`33.321290\,\mathrm{GB}`$ before other overhead. Base slots alone are $`2.56\,\mathrm{GB}`$; this is $`64`$ four-byte slots per vector, not $`32`$ eight-byte links.
@@ -182,32 +206,46 @@ Use hardware measurements rather than byte counts alone to choose $`k`$ and $`m`
 ### 16.2 Residual quantization and IVFADC
 #### What
 IVF assigns each vector to the nearest of $`K_c`$ centroids. Residual encoding stores:
+
 $$
 r(x)=x-q_c(x).
 $$
+
 Let $`X`$ denote a random vector and $`\mu=\mathbb E[X]`$. At a population centroid condition, or for the empirical training distribution at a nonempty-cell Lloyd fixed point:
+
 $$
 c_i=\mathbb E[X\mid q_c(X)=c_i],\qquad \mu=\mathbb E[X].
 $$
+
 Then $`\mathbb E[X-q_c(X)\mid q_c(X)]=0`$, so the cross term vanishes. With $`\sigma^2`$ denoting finite positive total mean squared deviation, not per-coordinate variance:
+
 $$
 \underbrace{\mathbb E\lVert X-\mu\rVert^2}_{\sigma^2}=\mathbb E\lVert q_c(X)-\mu\rVert^2+\underbrace{\mathbb E\lVert X-q_c(X)\rVert^2}_{\rho\sigma^2},\qquad 0\le\rho\le1.
 $$
+
 Training centroids need not satisfy that identity for a shifted serving population. For a high-rate model with intrinsic dimension $`d^*>0`$, comparable source shapes and the stated common prefactors, use the schematic approximations:
+
 $$
 \rho\approx K_c^{-2/d^*},\qquad D_{\mathrm{raw}}(R_b)\approx A\sigma^2 2^{-2R_b/d^*},\qquad D_{\mathrm{res}}(R_b)\approx A\rho\sigma^2 2^{-2R_b/d^*}.
 $$
+
 Equating raw distortion at $`R_b+\Delta R_b`$ to residual distortion at $`R_b`$ within this model gives:
+
 $$
 \Delta R_b=-\frac{d^*}{2}\log_2\rho\ \approx\ \log_2 K_c\quad\text{bits per vector}.
 $$
+
 For quantizer errors $`e_x=\widehat x-x`$ and $`e_y=\widehat y-y`$, the exact ADC and SDC identities are:
+
 $$
 \lVert y-\widehat x\rVert^2=\lVert y-x\rVert^2+\lVert e_x\rVert^2-2(y-x)^{\mathsf T}e_x.
 $$
+
+
 $$
 \lVert\widehat y-\widehat x\rVert^2=\lVert y-x\rVert^2+\lVert e_y-e_x\rVert^2+2(y-x)^{\mathsf T}(e_y-e_x).
 $$
+
 #### Why
 The coarse level can remove between-cell variation before PQ encodes residuals. The list address has at most $`\log_2 K_c`$ bits of information; actual entropy may be smaller for imbalanced assignments. It is implicit in list membership rather than stored in every PQ code, but centroids, IDs and list structures still cost memory.
 The estimate $`\Delta R_b\approx\log_2 K_c`$ is not a high-rate lower bound. Different source shapes, cell quality, rates and product-block correlations can change the gain in either direction. Likewise, the often-quoted ADC mean distance $`\lVert y-x\rVert^2+\xi`$ requires conditionally zero-mean error with $`\mathbb E\lVert e_x\rVert^2=\xi`$; SDC adds $`2\xi`$ only with suitable zero means, equal error energy and zero cross covariance. Deterministic centroid errors do not generally satisfy these assumptions. For example, $`X\in\{-1,1\}`$ equally likely, $`\widehat X=0`$ and $`y=0`$ give exact distance $`1`$ but ADC distance $`0`$, not $`2`$.
@@ -216,13 +254,17 @@ Without residuals, a shared raw-vector codebook covers the full distribution rat
 When measured $`\rho`$ is near $`1`$, centering may offer little distortion benefit while still costing work. The suggested warning $`\rho>0.8`$ is a workload heuristic, not a theorem. OPQ and centering can interact; measure their joint effect rather than adding their gains.
 #### Cost and complexity
 Without precomputation, residual scoring forms $`y-c_i`$ for each probed cell and builds a cell-dependent table. For balanced or representative probed lists, the following counts use one coordinate accumulation for table work and one addition for scan work; they are not calibrated equal-time operations:
+
 $$
 W_{\mathrm{build,count}}\approx wkd,\qquad W_{\mathrm{scan,add}}\approx w\frac{N}{K_c}m.
 $$
+
 The count-proxy crossover cancels $`w`$. Using the nominal two-FLOP MAC model instead changes the crossover; ignored loads, norms, table combinations and selection can move it further:
+
 $$
 K_{c,\mathrm{count}}^*=\frac{Nm}{kd},\qquad K_{c,\mathrm{FLOP}}^*\approx\frac{Nm}{2kd}.
 $$
+
 Use $`N = 10^{7}`$, $`d = 768`$, $`K_c = 4{,}096`$, $`m = 64`$, $`k = 256`$, and $`w = 32`$:
 - Codes are $`64`$ bytes and IDs eight bytes: $`72`$-byte entries use $`720\,\mathrm{MB}`$.
 - Centroids use $`12{,}582{,}912\,\mathrm B`$ and the book $`786{,}432\,\mathrm B`$. The scoped total is $`733{,}369{,}344\,\mathrm B=733.369344\,\mathrm{MB}`$, about $`41.8883`$ times smaller than float32 vectors alone, before other structures.
@@ -230,22 +272,30 @@ Use $`N = 10^{7}`$, $`d = 768`$, $`K_c = 4{,}096`$, $`m = 64`$, $`k = 256`$, and
 - A raw-PQ table has $`196{,}608`$ coordinate accumulations or nominal MACs. This is $`3.93216\%`$ of the scan's addition count, but nominal MAC FLOPs are $`7.86432\%`$; neither ratio is a latency share.
 - Naive residual tables use $`6{,}291{,}456`$ coordinate accumulations, $`1.2582912`$ times the scan count. The nominal dot-work FLOP ratio is $`2.5165824`$ before remaining terms.
 - The coarse address at $`K_c=4{,}096`$ contributes at most $`12`$ label bits. Under the high-rate equal-prefactor model this corresponds to a $`12/512=2.34375\%`$ code-bit gain, not a guaranteed accuracy gain or floor.
+
 $$
 K_{c,\mathrm{count}}^*=\frac{10^7(64)}{256(768)}\approx3{,}255.2083,\qquad K_{c,\mathrm{FLOP}}^*\approx1{,}627.6042.
 $$
+
 The source's $`4\sqrt N`$ to $`16\sqrt N`$ coarse-list starting heuristic gives:
+
 $$
 4\sqrt{10^7}\approx12{,}649.11,\qquad16\sqrt{10^7}\approx50{,}596.44.
 $$
+
 These endpoints are approximately $`3.886`$ and $`15.543`$ times the count-proxy crossover, or twice those ratios against the nominal FLOP crossover. The range is a tuning heuristic; it neither guarantees balanced lists nor matched recall.
 An optional float32 table of cell-dependent residual terms costs:
+
 $$
 K_cmk\times4\ \text{bytes}.
 $$
+
 The exact expansion, including the cell-dependent offset needed when comparing candidates across lists, is:
+
 $$
 \lVert(y-c_i)-\hat r\rVert^2=\lVert y-c_i\rVert^2+\lVert\hat r\rVert^2+2\langle c_i,\hat r\rangle-2\langle y,\hat r\rangle.
 $$
+
 For PQ64, this optional table uses $`268{,}435{,}456\,\mathrm B=268.435456\,\mathrm{MB}=256\,\mathrm{MiB}`$ at $`K_c=4{,}096`$, or $`36.6030\%`$ of the scoped $`733.369344\,\mathrm{MB}`$ index before adding it. The combined total becomes $`1.0018048\,\mathrm{GB}`$. At $`K_c=65{,}536`$ the table is $`4.294967296\,\mathrm{GB}=4\,\mathrm{GiB}`$. Precomputed terms remove repeated full-dimensional work, not every query operation: a shared query-dot table still costs nominal $`kd`$ MACs, cell-table combinations cost $`O(wmk)`$, and list scans, coarse search and selection remain.
 #### Worked numbers and decisions
 - Compare raw PQ, residual PQ and precomputed residual PQ at matched code bytes, recall, load and memory. Disable or alter residual encoding when the measured benefit does not justify its real query and storage cost; $`\rho>0.8`$ or a half-scan build share are heuristics to test, not universal thresholds.
@@ -257,55 +307,77 @@ For PQ64, this optional table uses $`268{,}435{,}456\,\mathrm B=268.435456\,\mat
 ### 16.3 Scalar and binary quantization
 #### What
 Float32 payload is $`4d`$ bytes, or $`3{,}072`$ bytes at $`d=768`$. For $`b\ge1`$ bits and a calibrated range $`\beta_j>\alpha_j`$, a clipped nearest-level scalar quantizer is:
+
 $$
-c_j=\operatorname{clip}_{[0,2^b-1]}\!\left(\left\lfloor\frac{x_j-\alpha_j}{\beta_j-\alpha_j}(2^b-1)+\frac12\right\rfloor\right).
+c_j=\mathop{\mathrm{clip}}\nolimits_{[0,2^b-1]}\!\left(\left\lfloor\frac{x_j-\alpha_j}{\beta_j-\alpha_j}(2^b-1)+\frac12\right\rfloor\right).
 $$
+
+
 $$
 \hat{x}_j=\alpha_j+\frac{c_j}{2^b-1}(\beta_j-\alpha_j),\qquad
 \Delta_j=\frac{\beta_j-\alpha_j}{2^b-1}.
 $$
+
 For $`x_j\in[\alpha_j,\beta_j]`$, nearest rounding gives $`\lvert e_j\rvert\le\Delta_j/2`$, where $`e_j=\widehat x_j-x_j`$. Clipped outliers need not obey that bound. A zero-mean uniform-bin approximation gives:
+
 $$
 \mathbb{E}[e_j^2]=\frac{\Delta_j^2}{12}.
 $$
+
 A unit vector has average squared coordinate $`1/d`$. If the unit-vector distribution is also zero-mean and isotropic, each coordinate has the following RMS/standard-deviation scale; it is not the value of every coordinate:
+
 $$
 \sqrt{\mathbb E[X_j^2]}=\frac1{\sqrt{768}}\approx0.0360844.
 $$
+
 With $`[\alpha,\beta]=[-0.2,0.2]`$ and $`b = 8`$:
+
 $$
 \Delta=\frac{0.4}{255}\approx1.56862745\times10^{-3},\qquad\sigma_e=\frac{\Delta}{\sqrt{12}}\approx4.52823741\times10^{-4}.
 $$
+
 For a fixed exact unit query, the score below is the dot product with the reconstructed vector, without renormalizing that reconstruction. With error mean $`\mu_e`$ and covariance $`\Sigma_e`$:
+
 $$
-\langle q,\widehat x\rangle-\langle q,x\rangle=q^{\mathsf T}e,\qquad\mathbb E[q^{\mathsf T}e]=q^{\mathsf T}\mu_e,\qquad\operatorname{Var}(q^{\mathsf T}e)=q^{\mathsf T}\Sigma_e q.
+\langle q,\widehat x\rangle-\langle q,x\rangle=q^{\mathsf T}e,\qquad\mathbb E[q^{\mathsf T}e]=q^{\mathsf T}\mu_e,\qquad\mathop{\mathrm{Var}}\nolimits(q^{\mathsf T}e)=q^{\mathsf T}\Sigma_e q.
 $$
-Only under $`\mu_e=0`$, $`\Sigma_e=\sigma_e^2I`$ and $`\lVert q\rVert=1`$ does score deviation equal $`\sigma_e`$. Per-dimension ranges, correlated errors, clipping and renormalization change that result. For binary hashing, let $`n_b`$ independent isotropic random hyperplanes encode a nonzero vector by $`\operatorname{sign}(a_\ell^{\mathsf T}x)`$. For a fixed pair at angle $`\theta`$:
+
+Only under $`\mu_e=0`$, $`\Sigma_e=\sigma_e^2I`$ and $`\lVert q\rVert=1`$ does score deviation equal $`\sigma_e`$. Per-dimension ranges, correlated errors, clipping and renormalization change that result. For binary hashing, let $`n_b`$ independent isotropic random hyperplanes encode a nonzero vector by $`\mathop{\mathrm{sign}}\nolimits(a_\ell^{\mathsf T}x)`$. For a fixed pair at angle $`\theta`$:
+
 $$
-p=\frac\theta\pi,\qquad H\sim\operatorname{Binomial}(n_b,p),\qquad\widehat\theta=\frac{\pi H}{n_b},\qquad\widehat c=\cos\widehat\theta.
+p=\frac\theta\pi,\qquad H\sim\mathop{\mathrm{Binomial}}\nolimits(n_b,p),\qquad\widehat\theta=\frac{\pi H}{n_b},\qquad\widehat c=\cos\widehat\theta.
 $$
+
 The source connects the single-random-hyperplane collision result to SimHash through Goemans and Williamson (1995) and Charikar (2002). Raw coordinate signs have no such guarantee for arbitrary fixed embeddings. A random orthogonal rotation has dependent hyperplane directions, so it does not by itself establish the binomial variance; learned ITQ also requires empirical error calibration.
 #### Why
 SQ8 reduces precision while retaining approximate component values. Binary Hamming counts estimate angular similarity under an appropriate hashing model instead of using one-bit reconstructed components. XOR and population count make Hamming scoring cheap, but query hashing, memory traffic, selection and candidate recall still cost work. A cosine estimate from Hamming is nonlinear and is generally biased even when the angle estimate is unbiased.
 #### Failure without it
 For finite, normal-range values rounded to nearest, float16 has $`11`$ significand bits and the usual relative error bound:
+
 $$
-\lvert\operatorname{fl}_{16}(x)-x\rvert\le u\lvert x\rvert,\qquad u=2^{-11}=4.8828125\times10^{-4}.
+\lvert\mathop{\mathrm{fl}}\nolimits_{16}(x)-x\rvert\le u\lvert x\rvert,\qquad u=2^{-11}=4.8828125\times10^{-4}.
 $$
+
 Subnormals, overflow and the actual rounding implementation need separate treatment. At component RMS $`1/\sqrt{768}`$, the normal-range absolute bound scale is about $`1.762\times10^{-5}`$. A further uniform-relative-rounding approximation gives RMS near $`1.0173\times10^{-5}`$, about $`44.5`$ times below the SQ8 component-noise model while using twice the bytes. This does not prove a score-error rate or universal ranking gap.
 Extrapolating the uniform-bin scalar model to one bit gives $`\Delta=0.4`$ and $`\sigma_e\approx0.11547`$, but the high-rate approximation is especially questionable when unit-vector coordinates cluster near zero. Treat it as a surrogate, not a measured cosine deviation. Independent random-hyperplane hashing changes the estimator; an arbitrary coordinate-sign code or learned/orthogonal rotation must have its own bias, variance and recall measured. No theorem requires every binary deployment to rerank, but cosine-quality requirements may make it necessary.
 #### Cost and complexity
 At cosine $`0.80`$:
+
 $$
 \theta=\arccos(0.8)\approx0.643501109\,\mathrm{rad},\qquad p=\theta/\pi\approx0.204832765.
 $$
+
+
 $$
-\mathbb E[H]=768p\approx157.311563,\qquad\operatorname{sd}(H)=\sqrt{768p(1-p)}\approx11.184319.
+\mathbb E[H]=768p\approx157.311563,\qquad\mathop{\mathrm{sd}}\nolimits(H)=\sqrt{768p(1-p)}\approx11.184319.
 $$
+
+
 $$
-\operatorname{sd}(\widehat\theta)=\pi\sqrt{\frac{p(1-p)}{768}}\approx0.0457507\,\mathrm{rad}.
+\mathop{\mathrm{sd}}\nolimits(\widehat\theta)=\pi\sqrt{\frac{p(1-p)}{768}}\approx0.0457507\,\mathrm{rad}.
 $$
-The delta-method cosine deviation is $`\sin\theta\,\operatorname{sd}(\widehat\theta)\approx0.0274504`$ at cosine $`0.8`$ and $`n_b=768`$. It is not an exact standard deviation or a universal error bound. Binary code payload is eight times smaller than SQ8 and its local modeled deviation is about $`60.62`$ times larger. Comparing it with the extrapolated one-bit scalar deviation gives a ratio near $`4.21`$, but does not validate that scalar noise model.
+
+The delta-method cosine deviation is $`\sin\theta\,\mathop{\mathrm{sd}}\nolimits(\widehat\theta)\approx0.0274504`$ at cosine $`0.8`$ and $`n_b=768`$. It is not an exact standard deviation or a universal error bound. Binary code payload is eight times smaller than SQ8 and its local modeled deviation is about $`60.62`$ times larger. Comparing it with the extrapolated one-bit scalar deviation gives a ratio near $`4.21`$, but does not validate that scalar noise model.
 For $`10^7`$ vectors and a sustained code-stream bandwidth of $`50\,\mathrm{GB/s}`$, the following are payload-only read floors, not measured end-to-end scans:
 
 
@@ -317,22 +389,30 @@ For $`10^7`$ vectors and a sustained code-stream bandwidth of $`50\,\mathrm{GB/s
 
 
 Two float32 calibration endpoints per coordinate use $`2(768)(4)=6{,}144\,\mathrm B`$. For two item scores, independent SQ8 errors in the stated isotropic model give a difference deviation:
+
 $$
 \sigma_{\mathrm{diff}}=\sqrt2\,\sigma_e\approx6.40389\times10^{-4},\qquad\frac{0.05}{\sigma_{\mathrm{diff}}}\approx78.08.
 $$
+
 The $`78`$-deviation number is a scale comparison, not a justified Gaussian tail estimate. There is a stronger statement for this particular unclipped equal-step raw-dot model: $`\lvert q^{\mathsf T}(e_1-e_2)\rvert\le\Delta\lVert q\rVert_1\le\Delta\sqrt{768}\approx0.04347<0.05`$, so a $`0.05`$ gap cannot flip under those bounds. Clipping, non-unit queries, other scoring rules or changed ranges invalidate that conclusion.
 For binary scores, an independent, equal-local-variance Gaussian surrogate at cosine $`0.8`$ gives the illustrative calculation below. The real scores share hash planes and a query, so their errors need not be independent:
+
 $$
 \sigma_{\mathrm{diff,ind}}\approx\sqrt2(0.0274504)\approx0.038821,\qquad\Pr(\text{flip})\approx\Phi\!\left(-\frac{0.05}{\sigma_{\mathrm{diff,ind}}}\right)\approx9.9\%.
 $$
-For shared independent planes, even the covariance depends on a third angle. Write $`p_a=\theta(q,x_a)/\pi`$, $`p_b=\theta(q,x_b)/\pi`$ and $`p_{ab}=\theta(x_a,x_b)/\pi`$. One-bit disagreement covariance is $`(p_a+p_b-p_{ab})/2-p_ap_b`$, and $`\operatorname{Cov}(\widehat\theta_a,\widehat\theta_b)`$ is $`\pi^2/n_b`$ times that quantity. Thus a score gap alone does not determine a binary flip rate. For a separate reranking budget, fetching $`200`$ original float32 vectors needs:
+
+For shared independent planes, even the covariance depends on a third angle. Write $`p_a=\theta(q,x_a)/\pi`$, $`p_b=\theta(q,x_b)/\pi`$ and $`p_{ab}=\theta(x_a,x_b)/\pi`$. One-bit disagreement covariance is $`(p_a+p_b-p_{ab})/2-p_ap_b`$, and $`\mathop{\mathrm{Cov}}\nolimits(\widehat\theta_a,\widehat\theta_b)`$ is $`\pi^2/n_b`$ times that quantity. Thus a score gap alone does not determine a binary flip rate. For a separate reranking budget, fetching $`200`$ original float32 vectors needs:
+
 $$
 200(768)(4\,\mathrm B)=614{,}400\,\mathrm B=614.4\,\mathrm{kB}.
 $$
+
 Assume every candidate needs one independent read, all requests are ready, maximum concurrency is $`32`$ and every service time is exactly $`100\,\mathrm{\mu s}`$. Full waves then need:
+
 $$
 \left\lceil\frac{200}{32}\right\rceil(100\,\mathrm{\mu s})=700\,\mathrm{\mu s}=0.7\,\mathrm{ms}.
 $$
+
 That is $`3.64583\%`$ of the binary $`19.2\,\mathrm{ms}`$ read floor, not a measured fraction of end-to-end latency. A fluid throughput calculation gives $`0.625\,\mathrm{ms}`$, but cannot complete a partial final wave in the equal-service-time model. If each vector is read as one aligned $`4\,\mathrm{KiB}`$ record, device traffic is $`819.2\,\mathrm{kB}`$ rather than $`614.4\,\mathrm{kB}`$. Queueing, page crossings, cache hits, selection and rescoring compute change actual latency.
 #### Worked numbers and decisions
 - PQ96 and $`768`$-bit binary codes both have $`96`$ bytes and $`2^{768}`$ labels; their reconstruction geometry and estimators differ. Equal code count does not imply equal quality.
@@ -345,16 +425,20 @@ That is $`3.64583\%`$ of the binary $`19.2\,\mathrm{ms}`$ read floor, not a meas
 ### 16.4 FAISS, parallelism, and why block structure matters
 #### What
 PQ ADC computes:
+
 $$
 \hat{d}(q,x)^2
 =\sum_{j=1}^{m}\left\lVert q^{(j)}-c_{\mathop{\text{code}}_j(x)}^{(j)}\right\rVert_2^2
 =\sum_{j=1}^{m}T[j,\mathop{\text{code}}_j(x)].
 $$
+
 Building the table touches $`kd`$ coordinates; a norm-plus-dot implementation has nominal $`kd`$ MACs plus other terms. Scanning one code uses $`m`$ lookups and $`m-1`$ additions, or $`m`$ additions with a zero-initialized accumulator. Loads, arithmetic and vector instructions are distinct costs.
 An illustrative coordinate-accumulation versus lookup-and-add count proxy, not an instruction- or time-equivalent comparison, gives at $`d=768,k=256,m=16`$:
+
 $$
 \frac{kd}{m}=\frac{196{,}608}{16}=12{,}288\quad\text{candidate-count proxy}.
 $$
+
 A conventional eight-bit PQ row stores a vector's $`m`$ subcodes together. Across $`32`$ vectors, one fixed subquantizer is then sampled at stride $`m`$ bytes. Implementations can still vectorize or cache such gathers; the layout does not uniquely fix instruction count.
 A fast-scan kernel stores subcodes in blocks, for example $`32`$ vectors with subquantizer-major order. Four-bit subcodes are packed and unpacked for register lookup. A `vpshufb`-style byte shuffle addresses $`16`$ entries within each $`128`$-bit lane; wider vector units replicate or arrange tables by lane. Quantizing table entries to bytes is an additional approximation, and accumulation width, offsets and saturation handling must be specified. Choosing $`k=16`$ alone does not make a float32 table byte-sized.
 At the same $`128`$-bit budget:
@@ -376,9 +460,11 @@ HNSW traversal has dependent accesses and uneven candidate work, which can make 
 #### Cost and complexity
 The source reports a four-bit block scan about $`4`$ to $`6`$ times faster than its conventional baseline, and reports WarpSelect at $`8.5`$ times a prior implementation plus a billion-vector $`k`$-NN graph built in under $`12`$ hours on four Maxwell Titan X GPUs. Preserve the respective study, workload and baseline scopes; these are not predictions for the arithmetic example below or current hardware.
 Use $`N = 10^{8}`$, $`d = 768`$, $`\mathrm{nlist} = 262{,}144`$, and $`\mathrm{nprobe} = 64`$:
+
 $$
 \overline n_{\mathrm{list}}=\frac{10^8}{262{,}144}=381.4697265625,\qquad\overline n_{\mathrm{cand}}=64\,\overline n_{\mathrm{list}}=24{,}414.0625.
 $$
+
 PQ8 with $`m = 16`$ and $`k = 256`$:
 - PQ8 with $`m=16`$ stores $`16`$-byte codes: $`1.6\,\mathrm{GB}`$ versus $`307.2\,\mathrm{GB}`$ of float32 payload, a $`192`$-fold code-payload reduction.
 - Use $`n_c=24{,}414`$ only as a rounded planning count. Its code stream is $`390{,}624\,\mathrm B=390.624\,\mathrm{kB}`$.
@@ -389,24 +475,32 @@ PQ4 with $`m = 32`$ and $`k = 16`$:
 - PQ4 with $`m=32,k=16`$ retains the same $`128`$ bits and $`1.6\,\mathrm{GB}`$ code payload; changed subspaces and LUT precision can change recall.
 - If the $`24{,}414`$ planned candidates form one packed run, $`\lceil24{,}414/32\rceil=763`$ blocks contain $`24{,}416`$ slots. Real IVF lists generally round blocks separately, so the sum of list block counts can be larger.
 - Under a particular kernel's assumed seven vector instructions per subquantizer per block—one load, two nibble unpacks, two shuffles and two accumulation operations—the illustration is:
+
 $$
 763(32)(7)=170{,}912\quad\text{vector instructions in the assumed packed-run kernel}.
 $$
+
 The numerical ratio $`1{,}147{,}458/170{,}912\approx6.71374`$ compares scalar logical operations with vector instructions, not equivalent work or a predicted speedup. Extra packing, table conversion, accumulation overflow handling, routing and selection are omitted. For the smaller codebooks, the table-work count proxy becomes:
+
 $$
 kd=16(768)=12{,}288\quad\text{coordinate accumulations},\qquad\frac{kd}{m}=\frac{12{,}288}{32}=384\quad\text{candidate-count proxy}.
 $$
+
 The proxy ratio is $`384/24{,}414.0625=1.572864\%`$, not a measured table-build share. Comparing it with the $`50.331648\%`$ PQ8 proxy does not account for the different scan kernels.
 If all planned candidate scores are materialized as float32, their output size is:
+
 $$
 24{,}414(4\,\mathrm B)=97{,}656\,\mathrm B=97.656\,\mathrm{kB}.
 $$
+
 One write plus one reread is $`195.312\,\mathrm{kB}`$, exactly $`50\%`$ of the $`390.624\,\mathrm{kB}`$ code stream. This is traffic accounting, not a $`50\%`$ latency penalty; streaming selection may avoid those transfers and caches can change the path.
 The reported $`4`$-to-$`6`$-fold kernel speedup cannot be inferred from, or disproved by, the $`6.71374`$ unlike-instruction-count ratio. Establishing why a measured gap occurs requires matched baselines, hardware counters and end-to-end timing; unchanged traffic and selection are plausible contributors, not conclusions proved by this ratio.
 For residual IVFADC at these PQ8 settings, a precomputed table costs:
+
 $$
 262{,}144(16)(256)(4\,\mathrm B)=4{,}294{,}967{,}296\,\mathrm B=4.294967296\,\mathrm{GB}.
 $$
+
 This optional table is $`2.68435456`$ times the $`1.6\,\mathrm{GB}`$ code array, before the separate IDs, centroids, codebook and overhead. The PQ4 $`m=32,k=16`$ version would have a different table budget, $`536.870912\,\mathrm{MB}`$; kernel and library support must also be checked.
 #### Worked numbers and decisions
 - Compare a supported fast-scan implementation with classic IVF-PQ at the same total code bytes and measured recall; do not assume the smaller LUT is accuracy-free or always faster.
@@ -429,26 +523,36 @@ At $`d = 768`$:
 
 IVF entries in these examples add an eight-byte ID. The HNSW example assumes implicit positional labels and four-byte neighbor IDs; stable external keys, deletion state and label maps can add bytes. Turn terms off when the corresponding structure is absent rather than adding IVF and graph terms indiscriminately.
 HNSW levels follow:
+
 $$
-\ell=\left\lfloor-\frac{\ln U}{\ln M}\right\rfloor,\qquad U\sim\operatorname{Uniform}(0,1),\quad M>1.
+\ell=\left\lfloor-\frac{\ln U}{\ln M}\right\rfloor,\qquad U\sim\mathop{\mathrm{Uniform}}\nolimits(0,1),\quad M>1.
 $$
+
 For an integer layer $`j\ge0`$, $`\Pr(\ell\ge j)=M^{-j}`$. Under the stated allocation convention, base layer zero reserves $`2M`$ four-byte neighbor slots and each occupied upper layer reserves $`M`$. Actual populated degree is not the same as reserved capacity, and implementations may allocate differently.
 The expected allocated slot bytes per node, excluding counts, pointers, alignment and other overhead, are:
+
 $$
 \mathbb E[b_{\mathrm{link}}]=4\!\left(2M+M\sum_{j=1}^{\infty}M^{-j}\right)\,\mathrm B=4\!\left(2M+\frac{M}{M-1}\right)\,\mathrm B.
 $$
+
 At $`M = 32`$:
+
 $$
 \mathbb E[b_{\mathrm{link}}]=4\!\left(64+\frac{32}{31}\right)\,\mathrm B\approx260.129032\,\mathrm B.
 $$
+
 The base-only rule $`2M\times4`$ gives $`256`$ bytes at $`M=32`$. Including expected upper slots is $`1.612903\%`$ higher than that base allocation; the two figures have different scopes. This expected-slot budget is neither an exact realized graph size nor complete process memory.
 Coarse IVF centroids use $`K_cd\times4`$ bytes and a float32 PQ book $`kd\times4`$ bytes. Include each only when present. Add optional precomputed tables and actual maps/overhead separately; a full-precision refine store is not part of a code-only budget.
+
 $$
 \begin{aligned}\mathbb E[M_I]&=N\!\left(b_{\mathrm{vec}}+b_{\mathrm{id}}+\mathbb E[b_{\mathrm{link}}]\right)\\&\quad+\mathbf1_{\mathrm{IVF}}K_cd(4\,\mathrm B)+\mathbf1_{\mathrm{PQ}}kd(4\,\mathrm B)\\&\quad+M_{\mathrm{precomp}}+M_{\mathrm{maps}}+M_{\mathrm{other}}.\end{aligned}
 $$
+
+
 $$
 M_{\mathrm{fleet,peak}}=R_{\mathrm{rep}}(1+h)M_I+M_{\mathrm{refine,peak}}+M_{\mathrm{builder,peak}}+M_{\mathrm{payload,total}}.
 $$
+
 #### Why
 The simplified fleet formula assumes $`R_{\mathrm{rep}}`$ equal serving index copies and local rebuild overlap $`hM_I`$ per replica. A same-node old-plus-new rebuild has $`h=1`$ for those index structures; not every in-place/incremental algorithm needs two full copies. A separate builder can move rebuild memory off serving nodes, but its peak and swap overlap must still be counted. A value such as $`h=0.2`$ is measured slack for one deployment, not a universal safe allowance. Refine and payload terms above already include their own physical replication and peak overlap, so do not multiply them again or silently omit replicas. Keep RAM and SSD budgets separate by tier.
 At $`400`$ tokens and roughly four characters per token, $`1{,}600`$ characters correspond to $`1{,}600\,\mathrm B`$ only under a one-byte-per-character average. UTF-8 is variable-width. The worked payload assumption is therefore $`1.6\,\mathrm{kB}`$ of text per chunk, $`16\,\mathrm{GB}`$ for $`10^7`$ chunks, plus $`200\,\mathrm B`$ per chunk or $`2\,\mathrm{GB}`$ of logical metadata. This $`18\,\mathrm{GB}`$ is a single logical payload copy, not automatically its replicated physical footprint or resident filter-index memory.
@@ -488,9 +592,11 @@ For $`200`$ million vectors, retain $`d=768,M=32`$ and $`K_c=16{,}384`$ in the r
 
 
 At constant $`10\%`$ monthly compound vector growth, ignoring fixed-term changes and assuming the same capacity is otherwise available, the yearly multiplier and approximate capacity time bought by the last ratio are:
+
 $$
 1.1^{12}\approx3.138428,\qquad t=\frac{\ln(4.29259)}{\ln(1.1)}\approx15.29\ \text{months}.
 $$
+
 #### Worked numbers and decisions
 - Quote per-vector bytes, fixed structures, code precision and metric, then multiply by $`N`$ before rounding.
 - Budget simultaneous old/new structures where the actual rebuild procedure needs them; do not call a separate builder free. State payload, refine and index replication separately.
@@ -661,8 +767,8 @@ No. Adding float16 refinement changes $`1.09111808\,\mathrm{GB}`$ to $`16.451118
 | float16 relative bound | $`u=2^{-11}=4.8828125\times10^{-4}`$ under nearest rounding in the finite normal range; subnormals/overflow separate |
 | Naive one-bit scalar | $`0.11547`$ from a uniform-bin extrapolation, not an established cosine-score deviation |
 | Binary Hamming mean | $`\mathbb E[H]\approx157.311563`$ at cosine $`0.8`$, $`n_b=768`$ independent planes |
-| Binary Hamming deviation | $`\operatorname{sd}(H)\approx11.184319`$ under the binomial model |
-| Binary angle deviation | $`\operatorname{sd}(\widehat\theta)\approx0.0457507\,\mathrm{rad}`$; cosine delta approximation $`0.0274504`$ |
+| Binary Hamming deviation | $`\mathop{\mathrm{sd}}\nolimits(H)\approx11.184319`$ under the binomial model |
+| Binary angle deviation | $`\mathop{\mathrm{sd}}\nolimits(\widehat\theta)\approx0.0457507\,\mathrm{rad}`$; cosine delta approximation $`0.0274504`$ |
 | Binary pairwise deviation | $`0.0388208`$ only under equal local variance and independent score errors; shared planes introduce covariance |
 | Binary compression comparison | Eightfold smaller code payload than SQ8; about $`60.62`$ times the local modeled deviation at cosine $`0.8`$ |
 | Fast-scan candidate set | Mean list $`381.4697265625`$, mean candidates $`24{,}414.0625`$ at $`64`$ representative cells; planning count $`24{,}414`$, not an exact per-query total |

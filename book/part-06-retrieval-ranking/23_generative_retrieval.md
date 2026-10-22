@@ -134,14 +134,16 @@ The quantity $`b_wP/N`$ is a nominal stored-bit budget per document, not learned
 Recitation equations describe a specified clean entry/continuation/extraction path. Equal conditional continuation probabilities yield a power; marginal per-token accuracy alone does not. Voting examples additionally assume IID correctness indicators, a single canonical correct answer and a declared tie rule. Concentrated wrong-answer identity is different from statistical correlation between samples.
 ### 23.1 Generating document IDs instead of searching
 #### Classical search keeps the corpus on the query path
-- Classical scoring defines $`\hat d\in\operatorname*{arg\,max}_{d\in D}s(q,d)`$, with a declared tie policy. Approximate search need not return that exact maximizer.
+- Classical scoring defines $`\hat d\in\mathop{\mathrm{arg\,max}}_{d\in D}s(q,d)`$, with a declared tie policy. Approximate search need not return that exact maximizer.
 - Inverted lists, IVF and HNSW reduce evaluated records under their own assumptions; corpus vectors, postings or other index data remain in the retrieval path.
 - Full materialization, sharding and replication are deployment choices, not a mathematical requirement that all source text be resident on one machine. The worked payload comparison explicitly excludes several serving structures.
 #### Generative retrieval turns retrieval into decoding
 Assign an injective identifier $`i(d)=(t_1,\ldots,t_{L_{\mathrm{id}}})`$ from an alphabet of size $`V`$. The autoregressive factorization is
+
 $$
 p_\theta(i\mid q)=\prod_{j=1}^{L_{\mathrm{id}}}p_\theta(t_j\mid t_{<j},q).
 $$
+
 The ID-generation stage can consult weights and a constraint structure rather than scanning document vectors. Returning a passage still requires an identifier-to-document mapping and content access. Training and constraint storage do not disappear, and variable-length schemes need explicit termination semantics.
 #### DSI trains memorization and generalization together
 - What: Tay et al. (2022) train an indexing task from document text to its docid and a retrieval task from query to docid. Metzler et al. (2021) frame the program as replacing the index with parameters.
@@ -150,9 +152,11 @@ The ID-generation stage can consult weights and a constraint structure rather th
 - Cost: Training needs examples for both tasks. Generated queries cover documents that lack real query logs.
 #### Atomic identifiers rebuild the index inside the softmax
 In the exhaustive atomic baseline, one document receives one output class, so the added head has $`N`$ rows of width $`d_{\mathrm{model}}`$. At $`N=8.8\times10^6,d_{\mathrm{model}}=768`$, its fp32 payload is
+
 $$
 B_{\mathrm{atomic}}=N d_{\mathrm{model}}(4\,\mathrm B)=27{,}033{,}600{,}000\,\mathrm B=27.0336\,\mathrm{GB}.
 $$
+
 The stipulated $`220\times10^6`$-parameter backbone is $`880\,\mathrm{MB}`$ in fp32, so that added table is exactly $`30.72`$ times the backbone payload. The total is $`27.9136\,\mathrm{GB}`$ under this additive, non-shared-table accounting. Exhaustive output scoring is maximum-inner-product ranking. It is not intrinsically impossible to index those rows with ANN for approximate top results; doing so reintroduces a conventional search structure. Full softmax normalization and exact class probabilities have additional requirements.
 #### Semantic hierarchy spends the identifier space differently
 The source uses hierarchical clustering with branching factor ten and leaf capacity one hundred. At least $`\lceil8.8\times10^6/100\rceil=88{,}000`$ leaves are necessary. A sufficiently balanced ten-way tree can use five tree digits and two within-leaf digits, giving seven-token IDs; the leaf-count calculation alone does not guarantee that depth for recursive k-means. Unbalanced splits or unsuccessful clustering termination require another policy. Semantic prefixes may help learning, but do not prove more accurate decisions than arbitrary prefixes.
@@ -177,9 +181,11 @@ The added atomic table streams $`27.0336\,\mathrm{GB}`$ in fp32, a $`13.5168\,\m
 Configuration 3 uses hierarchical identifiers.
 For one explicit hierarchical scenario, divide the $`220\times10^6`$ stored parameters into two stipulated equal halves: encoder and decoder each $`110\times10^6`$. This is simplified accounting, not a measured T5 implementation profile. The fp16 total is $`440\,\mathrm{MB}`$; each half is $`220\,\mathrm{MB}`$.
 A thirty-two-position query uses linear work $`2(110\times10^6)(32)=7.04\times10^9`$ FLOPs, or $`0.056320\,\mathrm{ms}`$ at $`F_{\mathrm{id}}`$. A full encoder-half read costs $`0.11\,\mathrm{ms}`$ at $`B_{\mathrm{id}}`$. Seven decoder-half reads use $`1.54\,\mathrm{GB}`$, or $`0.77\,\mathrm{ms}`$. Beam ten adds linear decoder work $`2(110\times10^6)(10)(7)=15.4\times10^9`$ FLOPs, or $`0.123200\,\mathrm{ms}`$. The partial sequential roofline estimate is therefore
+
 $$
 t_{\mathrm{partial}}\approx\max(0.056320,0.11)+\max(0.123200,0.77)=0.88\,\mathrm{ms}.
 $$
+
 If instead every decode step reads the full backbone, seven reads use $`3.08\,\mathrm{GB}`$; the corresponding partial sum is $`0.11+1.54=1.65\,\mathrm{ms}`$. Neither byte sum is an upper bound on real latency. The earlier calculation mixed decoder parameter counts with full-model traffic and omitted the encoder read.
 Model-only versus HNSW payload-plus-base-links storage ratio is $`29.2864/0.44=66.56`$, not an all-in index ratio because the trie and ID mapping are omitted. Int8 vector payload is $`6.7584\,\mathrm{GB}`$; with the same graph-link budget it is $`9.0112\,\mathrm{GB}`$, ratio $`20.48`$. Quantization can change quality. The $`0.88/0.1=8.8`$ and $`1.65/0.1=16.5`$ partial-time ratios compare stipulated components, not controlled architecture benchmarks.
 #### Scale checks and operating choices
@@ -194,18 +200,22 @@ Model-only versus HNSW payload-plus-base-links storage ratio is $`29.2864/0.44=6
 #### Query latency depends on the model and identifier
 A stipulated batch-one decoder may be bandwidth-bound if weight reads dominate arithmetic and other traffic; this is not automatic for every model, beam or implementation. Reusing a read across beam hypotheses helps, but does not make hypotheses free. Under a fixed per-step regime, the weight-stream component is proportional to $`L_{\mathrm{id}}`$.
 For $`N`$ fixed-length unique IDs over $`V`$ symbols,
+
 $$
 V^{L_{\mathrm{id}}}\ge N\quad\Longrightarrow\quad L_{\mathrm{id}}\ge\lceil\log_VN\rceil.
 $$
+
 This is an identifier-space lower bound, not a universal achieved complexity. At minimum length, decimal IDs need six tokens at $`320{,}000`$, seven at $`8.8\times10^6`$ and nine at $`10^9`$ documents. Thousandfold growth adds three minimal decimal digits. Variable lengths, nonuniform IDs and unbalanced semantic trees need their own maximum/mean-length analysis.
 #### Index cost still grows with the corpus
 For IVF with $`C`$ coarse lists, exhaustive centroid selection evaluates $`C`$ centroid vectors. Under balanced-list or mean-size assumptions, probing $`n_{\mathrm{probe}}`$ lists scans about $`n_{\mathrm{probe}}N/C`$ document codes. At $`C\approx\sqrt N`$, their total *number* is approximately $`(1+n_{\mathrm{probe}})\sqrt N`$, but a centroid comparison and a PQ code scan are not equal-cost operations.
 With width $`d`$ and $`m`$ PQ subquantizers, price coarse inner products as $`2dC`$ FLOPs and code scans as $`m n_{\mathrm{probe}}N/C`$ lookups. A query lookup-table build with $`256`$ centroids per subspace adds roughly $`2(256)d`$ dot-product FLOPs. Query-selected lists need not equal the global average length. HNSW often has favorable empirical/logarithmic-like scaling, not a universal guaranteed logarithmic hop count. Resident versus disk-based indexes, sharding, caches and fan-out are design choices; maxima of shard timings must not be replaced by an identity involving individual p99 values.
 #### Stored-bit parity is not a quality theorem
 The model's stored payload is $`b_wP`$ bits. Dividing by the corpus size gives nominal budget $`\kappa_{\mathrm{gen}}=b_wP/N`$. A width-$`768`$ fp32 vector uses $`24{,}576`$ bits; a sixty-four-byte PQ code uses $`512`$ bits. Their byte-budget equality is
+
 $$
 N^\star=\frac{b_wP}{\kappa_{\mathrm{idx}}}.
 $$
+
 It is **not** a necessary quality bound, a guarantee of starvation above the crossing, or a guarantee of good retrieval below it. Model weights can share structure across documents; PQ codes store a particular representation, not the information-theoretic minimum for retrieval. Model payload also excludes the trie, mapping and source text. There is no justified inference that below five hundred twelve stored weight bits per document forces a model to lose.
 A genuine counting bound needs a declared function family. If all information for an arbitrary bijection from $`N`$ fixed labeled queries to $`N`$ document IDs must reside in quantized weights, distinguishing all $`N!`$ bijections requires $`b_wP\ge\log_2(N!)`$. At $`8.8\times10^6`$, this is about $`21.626379`$ bits per document, not $`512`$. This hypothetical counting requirement is not a sufficiency theorem for learning or natural-language retrieval, and external structures can carry information too.
 #### If model size grows with the corpus
@@ -240,6 +250,7 @@ Shared learned mappings can interfere: updating one query-to-ID path can alter o
 #### Full retraining prices one refresh workflow, not every update method
 The source prices a DSI-style retriever with $`N = 10^{7}`$ and $`P = 2.2 \times 10^{8}`$.
 The indexing input is $`64`$ positions plus ten pseudo-query inputs of sixteen positions: $`224`$ inputs per document and epoch. The original $`6PT`$ estimate counted only those inputs. This revised workload reserves fixed eight-digit identifiers for the update scenario, allowing growth beyond ten million without immediately exhausting seven-digit space. Eleven tasks per document therefore add $`11(8)=88`$ target positions, with no extra EOS in this declared proxy.
+
 $$
 \begin{aligned}
 T_{\mathrm{work}}&=10^7(224+88)(10)=3.12\times10^{10},\\
@@ -248,6 +259,7 @@ t_{\mathrm{job}}&\approx\frac{4.1184\times10^{19}}{8(1.5\times10^{14})}=34{,}320
 H_{\mathrm{GPU}}&\approx76.266667\,\mathrm{GPU\text{-}hours}.
 \end{aligned}
 $$
+
 The earlier input-only $`T=2.24\times10^{10}`$ gives $`2.9568\times10^{19}`$ FLOPs and $`6.844444`$ hours under the same simplified rule. Neither is a measured encoder-decoder training runtime or a strict freshness floor: parameter participation differs by stage, attention and decoder memory projections are not modeled, and pseudo-query generation, evaluation, queues and release work are excluded. Count targets explicitly and benchmark the actual recipe instead of presenting the input-only value as a complete job estimate.
 #### New-only fine-tuning forgets old mappings
 The source reports continual-indexing forgetting and describes DSI++ using sharpness-aware minimization and generative-memory rehearsal. Its quoted average Hits-at-ten improvement is $`21.1\%`$ relative to its stated baselines, not automatically twenty-one-point-one absolute points. The reported sixfold reduction concerns model updates across five sequential corpora, not an externally reproduced cost ratio.
@@ -288,10 +300,13 @@ An external datastore $`D`$ retains documents; weights $`\theta`$ encode learned
 Autoregressive generation factorizes a string into next-token probabilities $`p_\theta(x_t\mid x_{<t})`$. A model can also directly answer a question from its prompt; it is not architecturally forced to reproduce all earlier tokens of a remembered source. The procedure analyzed here intentionally locates a passage beginning and generates forward. It is not a keyed database read, and its exact-continuation reliability is a property to measure rather than a certified source-access operation.
 #### Recitation success has an exponential distance term
 For a specified recitation-and-answer distribution, the law of total probability gives
+
 $$
 p(a\mid q)=\sum_r p(a\mid q,r)p(r\mid q).
 $$
+
 Sampling recitations approximates expectations under that declared distribution; voting is a different aggregation rule, not exact marginalization. Locating a particular true passage start is event $`G`$, maintaining the chosen clean continuation to answer distance $`L_{\mathrm{roll}}`$ is $`H`$, and answering correctly after it is $`J`$. The path contribution obeys a conditional chain:
+
 $$
 \begin{aligned}
 s_{\mathrm{clean}}&=\Pr(G\cap H\cap J)\\
@@ -299,12 +314,15 @@ s_{\mathrm{clean}}&=\Pr(G\cap H\cap J)\\
 s_{\mathrm{clean}}&=p_{\mathrm{loc}}\phi^{L_{\mathrm{roll}}}A\quad\text{if each required conditional }\phi_t=\phi.
 \end{aligned}
 $$
+
 This is overall accuracy only under the further toy assumption that success on all other paths is zero. Correct answers can survive imperfect wording or arise without that entry path. A marginal average per-token accuracy does not by itself justify the power. At $`\phi=0.995`$, the clean factors are $`0.995^{60}\approx0.740260958`$ and $`0.995^{200}\approx0.366957822`$. Retrieval avoids generating every preceding token of a source, but has its own coverage, selection and extraction errors.
 #### Retrieval and recitation cover different misses
 Let $`R`$ and $`S`$ be retrieved-evidence and clean-recitation coverage events on the same query population. The exact union is
+
 $$
 \Pr(R\cup S)=\Pr(R)+(1-\Pr(R))\Pr(S\mid R^c).
 $$
+
 Only under independence does it reduce to $`1-(1-R_1)(1-p_{\mathrm{loc}}\phi^{L_{\mathrm{roll}}})`$. The marginal probabilities alone bound the union between $`\max(\Pr R,\Pr S)`$ and $`\min(1,\Pr R+\Pr S)`$. A fallback deployed only on retrieval misses needs measured $`\Pr(S\mid R^c)`$, not recitation accuracy averaged over all queries. Oracle zero-hit labels are not automatically available online; a no-evidence detector has its own errors.
 The source reports combining generated and retrieved documents in GenRead. That supports evaluating complementarity, not independence or a guaranteed union/answer gain. Adding noisy context can harm the final reader. Retained sources can supply fresh, private and attributable content when correctly indexed and controlled. A frozen model without new evidence offers no verified update channel; it can still infer or guess answers, so lack of freshness is not a blanket claim that every post-training fact is impossible to output. Keep origin labels and verify any cited source independently.
 #### Worked recitation and retrieval comparison
@@ -317,22 +335,28 @@ For the tail example $`p_{\mathrm{loc}}=0.15,L_{\mathrm{roll}}=200`$, clean cove
 Configuration 3 fuses retrieved and recited contexts.
 Using the head clean coverage and $`R_{100}=0.854`$ in the independence scenario gives union $`0.929654670`$, or $`92.965467\%`$, an absolute $`7.565467`$ percentage-point increase. Without an overlap estimate, the marginals permit anything from $`85.4\%`$ to $`100\%`$. This is coverage, not final exact match. For a five-item prompt chosen from one hundred, substitute $`R_{\mathrm{context}}=R_{100}R_2(5\mid100)`$, with conditional retention measured separately; the top-one-hundred number alone does not determine that union.
 #### Voting depends on the error structure
-Use five independent correctness indicators with common per-sample success $`s=0.388637003`$ from the unrounded head scenario. Then $`K\sim\operatorname{Binomial}(5,s)`$. Suppose all correct outputs canonicalize to one answer.
+Use five independent correctness indicators with common per-sample success $`s=0.388637003`$ from the unrounded head scenario. Then $`K\sim\mathop{\mathrm{Binomial}}\nolimits(5,s)`$. Suppose all correct outputs canonicalize to one answer.
 If every wrong answer is distinct, at least two correct copies form the unique plurality. With ties declared unsuccessful/abstained, success is
+
 $$
 \Pr(K\ge2)=1-(1-s)^5-5s(1-s)^4\approx0.643129485.
 $$
+
 Uniformly breaking the five-way tie when exactly one sample is correct instead gives $`0.697422098`$. The tie rule therefore matters. If all incorrect samples name the same wrong alternative while correctness indicators remain IID, the correct answer needs a strict majority:
+
 $$
 \Pr(K\ge3)=\sum_{j=3}^{5}\binom5j s^j(1-s)^{5-j}\approx0.297997075.
 $$
+
 That is $`9.063993`$ percentage points below the single-sample success. This failure requires no correlation between correctness indicators: concentrated wrong labels suffice. With statistically correlated samples, the Binomial formulas no longer apply; perfectly shared successes/failures, for example, leave voting at single-sample accuracy. Measure aliases, abstention, ties, repeated wrong labels and dependence rather than asserting that correlation alone always makes voting harmful below one half.
 #### Recitation is slower in the worked serving model
 The separate serving proxy assumes one full fp16 seven-billion-parameter weight read, $`14\,\mathrm{GB}`$, for each generated token at $`2.0\,\mathrm{TB/s}`$. That stream component is $`7\,\mathrm{ms/token}`$: sixty sequential tokens give $`420\,\mathrm{ms}`$ and two hundred give $`1{,}400\,\mathrm{ms}`$. Batching, caches, arithmetic, KV traffic, input prefill and answer generation change actual cost; the stream number is not measured token latency.
 For another partial scenario, stipulate ANN service $`10\,\mathrm{ms}`$ and five retrieved chunks of $`256`$ positions. Their document-only prefill proxy is
+
 $$
 W_{\mathrm{prefill}}\approx2(7\times10^9)(1{,}280)=1.792\times10^{13}\,\mathrm{FLOP},\qquad W_{\mathrm{prefill}}/F\approx52.705882\,\mathrm{ms}.
 $$
+
 The sum is $`62.705882\,\mathrm{ms}`$; $`420/62.705882\approx6.697936`$. This compares unlike partial context-production costs, not quality-matched measured request latencies. In particular, top-one-hundred DPR hit rate cannot be assigned to this five-chunk prompt without measuring truncation/reranking. Shared prompt/answer costs and reader behavior also need accounting.
 #### Sanity checks and operating choices
 - The source reports DPR Natural Questions exact match $`41.5\%`$. The constructed head example gives $`38.863700\%`$, numerically $`2.636300`$ points lower, but invented path probabilities and a different extraction assumption do not demonstrate competitive measured performance.
@@ -375,6 +399,7 @@ flowchart TD
 Figure $`23.1`$: A trie masks unregistered continuations. The highlighted path illustrates one accepted identifier, not an exact global top-beam guarantee. For fixed-length IDs, $`L_{\mathrm{id}}\ge\lceil\log_VN\rceil`$; a balanced decimal assignment can reach seven at $`N=8.8\times10^6`$. A semantic tree may be deeper. This ID stage touches weights and external constraints; returning passage text still needs the mapping and content store.
 ### Figure 23.2
 The following are component models, not measured latency curves:
+
 $$
 \begin{array}{c|rr}
 N&320{,}000&8{,}800{,}000\\\hline
@@ -385,9 +410,12 @@ L_{\mathrm{id,min}}&6&7\\
 b_wP/N\ (\mathrm{bits/document})&11{,}000&400
 \end{array}
 $$
+
+
 $$
 \kappa_{\mathrm{PQ}}=512\ \mathrm{bits/document},\qquad N^\star_{\mathrm{PQ}}=6{,}875{,}000,\qquad N^\star_{\mathrm{fp32}}\approx143{,}229.167.
 $$
+
 Figure $`23.2`$: Stored-bit parity compares footprints, not learned information or a retrieval-quality ceiling. The integer-list PQ lookup component excludes separately counted centroid work and LUT construction. The decoder stream includes neither complete query compute nor real service overhead. Devices and resource denominators differ. Identifier length grows in steps with the minimum fixed-length space; it is not flat in corpus size for all designs.
 ### Figure 23.3
 

@@ -15,9 +15,11 @@ At $`\$2.50`$ per GPU-hour, the modeled prefill costs are approximately $`\$0.03
 The modeled stuffed prefill is approximately $`43.884\,\mathrm{s}`$, versus $`148.116\,\mathrm{ms}`$ for retrieved-context prefill. Two versus $`162`$ requests are payload-memory upper bounds before overhead. Neither calculation is an observed concurrency or p99-latency result.
 ### The crossover point
 The passage estimates where attention’s cost catches up with the cost of reading the model’s parameters:
+
 $$
 C^{*} = \frac{N}{Ld}
 $$
+
 Here, $`N`$ is the number of model parameters, $`L`$ the number of layers, $`d`$ the model’s width, and $`C^{*}`$ the prompt length at which those two costs are equal.
 For the stipulated $`8`$B model, the calculated equality point is approximately $`61{,}035`$ tokens. The textbook approximation $`N\approx12Ld^2`$ instead gives $`12d=49{,}152`$ tokens for $`d=4{,}096`$. Parameter accounting and architecture can change that constant; the difference does not independently identify one architectural cause. The stipulated $`70`$B model gives approximately $`106{,}812`$ tokens under the same attention proxy.
 **Bottom line:** a large window may let the model accept a huge prompt, but it doesn’t make that prompt cheap to process. For ordinary questions, selecting a few useful passages can save substantial compute, memory, latency, and cost.
@@ -181,62 +183,82 @@ An answer sometimes needs knowledge that the released weights do not contain or 
 ### 2.1 Continual learning and catastrophic forgetting
 #### What it is and why it exists
 The motivating case is a legal assistant built on an open-weight 27-billion-parameter model. It ships in March. An appellate court reverses a standard in June. Training on the new opinions makes the assistant cite the reversal, but it also damages citation formatting and sends a venue answer to the wrong state. The update wrote 200 million new tokens into 27 billion parameters. Nothing was intentionally deleted. The optimizer simply moved shared parameters that supported more than the target facts. McCloskey and Cohen (1989) named this catastrophic interference in connectionist networks. Luo et al. (2023) found that continual instruction tuning eroded prior ability more severely at 7 billion parameters than at 1 billion. Scale did not remove the failure. Let the released checkpoint be $`\theta_0`$, old and new expected losses be $`L_{\mathrm{old}}`$ and $`L_{\mathrm{new}}`$, and accumulated parameter update be $`\Delta=\theta-\theta_0`$ after $`T`$ optimizer steps at learning rate $`\eta`$.
+
 $$
 \Delta = \theta - \theta_0
 $$
+
 The naive objective minimizes only the new loss. It contains no term that protects the old loss. At a local minimum of the old loss, the old gradient is approximately zero. The first-order Taylor term vanishes. The old-loss increase is therefore approximately quadratic.
+
 $$
 \mathcal F(\Delta)
 = L_{\mathrm{old}}(\theta_0+\Delta)-L_{\mathrm{old}}(\theta_0)
 \approx \frac{1}{2}\Delta^{\mathsf T}H\Delta
 \approx \frac{1}{2}\sum_i F_i\Delta_i^2
 $$
+
 For a correctly specified probabilistic model, an expectation under the model and suitable regularity conditions relate the expected negative-log-likelihood Hessian to the Fisher information. Merely being at a local optimum of an arbitrary empirical loss does not establish that identity. EWC uses Fisher curvature as an approximation, often diagonalized to one value $`F_i`$ per parameter. The quadratic forgetting surrogate is local; away from an old-loss stationary point, the first-order term $`\nabla L_{\mathrm{old}}(\theta_0)^{\mathsf T}\Delta`$ must also be retained. Define $`g=\nabla L_{\mathrm{new}}(\theta_0)`$ for the local new-loss calculation.
+
 $$
 \text{new gain} \approx -g^{\mathsf T}\Delta
 $$
+
 Along a fixed update direction and for sufficiently small steps, the new-loss reduction is first order, while the old-loss increase is second order if the old gradient vanishes. Halving such a step therefore approximately halves the local new-loss change and quarters the quadratic old-loss change; this does not count facts learned or prove an unavoidable global trade-off for every method. Damage is directional: a direction with $`9`$ times the Fisher curvature has $`9`$ times the quadratic cost at equal step length. A merely $`3`$-fold curvature increase gives $`3`$ times the cost, not $`9`$.
 #### What breaks and what the alternatives cost
 Elastic weight consolidation directly penalizes the derived forgetting term.
+
 $$
 L_{\mathrm{new}}(\theta)
 + \frac{\lambda}{2}\sum_i F_i(\theta_i-\theta_{0,i})^2
 $$
+
 Kirkpatrick et al. (2017) demonstrated EWC in their setting. For the $`27`$B example, an fp32 diagonal Fisher uses $`108\,\mathrm{GB}`$. FP32 Adam weights, gradients and two moments together already use $`432\,\mathrm{GB}`$; optimizer moments alone use $`216\,\mathrm{GB}`$. Fisher estimation also needs representative old-distribution samples and backward passes; these need not literally be the original dataset, but their availability and representativeness are material constraints. LoRA restricts a matrix update to two thin factors, not directly to low-Fisher directions.
+
 $$
 \Delta W = BA
 $$
+
 The permitted rank-r update manifold for a square width d matrix has dimension:
+
 $$
 r(2d-r)
 $$
+
 For $`d=4{,}096`$ and $`r=16`$, the rank-exactly-$`r`$ matrix manifold has local dimension $`r(2d-r)=130{,}816`$, versus $`d^2=16{,}777{,}216`$ coordinates for an unconstrained square matrix—a ratio of approximately $`128.25`$. The stored factors contain $`2dr=131{,}072`$ scalars; the $`r^2`$ difference reflects factorization redundancy. This is a nonlinear manifold dimension, not a fixed linear subspace of independent fact directions or a bound on fact count. The cited Biderman et al. result is empirical evidence about learning and forgetting, not a theorem implied by the dimension ratio. With replay fraction $`\rho`$, sampling the two distributions gives the following expected gradient.
+
 $$
 (1-\rho)\nabla L_{\mathrm{new}}+\rho\nabla L_{\mathrm{old}}
 $$
+
 Ibrahim et al. (2024) report that re-warming and re-decaying the learning rate, plus replay near 5 percent of the original distribution, brings continual pre-training close to retraining on the union. Real held-out replay avoids the self-sampling loop. Synthesized replay repeatedly trains the model on its own outputs, which can amplify peaked modes and thin the tail. Retrieval takes the movement principle to its limit. It writes facts with Delta equal to zero. It cannot supply a new output form, language, or persistent vocabulary behavior.
 #### A Worked Example
 The worked quarterly update to Gemma 2 27B contains $`200`$ million new tokens. Keep the rounded sustained-throughput assumption $`340`$ trillion FLOPs per second. A stated dense bf16 peak of $`989`$ trillion FLOPs per second times exactly $`34\%`$ would instead be $`336.26`$ trillion; $`340/989\approx34.38\%`$. These are rounded hardware-model inputs, not exact equalities. The training proxy is
+
 $$
 6ND
 = 6(2.7\times10^{10})(2\times10^8)
 = 3.24\times10^{19}\ \mathrm{FLOPs}
 $$
+
 The base training proxy is approximately $`95{,}294.1\,\mathrm{s}=26.4706`$ GPU-hours. If replay is $`\rho=0.05`$ of the total stream, total tokens are $`200\times10^6/(1-\rho)\approx210.5263`$ million, including approximately $`10.5263`$ million replay tokens. Training is then approximately $`27.8638`$ GPU-hours, a $`5.2632\%`$ increase. The $`432\,\mathrm{GB}`$ total training-state payload—not optimizer moments alone—needs at least six $`80\,\mathrm{GB}`$ cards in aggregate before activations and other overhead.
 If the released model synthesizes replay, both memory bandwidth and compute impose limits. Streaming $`54\,\mathrm{GB}`$ of bf16 weights at $`3.35\,\mathrm{TB/s}`$ gives a bandwidth-only floor of approximately $`16.12\,\mathrm{ms}`$ per decode step. But producing a batch of $`256`$ tokens also costs approximately $`2NB/P_{\mathrm{GPU}}=40.66\,\mathrm{ms}`$, a tighter floor. Under this proxy, throughput is at most approximately $`6{,}296.3`$ tokens per second; the original $`15{,}900`$ estimate ignored this compute constraint. Replay synthesis therefore requires at least approximately $`1{,}671.8\,\mathrm{s}=0.4644`$ GPU-hours before attention, KV-cache, scheduling and sampling overhead. This is approximately $`1.667\%`$ of the replay-inclusive training compute, not $`0.7\%`$. A $`256`$-sequence batch must also fit the actual KV-memory budget. Representative replay quality remains a separate problem.
 Re-embedding the same $`200`$ million source tokens with a $`110`$-million-parameter encoder gives:
+
 $$
 2ND
 = 2(1.1\times10^8)(2\times10^8)
 = 4.4\times10^{16}\ \mathrm{FLOPs}
 $$
+
 The embedding proxy is approximately $`129.41\,\mathrm{s}=0.03595`$ GPU-hours. Treating chunking as a packed stream, $`200{,}000{,}000/512=390{,}625`$ vectors with $`768`$ fp32 dimensions use $`1.20\,\mathrm{GB}`$ of vector payload. Per-document ceilings, overlap, padding and index overhead can increase those totals. The compute ratio below assumes the same tokens and the same effective throughput for encoder and generator; it is not independent of different measured utilizations in real systems.
+
 $$
 \frac{6N_{\mathrm{gen}}T}{2N_{\mathrm{emb}}T}
 =\frac{3N_{\mathrm{gen}}}{N_{\mathrm{emb}}}
 =\frac{3(27\times10^9)}{110\times10^6}
 \approx736.36.
 $$
+
 With uniform update arrivals and periodic instantaneous publication, mean waiting time is half the refresh period. A quarter modeled as $`365.25/4`$ days gives approximately $`45.66`$ days, versus $`0.5`$ hours for hourly indexing: a ratio of $`2{,}191.5`$. Training, ingestion, evaluation and rollout delays add to those waits. At $`13\times10^{12}`$ pre-training tokens, the same proxy is $`2.106\times10^{24}\,\mathrm{FLOP}`$, approximately $`1.721`$ million GPU-hours. The new-only $`200`$M-token update is $`1/65{,}000`$ of that token budget; including replay changes the denominator comparison. Training is approximately $`736.36`$ times embedding compute for the matched new-only stream.
 #### What You Actually Decide in Practice
 - Default to retrieval for facts and continual learning for form.
@@ -260,15 +282,18 @@ Forgetting has a quadratic form. Learning is first order in step length. Damage 
 ### 2.2 Model editing: gradient-based and locate-and-update
 #### What it is and why it exists
 The motivating fact says an enterprise tier includes 24/7 phone support even though the service ended in March. The assistant has told customers this for three months, and the vice president wants the claim gone by Friday. The claim is one sentence inside a 27-billion-parameter model. At FP32, the model needs $`108\,\mathrm{GB}`$ for weights in the forward pass before gradients, optimizer state, or activations. A full retrain is not a Friday repair. A transformer feed-forward block computes:
+
 $$
 \mathop{\text{MLP}}(h)
 = W_{\mathrm{proj}}\sigma(W_{\mathrm{fc}}h)
 $$
+
 The residual vector h has width d. The first matrix expands it to the feed-forward width. The projection matrix writes the result back to the residual stream. Geva et al. (2021) interpret these matrices as an associative memory. Rows of the expansion matrix act like keys. Columns of the projection matrix act like values. Editing one fact becomes rewriting one key-value association. Locate-and-update methods first find a site with causal tracing. Meng et al. (2022) run a prompt in three conditions.
 1. Run it clean and record the probability of the correct object.
 2. Corrupt the subject embeddings with Gaussian noise and observe the probability collapse.
 3. Keep the prompt corrupted but restore one hidden state at layer l and token position t.
 The recovered probability is the indirect effect of that state. Sweeping all layer and token positions produces a map. The source reports a sharp peak in mid-layer feed-forward modules at the final subject token. Writing at that site is constrained least squares. The goal is to send a new key to a new value while disturbing remembered key-value pairs as little as possible. The solution is rank one.
+
 $$
 \begin{aligned}
 W'&=W+
@@ -277,31 +302,40 @@ W'&=W+
 W'k^\star&=v^\star.
 \end{aligned}
 $$
+
 Here $`C`$ is an uncentered second-moment matrix of remembered keys estimated from representative text; the displayed solution assumes $`C`$ is positive definite and $`k^\star\ne0`$, with dimensions matching $`W`$; practical inversion may require regularization. For GPT-J 6B, take $`d=4{,}096`$ and feed-forward width $`d_{\mathrm{mlp}}=16{,}384`$. The projection matrix has $`67{,}108{,}864`$ parameters. A rank-one correction can be represented by two factors totaling $`20{,}480`$ stored scalars: approximately $`0.03052\%`$ of the matrix or $`0.0003413\%`$ of a nominal $`6\times10^9`$-parameter model. Stored factor entries are not automatically independent trainable degrees of freedom; the fixed key and factorization redundancy matter. Such an edit avoids a full training run but still requires key statistics, optimization and evaluation. MEND and KnowledgeEditor learn to transform edit gradients. For one linear-layer input/output instance, the weight gradient has the following outer-product form; a sum over many instances need not remain rank one:
+
 $$
 \nabla_W L
 = (\nabla_y L)x^{\mathsf T}
 = \delta u^{\mathsf T}
 $$
+
 A hypothetical dense linear map from a vectorized $`4{,}096\times4{,}096`$ gradient to an equally sized edit needs $`(4{,}096^2)^2=281{,}474{,}976{,}710{,}656`$ weights before biases, approximately $`46{,}912`$ times a $`6`$B base. Two independent width-$`4{,}096`$ factor maps would instead use $`2(4{,}096)^2=33{,}554{,}432`$ weights. This illustrates the factorization advantage; it is not an architecture-independent parameter count for every learned editor.
 #### What breaks and what the alternatives cost
 Both editing families can produce additive low-rank corrections. The following matrix-rank bound is valid, but it must not be reinterpreted as a theorem about the number of editable facts.
+
 $$
 \Delta W
 = \sum_{i=1}^{n}u_iv_i^{\mathsf T}
 $$
+
+
 $$
 \mathop{\text{rank}}(\Delta W)
 \leq \min(n,d,d_{\mathrm{mlp}})
 $$
+
 For a $`4{,}096\times16{,}384`$ correction, matrix rank is at most $`4{,}096`$, regardless of how many rank-one terms are summed. This is not a hard limit of $`4{,}096`$ installable facts: many associations can share a full-rank or low-rank map, and interference can occur before or after that number of edits. MEMIT spreads a joint write across a band of layers. A workload of $`2.5`$ million articles times $`20`$ claims is $`50`$ million claims per year; comparing it with $`28\times4{,}096=114{,}688`$ summed matrix-rank bounds gives a numerical ratio near $`436`$, but that ratio is not a proof of a fact-capacity shortfall. Sustained edit quality, locality and sequential-update behavior must be measured. The cited causal-tracing and RippleEdits studies examine distinct edit-location and downstream-consistency failures.
 #### A Worked Example
 The worked catalog uses GPT-J 6B with $`28`$ layers, residual width $`4{,}096`$ and feed-forward width $`16{,}384`$, receiving $`12{,}000`$ changed facts per quarter. A simplified bf16 training-state budget with $`2`$ bytes for weights, $`2`$ for gradients and $`8`$ for fp32 Adam moments is $`12\,\mathrm{B/parameter}=72\,\mathrm{GB}`$, excluding activations. An fp32 master copy adds another $`4\,\mathrm{B/parameter}`$; implementation choices must be specified. A rank-one ROME correction can be stored in $`20{,}480`$ factor entries for the $`67.1`$M-entry matrix. Summing $`12{,}000`$ rank-one terms still has rank at most $`4{,}096`$, but edit $`4{,}097`$ is not a mathematically established failure threshold.
+
 $$
-\sum_{\ell=1}^{6}\operatorname{rank}(\Delta W_\ell)
+\sum_{\ell=1}^{6}\mathop{\mathrm{rank}}\nolimits(\Delta W_\ell)
 \le6(4{,}096)=24{,}576
 \quad\text{(summed matrix ranks, not a fact-count capacity)}.
 $$
+
 No success guarantee for $`12{,}000`$ facts follows from the rank sum. For the illustrative edit budget, $`25`$ optimization steps over a $`20`$-token prompt process $`500`$ token-steps. Charging a full $`6NT`$ proxy to a nominal $`6`$B model gives $`18\times10^{12}\,\mathrm{FLOP}`$ per edit and $`216\times10^{15}\,\mathrm{FLOP}`$ for $`12{,}000`$ edits. A full training epoch over $`10^9`$ tokens costs $`36\times10^{18}\,\mathrm{FLOP}`$, a ratio of $`166.67`$. This is a rough proxy: optimizing one internal vector need not have the same backward cost as full-parameter training, and edit setup and regression are omitted. MEMIT's reported $`10{,}000`$-fact demonstration is empirical evidence at that experimental scale, not $`41\%`$ of a proven fact-capacity ceiling.
 #### What You Actually Decide in Practice
 - Default to retrieval for facts with a refresh cadence.
@@ -324,14 +358,18 @@ Model editing modifies shared internal associations. Causal localization does no
 ### 2.3 Long context vs retrieval
 #### What it is and why it exists
 The challenge starts with an 8-million-token support corpus and a generator advertised with a million-token window. The proposed shortcut is to prune the corpus, paste it into every prompt, and delete the chunker, embedding job, vector store, and retrieval on-call work. The proposal changes no weights and builds no searchable index. It transfers the cost to serving. Let N be generator parameters, L be layers, d be residual width, and C be prompt tokens. Prefill has two terms. Every token reads every parameter once. Attention also compares token positions and applies the resulting weights. The causal mask leaves the lower triangle, producing:
+
 $$
 F_{\mathrm{prefill}}(C)
 \approx 2NC+2LdC^2
 $$
+
 The terms are equal at:
+
 $$
 C^{*}=\frac{N}{Ld}
 $$
+
 For an 8 billion parameter decoder with 32 layers and width $`4{,}096`$, the crossover is $`61{,}035`$ tokens. Below it, doubling context roughly doubles prefill. Above it, attention dominates and doubling context roughly quadruples prefill. A retrieved prompt near $`3{,}000`$ tokens remains in the linear regime. A 210,000-token stuffed prompt is $`3.4`$ times the crossover and pays the quadratic term. A context window is capacity. Retrieval is selection. Capacity is billed on each query. Selection is primarily paid at indexing time and then limits how much evidence reaches prefill. Liu et al. (2023) measured position effects in multi-document question answering and synthetic key-value retrieval. Accuracy was strongest near the start and end and weaker in the middle. With the gold document in the middle, accuracy could fall below the closed-book baseline. Extended-context variants did not materially improve the shape of the curve. Buying a larger window buys capacity, not reliable use of every position. Corpus stuffing loses on compute and latency because it declines to perform the cheapest selection step. It does not prove retrieval always wins. Retrieval can also flip a correct parametric answer to wrong. Use retrieval to select, then spend extra window capacity on candidate and reranking headroom. One query class genuinely needs whole-corpus evidence. The example asks for three complaints recurring across all $`12{,}000`$ tickets. No top-k set of eight chunks can represent that evidence. Route such work to hierarchical summarization or graph community summaries rather than pretending ordinary retrieval solved it.
 This passage compares **giving a model a large prompt** with **retrieving a small, relevant set of evidence**. A larger context window lets the model hold more text, but it doesn’t guarantee that the model will use every part of that text well—and processing a very long prompt can become expensive.
 The cost estimate has two parts:
@@ -343,6 +381,7 @@ More context also doesn’t guarantee more reliable answers. The cited research 
 Finally, some questions need evidence from **across the whole collection**, not just a few top-ranked passages. For example, identifying complaints that recur across $`12{,}000`$ tickets may require combining evidence broadly. Retrieving only eight chunks could miss that pattern, so a summarization method that works across groups of documents may be more appropriate.
 #### A Worked Example
 The support corpus contains $`12{,}000`$ articles at 700 tokens each, or $`8.4`$ million tokens. Chunking at 350 tokens creates $`24{,}000`$ chunks. The generator has 8 billion parameters, 32 layers, width $`4{,}096`$, and eight grouped-query key-value heads of width 128. It runs in FP16 on one $`80\,\mathrm{GB}`$ card at 340 trillion effective FLOPs per second and $`2.50`$ dollars per GPU-hour. The KV cache per token is:
+
 $$
 \begin{aligned}
 b_{\mathrm{KV/token}}
@@ -353,6 +392,7 @@ b_{\mathrm{KV/token}}
 =128\,\mathrm{KiB}.
 \end{aligned}
 $$
+
 Corpus stuffing keeps $`300`$ articles, or $`210{,}000`$ tokens. The linear term is $`3.36\times10^{15}\,\mathrm{FLOP}`$; the attention term is $`1.15605504\times10^{16}\,\mathrm{FLOP}`$, about $`3.44`$ times the linear term. Total modeled prefill is $`1.49205504\times10^{16}\,\mathrm{FLOP}`$, or approximately $`43.884\,\mathrm{s}`$. KV payload is $`27.52512\,\mathrm{GB}`$. With $`16\,\mathrm{GB}`$ of weights, a nominal $`80\,\mathrm{GB}`$ card has a payload-only upper bound of $`\lfloor64/27.52512\rfloor=2`$ such requests, not a benchmarked concurrency limit.
 Retrieval selects eight $`350`$-token chunks and adds $`200`$ instruction tokens, totaling $`3{,}000`$. The linear term is $`48\times10^{12}\,\mathrm{FLOP}`$ and attention is $`2.359296\times10^{12}\,\mathrm{FLOP}`$, $`4.68\%`$ of the total. Total prefill is approximately $`148.116\,\mathrm{ms}`$. The source's additional $`1\,\mathrm{ms}`$ for embedding and HNSW is a separate assumed or measured input, not derived by this FLOP calculation. KV payload is $`0.393216\,\mathrm{GB}`$, giving the payload-only upper bound $`\lfloor64/0.393216\rfloor=162`$ requests. Runtime buffers, activations, fragmentation and scheduler limits lower practical capacity.
 The $`70`$-fold token ratio produces approximately $`296.28`$ times the modeled prefill compute. At $`\$2.50`$ per GPU-hour, prefill alone costs approximately $`\$0.030475`$ versus $`\$0.00010286`$ per query. At $`100{,}000`$ queries per day, those are approximately $`50.79`$ versus $`0.1714`$ GPU-days per day, or $`\$3{,}047.50`$ versus $`\$10.29`$ daily. The ideal utilization floor for the stuffed case rounds up to $`51`$ cards; capacity for p99 latency requires additional headroom. Output decoding, search and fixed operating costs are not included.
@@ -382,31 +422,39 @@ A classical retrieval stack has three stores.
 2. Index I maps a query to a short list of document identifiers.
 3. Payload X stores document text by identifier.
 A classical RAG query searches I, receives identifiers, fetches text from X, and puts that text into theta’s context. The index can be an inverted index, an HNSW graph, or IVF cells. Generative retrieval deletes only I. The model reads a query and decodes a docid one token at a time. That docid still performs a primary-key fetch from X. The method replaces the card catalog, not the shelves. The distinction controls what capacity is buying. Take 1 million chunks of 256 tokens and a T5-base retriever with 220 million fp16 parameters. Assigning arbitrary identifiers to documents requires at least:
+
 $$
 \log_2(N!)
 \approx N\log_2N-N\log_2e
 $$
+
+
 $$
 \log_2\bigl((10^6)!\bigr)
 \approx10^6\log_2(10^6)-10^6\log_2 e
 \approx1.84889\times10^7\,\mathrm{bits}
 \approx2.31111\,\mathrm{MB}.
 $$
+
 The nominal $`220`$M fp16 parameters contain $`3.52\times10^9`$ physical bits. Stirling's leading terms for $`\log_2(N!)`$ at $`N=10^6`$ give approximately $`18.489`$ million bits, or $`2.311`$ decimal MB, about $`0.525\%`$ of that bit count. This is the entropy of an arbitrary permutation between fixed labels and documents, not a universal document-naming lower bound: deterministic or structured identifiers need not encode an arbitrary permutation. Nor does checkpoint bit count prove usable learned routing capacity. DSI learns naming and query routing jointly. At $`4\,\mathrm{B/token}`$, payload text is $`1.024\,\mathrm{GB}`$. Vectors occupy $`3.072\,\mathrm{GB}`$; a stipulated $`256\,\mathrm{B/vector}`$ HNSW base-link budget adds $`0.256\,\mathrm{GB}`$, giving $`3.328\,\mathrm{GB}`$ before other overhead.
 #### What breaks and what the alternatives cost
 A conventional index accepts a local write. An inverted index appends posting-list entries. An HNSW index allocates a node and rewires a bounded neighborhood. A generative retriever has no local parameter region for one document. The query-to-identifier map is superposed across all 220 million parameters. Its write primitive is a gradient update over the model. Model editing does not repair this write path. Locate-and-update expects a canonical subject key that can be localized. The query side is an open set of paraphrases with no single surface form. Fine-tuning only the new documents also steals softmax probability mass from existing identifiers. Mehta et al. (2023) report in DSI++ that sequential corpus indexing substantially forgets documents indexed earlier. Generative retrieval changes how the system finds documents. It does not change where payload knowledge lives. Its constant query latency and quality ceiling are retrieval-architecture properties.
 #### A Worked Example
 The corpus has 1 million chunks of 256 tokens. The embedding encoder has 110 million parameters and width 768. The generative retriever has 220 million parameters in fp16. The HNSW graph uses 32 neighbors. Each accelerator sustains 150 trillion FLOPs per second. The ingestion rate is 400 documents per day. One RAG upsert embeds a 256-token document:
+
 $$
 2(1.1\times10^8)(256)
 = 5.63\times10^{10}\ \mathrm{FLOPs}
 $$
+
 At the assumed $`150`$ trillion FLOPs per second, the embedding-only proxy is $`0.37547\,\mathrm{ms}`$; it is not the complete index-upsert latency. The vector plus stipulated base-layer links use $`3{,}328`$ bytes. The source additionally budgets $`32\log_2(10^6)\approx638`$ four-byte back-link writes, totaling about $`5.9\,\mathrm{kB}`$ with the new-node payload. This is an illustrative write budget, not an HNSW algorithmic guarantee: visited nodes and rewritten links depend on insertion policy, upper layers, construction search and allocation. It cannot certify that exactly $`99.9998\%`$ of every physical index remains bit-for-bit unchanged. Source text is appended separately. The generative scenario charges $`64+10(16)=224`$ training tokens per document per epoch, totaling $`2.24\times10^9`$ over ten epochs; pseudo-query generation, target identifiers, padding and architecture-specific encoder/decoder work are omitted from that proxy.
+
 $$
 6PT
 = 6(2.2\times10^8)(2.24\times10^9)
 = 2.96\times10^{18}\ \mathrm{FLOPs}
 $$
+
 Eight stipulated accelerators provide $`1.2\times10^{15}\,\mathrm{FLOP\,s^{-1}}`$. The refresh proxy is $`2{,}464\,\mathrm{s}`$ wall time, $`41.067`$ minutes and $`5.4756`$ GPU-hours. If one such refresh handles $`400`$ arrivals and deployment rewrites a full fp16 checkpoint, the budget is $`49.28`$ GPU-seconds per arrival and a $`440\,\mathrm{MB}`$ checkpoint write. This does not mean every parameter necessarily changes. Comparing against the stipulated $`5.9\,\mathrm{kB}`$ local-write budget gives roughly $`75{,}000`$ by bytes; comparing GPU compute with embedding-only compute gives $`131{,}250`$. Both ratios depend on these batch, model and accounting assumptions.
 DSI++'s reported $`21.1\%`$ average Hits@10 improvement and sixfold reduction in model-update count across five sequential corpora are empirical inputs, not proof of a sixfold FLOP reduction in this separate setup. If total refresh compute hypothetically fell sixfold, the arithmetic would be $`49.28/6\approx8.213`$ GPU-seconds per arrival, still $`21{,}875`$ times the embedding-only proxy. Do not present that conditional scenario as a measured DSI++ serving result.
 #### What You Actually Decide in Practice
@@ -428,10 +476,12 @@ The arbitrary-permutation entropy example is approximately $`2.311\,\mathrm{MB}`
 ### 2.5 Choosing between them out loud in an interview
 #### What it is and why it exists
 The design prompt says an application programming interface assistant answers from internal documentation. The docs change every sprint. Customers still hear about endpoints deprecated two releases ago. Saying “build RAG” is often correct and still incomplete. The interviewer is testing whether the candidate can rule methods out by constraint and cost shape. Let N be generator parameters. Let F be facts changed in one update cycle. Let T be evidence tokens read per query. Continual learning costs depend on the chosen new-token and replay budgets; only a specified fixed full-replay baseline is flat in the changed-fact count $`F`$. For a 27-billion-parameter model trained in FP32 with Adam, weights, gradients, and two moments use 16 bytes per parameter.
+
 $$
 27\times10^9(16\ \mathrm{bytes})
 = 432\ \mathrm{GB}
 $$
+
 A fixed full-replay baseline can cost the same for one or many changed facts, but this is a selected training policy, not a universal law. A $`3\%`$ corpus change does not mathematically require complete retraining; update tokens, replay, adaptation method and regression targets determine the actual budget. Model editing has per-edit work plus setup, joint-solve and locality/regression costs. Long context adds prefill, attention, KV and decoding costs per query, with possible prefix amortization. Generative retrieval learns routing and still fetches a payload; identifier length, decoding and refresh policy matter. RAG embeds changed chunks, maintains an index and supplies selected context. The linear $`2NT`$ forward proxy is only the starting point for large contexts. Weights suit learned behavior; a datastore provides addressable evidence and removal handles. None of these cost shapes proves a universal performance ordering.
 #### Decision gates in source order
 1. Ask whether the whole evidence set fits one window at a prefill cost worth paying on every query.
@@ -442,15 +492,19 @@ A fixed full-replay baseline can cost the same for one or many changed facts, bu
 Fitting is not the same as being usable. A corpus inside a 128,000-token window can perform worse than closed-book when the relevant passage sits in the middle. Read the first gate as fitting with room to spare while keeping the answer near an edge. A 30,000-token corpus may make an embedding model, vector store, and reranker unnecessary.
 #### A Worked Example
 The documentation contains $`12{,}000`$ chunks of 512 tokens, or $`6{,}144{,}000`$ tokens. Each two-week sprint changes 3 percent. That is 360 chunks and $`184{,}320`$ tokens. The generator has 27 billion parameters. The specified FP32 Adam weights, gradients and moments together use $`432\,\mathrm{GB}`$ before activations. An eight-card node with $`80\,\mathrm{GB}`$ per card has $`640\,\mathrm{GB}`$ total and leaves $`208\,\mathrm{GB}`$ of aggregate payload headroom before activations, communication buffers, fragmentation and other runtime allocations; this is not a fit guarantee. The fit is tight rather than comfortable. The team repeats it 26 times per year to move 3 percent each time. Model editing sees about eight checkable statements per changed chunk. That is $`2{,}880`$ edits. At a generous one second per edit, raw execution takes $`2{,}880`$ seconds or 48 minutes. The edits are affordable. Proving that they left the other $`11{,}640`$ chunks’ behavior unchanged is the costly part. The result still lacks citations. Long context over only the changed subset costs:
+
 $$
 2(27\times10^9)(184{,}320)
 = 9.95\times10^{15}\ \mathrm{FLOPs\ per\ query}
 $$
+
 Pasting the full $`6{,}144`$,000-token corpus costs 332 quadrillion FLOPs per query under the same linear approximation. RAG with five chunks reads $`2{,}560`$ tokens.
+
 $$
 2(27\times10^9)(2{,}560)
 = 1.38\times10^{14}\ \mathrm{FLOPs\ per\ query}
 $$
+
 It is 72 times cheaper than pasting the changed subset and $`2{,}400`$ times cheaper than pasting the whole corpus on every query. Re-embedding $`184{,}320`$ changed tokens with a 110 million parameter encoder costs $`40.6`$ trillion FLOPs. An entire sprint’s re-index is about one eight-thousandth of one full-corpus long-context query. As a sanity check, the same bytes-per-parameter method gives $`810\,\mathrm{GB}`$ for LLaMA $`3.1`$ 405B at fp16 inference. That exceeds the $`640\,\mathrm{GB}`$ eight-card node. The arithmetic correctly predicts a need for multiple nodes or reduced precision.
 #### What You Actually Decide in Practice
 - Name proportionality before method.
@@ -526,7 +580,7 @@ flowchart TB
     L4 --> W
     W --> C["matrix-rank bound: at most 4,096; not a fact-count ceiling"]
 ```
-> Figure $`2.2`$: Both editing families can yield additive low-rank matrix corrections. The bound $`\operatorname{rank}(\Delta W)\le\min(n,d,d_{\mathrm{mlp}})`$ limits matrix rank, not the number of facts that can be represented or safely edited. Determine sequential-edit limits with efficacy, locality and general-regression tests.
+> Figure $`2.2`$: Both editing families can yield additive low-rank matrix corrections. The bound $`\mathop{\mathrm{rank}}\nolimits(\Delta W)\le\min(n,d,d_{\mathrm{mlp}})`$ limits matrix rank, not the number of facts that can be represented or safely edited. Determine sequential-edit limits with efficacy, locality and general-regression tests.
 ### Figure 2.3
 ```plain text
 (a) prefill time, 8B decoder at 3.4 x 10^14 FLOP/s

@@ -148,6 +148,7 @@ Laundered provenance can harm transparency and factuality. A missing relevant ci
 - **Cost:** The transparency protocol checks generated intermediate key facts against references. Such overlap measures explanation content, not certified faithfulness of a model’s internal computation.[\[1\]](https://arxiv.org/html/2409.10102v1)
 The original survey evaluates more than three models. Its Table II reports, for example, GPT-3.5-Turbo privacy refusal $`0\%`$ and GPT-4o $`4\%`$ on the constructed Enron-email task, while their factuality scores are $`40.0`$ and $`26.0`$ under that task’s metric. GPT-4o is not best on every axis. Llama2-13B has missing robustness/fairness entries, not measured uniformly low scores. These are historical protocols, not general present-day privacy or model-quality guarantees.[\[1\]](https://arxiv.org/html/2409.10102v1)
 For a separate illustrative radar chart, assume six nonnegative, commensurately scaled scores $`r_1,\ldots,r_6\in[0,1]`$ on equally spaced axes in a fixed order. Close the polygon with $`r_7=r_1`$; using $`r_{(i+1)\bmod6}`$ with one-based labels would incorrectly introduce $`r_0`$. Then:
+
 $$
 \begin{aligned}
 \mathrm{Area}&=\frac12\sin\!\left(\frac{\pi}{3}\right)\sum_{i=1}^{6}r_i r_{i+1},\qquad r_7=r_1,\\
@@ -155,6 +156,7 @@ $$
 \frac{\mathrm{Area}}{\mathrm{Area}_{\max}}&=\frac16\sum_{i=1}^{6}r_i r_{i+1}.
 \end{aligned}
 $$
+
 Toy Model A has scores $`(0.80,0.30,0.75,0.70,0.85,0.60)`$. Its adjacent products sum to $`2.575`$, so its area is approximately $`1.115007707`$. Model B has $`0.65`$ on every axis; its products sum to $`2.535`$ and its area is approximately $`1.097687199`$. Relative to B, the difference is $`2.575/2.535-1\approx1.577909\%`$, below $`2\%`$. Normalized areas are $`0.429166667`$ and $`0.4225`$. Similar areas conceal different component risks. Area also changes with axis order and scaling; it is not a probability or a trustworthy-model certificate.
 #### Operating rules
 - **What:** Report defined component metrics, missing entries, uncertainty and stage tags; keep privacy and other hard requirements independently visible.
@@ -190,18 +192,20 @@ Prioritize source-quality controls in consequential domains, with independent va
 - **Limit:** A score estimates agreement on covered calibration questions, not independently known factual reliability. The original $`200`$-query calibration is an experiment size, not a universal requirement.
 - **Cost:** Generate/filter calibration answers, iterate vote-weight updates and declare stopping/tie rules. Convergence and correct truth recovery are not guaranteed merely by repeating the updates.[\[3\]](https://arxiv.org/html/2410.22954v1)
 Let $`A_s(q)`$ be source $`s`$’s filtered answer or abstention $`\mathrm{IDK}`$, and let $`\mathcal Q_{\mathrm{res}}`$ be the calibration queries with a resolved non-abstaining consensus answer class $`z(q)`$. Among the $`Q`$ calibration queries, define $`J_s=\{q\in\mathcal Q_{\mathrm{res}}:A_s(q)\ne\mathrm{IDK}\}`$. The bounded agreement estimator is:
+
 $$
 \begin{aligned}
 r_s&=\frac{1}{|J_s|}\sum_{q\in J_s}\mathbf1[A_s(q)\sim z(q)],\qquad |J_s|>0,\\
 v_s&=S r_s-1.
 \end{aligned}
 $$
+
 Here $`\sim`$ means the chosen answer-equivalence rule and $`S`$ is the source count. The paper excludes abstentions from the reliability denominator; the chapter’s earlier division by $`Q`$ is valid only when every calibration query yields a usable source answer. Handle unresolved/all-abstaining queries explicitly rather than counting matching “IDK” strings as factual agreement, and mark zero-answer sources unknown. The paper rescales agreement into vote weights $`v_s=S r_s-1`$ (with a possible cap on the scaling factor); $`r_s\in[0,1]`$ but $`v_s`$ need not lie in that interval or be nonnegative. This is an affine vote weight, not a normalized probability.[\[3\]](https://arxiv.org/html/2410.22954v1)
 A stable consensus may still be wrong: copied false answers, correlated sources, a shared generator or filter errors can create a self-reinforcing fixed point. Use independent labeled audits, answer-coverage counts, domain/time slices and source-dependence checks before interpreting agreement as truth reliability.
 #### Online per-source voting
 - **What:** Inspect sources in descending estimated reliability. Retrieve and generate from each source separately, filter unsupported answers to abstention, and stop after $`K`$ usable sources or exhaustion.
 - **Why:** The original $`\kappa`$-RRSS procedure checks relevance through the source answer/filter, not a free pre-generation relevance oracle.
-- **Vote:** For a selected source set $`\mathcal W`$ and answer classes $`\mathcal A`$, use $`\hat a\in\operatorname*{arg\,max}_{a\in\mathcal A}\sum_{s\in\mathcal W}v_s\mathbf1[A_s(q)\sim a]`$, with declared tie/empty policies.
+- **Vote:** For a selected source set $`\mathcal W`$ and answer classes $`\mathcal A`$, use $`\hat a\in\mathop{\mathrm{arg\,max}}_{a\in\mathcal A}\sum_{s\in\mathcal W}v_s\mathbf1[A_s(q)\sim a]`$, with declared tie/empty policies.
 - **Cost:** $`K`$ is the accepted-source target, not an upper bound on source-model calls. With many abstentions, all $`S`$ sources can be attempted. Later RA-RAG adds semantic-equivalence clustering; do not silently mix versions or count paraphrases as separate truths.[\[3\]](https://arxiv.org/html/2410.22954v1)[\[4\]](https://arxiv.org/html/2410.22954)
 In the constructed COVID-19 vote, three named sources support SARS-CoV-2 with assumed agreement rates $`0.95`$, $`0.93`$, $`0.90`$; three others support the false 5G claim with $`0.20`$, $`0.15`$, $`0.15`$. These are toy values, not measured publisher ratings. Raw nonnegative rate-weighted totals are $`2.78`$ versus $`0.50`$, breaking a $`3{:}3`$ unweighted tie. That is a simplified vote, not the paper’s transformed weights: with $`S=6`$, the corresponding sums of $`6r_s-1`$ are $`13.68`$ versus $`0`$. Do not interpret either score or its normalized share as a calibrated answer probability. One ballot per identity limits duplication inside that identity, not attacks using many identities or independent-looking copies.
 #### Cost and measured results
@@ -219,9 +223,11 @@ Consider RA-RAG when source identity is meaningful and calibration coverage is s
 - **Cost:** Annotation, teacher generation, training, validation and inference-time credibility inputs all require resources; “days” is a project estimate, not a method guarantee.[\[5\]](https://arxiv.org/html/2404.06809)
 The original teacher is GPT-3.5. It receives the question, credibility-tagged documents and the gold answer, then writes a credibility-guided explanation used as the training output. The model learns to generate with annotated evidence; it is not simply trained to infer source truth from writing register or citation appearance. A coherent, gold-conditioned explanation is also not a verified causal trace of the student’s internal computation.[\[5\]](https://arxiv.org/html/2404.06809)
 As one explicit benchmark policy, relevance tier $`R\in\{1,2,3\}`$ is downgraded by elapsed time $`T\ge0`$ in intervals $`\tau>0`$, and capped by source tier $`S_{\mathrm{tier}}\in\{1,2,3\}`$:
+
 $$
 c=\min\!\left\{\max\!\left(R-\left\lfloor T/\tau\right\rfloor,1\right),S_{\mathrm{tier}}\right\}.
 $$
+
 This is a declared ordinal heuristic, not a calibrated probability. Its choice of timestamp and source tier still needs validation.[\[5\]](https://arxiv.org/html/2404.06809)
 #### Why prompting alone loses
 - **What:** An untrained baseline can receive the same credibility labels in its prompt.
@@ -249,18 +255,22 @@ Head effects depend on the model, prompt, task, intervention and score quality. 
 - **Limit:** Attention weights are not causal explanations by themselves, and the intervention can suppress correct evidence if credibility is wrong.
 - **Cost:** It requires access to the attention implementation, including compatible masking/caching/kernels. A hosted text-only interface cannot perform it just because no fine-tuning is needed.[\[2\]](https://arxiv.org/html/2406.11497v3)
 For one head $`h`$, query-token row $`i`$ and key token $`j`$, let $`\alpha_{h,i,j}\ge0`$ be normalized attention on allowed positions. Let $`c_j\in[0,1]`$ be an already prepared token multiplier, with non-document tokens normally assigned one. CrAM’s paper min-max scales raw document scores $`s_d`$ using $`(s_d-s_{\min})/(s_{\max}-s_{\min})`$ when the range is positive. Declare a policy for equal raw scores (zero range) rather than divide by zero. The row-wise operation is:[\[2\]](https://arxiv.org/html/2406.11497v3)
+
 $$
 \widetilde\alpha_{h,i,j}=\begin{cases}
 \alpha_{h,i,j}c_j,&h\in H_{\mathrm{gullible}},\\
 \alpha_{h,i,j},&h\notin H_{\mathrm{gullible}}.
 \end{cases}
 $$
+
+
 $$
 \begin{aligned}
 Z_{h,i}&=\sum_{j\in\mathcal A_i}\widetilde\alpha_{h,i,j},\\
 \alpha'_{h,i,j}&=\frac{\widetilde\alpha_{h,i,j}}{Z_{h,i}},\qquad Z_{h,i}>0.
 \end{aligned}
 $$
+
 Here $`\mathcal A_i`$ is the allowed key set for row $`i`$. Masked positions remain zero, and unselected heads retain their original normalized row. If $`Z_{h,i}=0`$, use an explicitly chosen safe fallback, such as preserving the original valid row and escalating, rather than silently creating NaNs. This fallback and an equal-score policy are implementation requirements, not additional guarantees from the paper. Multiplying post-softmax weights is equivalent to adding $`\log c_j`$ to unmasked logits when $`c_j>0`$; adding raw $`c_j`$ to logits is a different operation.
 #### Attention arithmetic and measured scope
 - **What:** For a generic reweighting illustration, Document A has initial row mass $`0.30`$ and multiplier $`0.8`$; B has mass $`0.20`$ and multiplier $`0.1`$. The remaining $`0.50`$ is on unscaled tokens.
@@ -304,9 +314,11 @@ A reference-list omission can also propagate downstream. It is a coverage/proven
 - **Arithmetic:** The 2023 wrapper yields $`2^{-3}=1/8=0.125`$, while the 2020 observation yields $`2^{-6}=1/64=0.015625`$. The ratio is exactly eight.
 - **Limit:** This is a freshness-weight distortion under an illustrative decay policy, not an eightfold probability of being wrong.
 A 2025 wrapper gives $`1/2`$ and a ratio of $`32`$ to the unchanged observation weight. Generally,
+
 $$
 \frac{w(T,t_n)}{w(T,t_0)}=2^{(t_n-t_0)/\tau_{1/2}}\le 2^{(T-t_0)/\tau_{1/2}},\qquad t_0\le t_n\le T.
 $$
+
 At this fixed $`T`$, $`t_0`$ and half-life, the maximum ratio is $`64`$, not unbounded as chain length grows. A date advance $`\delta`$ contributes a factor $`2^{\delta/\tau_{1/2}}`$; hop factors telescope to the total date advance. More hops with the same final timestamp do not increase distortion. Unbounded ratios require allowing the elapsed origin-to-current time to grow, not merely adding citations.
 #### Operating rules and claim limits
 - **What:** Track measurement/validity dates separately from publication, modification, citation and retrieval dates; distinguish time-persistent from time-sensitive claims.
@@ -328,14 +340,18 @@ On the ambiguous query “Michael Jordan,” several entities can be plausible. 
 - **Limit:** Cosine dissimilarity lies in $`[0,2]`$, not automatically $`[0,1]`$; unrelated or adversarial text can increase it. It is not a probability or, without further conditions, a metric distance.
 - **Cost:** Specify embeddings, normalization and handling of $`K<2`$ (for example, omit the term). Geometric spread needs an independently defined task-quality check.
 Let $`\mathcal S`$ be a fixed, nonempty reference set of eligible intents/stances and require $`S_d\subseteq\mathcal S`$. Then coverage is bounded in $`[0,1]`$:
+
 $$
 \mathrm{coverage}(L)=\frac{\left|\bigcup_{d\in L}S_d\right|}{|\mathcal S|},\qquad |\mathcal S|>0.
 $$
+
 For a fixed $`K\ge2`$ and declared $`\lambda_1,\lambda_2\ge0`$, one set-level objective is:
+
 $$
-L^\star\in\operatorname*{arg\,max}_{L\subseteq\mathcal D:\,|L|=K}
+L^\star\in\mathop{\mathrm{arg\,max}}_{L\subseteq\mathcal D:\,|L|=K}
 \left[\sum_{d\in L}u(d)+\lambda_1\mathrm{ILAD}(L)+\lambda_2\mathrm{coverage}(L)\right].
 $$
+
 At $`\lambda_1=\lambda_2=0`$, this recovers a top-$`K`$ utility set, with tie handling; it does not literally restore the earlier position-weighted formula. For nonnegative decreasing discounts, sorting that set by utility maximizes the separable position-weighted version. The utility sum scales with $`K`$ while the two averages do not, so weights require retuning when list length or score scale changes. Carbonell and Goldstein’s MMR is a relevance–redundancy heuristic; it can be useful without an enumerable stance set but does not certify coverage of one.
 #### Michael Jordan worked example
 - **Candidates:** Twenty documents represent fourteen basketball, three footballer, two actor and one researcher items. Specify basketball utilities $`0.90,0.89,0.88,0.87,0.86`$ and nine more at $`0.85`$; footballer utilities $`0.75,0.74,0.73`$; actor utilities $`0.70,0.69`$; researcher utility $`0.62`$. The leading values are not group means.
@@ -354,11 +370,13 @@ Use coverage where the task has multiple eligible intents or viewpoints; clarify
 - **Limit:** Group-total exposure is $`|G|E_G`$, a different quantity. A hard ranking gives zero displayed exposure below the cutoff; a randomized policy can spread it, but not create additional attention mass.
 - **Constraints:** Use nonnegative entries, unit column sums and row sums at most one for a rectangular displayed-position matrix.
 The correct rectangular feasibility conditions are
+
 $$
 P\in\mathbb R_{\ge0}^{N\times K},\qquad
 \sum_{d=1}^{N}P_{d,k}=1,\qquad
 \sum_{k=1}^{K}P_{d,k}\le1.
 $$
+
 Their total mass is $`K`$. Requiring all $`N`$ row sums and all $`K`$ column sums to equal one is impossible when $`K<N`$. For the standard square doubly stochastic formulation, add $`N-K`$ unshown positions with zero attention and complete each row to one. If $`K<N`$, one explicit completion gives every extra column entry $`(1-\sum_{k\le K}P_{d,k})/(N-K)`$; those extra columns sum to one. When $`K=N`$, the rectangular constraints already force every row sum to one. Apply Birkhoff to this square completion, not directly to an incompatible rectangular matrix.[\[6\]](https://arxiv.org/html/1802.07281)
 For nonempty groups with positive average utility $`\bar u_G`$, demographic parity uses $`E_{G_1}=E_{G_2}`$, while the paper’s utility-proportional (“disparate treatment”) constraint uses $`E_{G_1}/\bar u_{G_1}=E_{G_2}/\bar u_{G_2}`$. Here “disparate treatment” names that mathematical formulation, not a general legal conclusion. Fix utilities first so this is linear in $`P`$. Zero/negative utilities need an explicitly defined alternative; do not divide by zero. Choosing parity, merit-proportional exposure or another rule is a policy decision informed by validity/bias of the utility estimates—not a theorem that credibility mandates one rule.[\[6\]](https://arxiv.org/html/1802.07281)
 One LP maximizes $`\sum_d u(d)e_d`$ under these assignment and declared linear group constraints. Its coefficients require a fixed query, utility model, group definition and attention model. It allocates modeled expected utility, not necessarily end-to-end answer accuracy. Check feasibility: exposure targets outside the candidate/position polytope cannot be met by merely renormalizing totals. Singh and Joachims formalize the exposure LP; amortized fairness across a changing query stream is a further accounting choice.[\[6\]](https://arxiv.org/html/1802.07281)

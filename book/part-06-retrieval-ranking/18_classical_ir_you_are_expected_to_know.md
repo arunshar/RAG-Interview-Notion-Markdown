@@ -55,7 +55,7 @@ The librarian keeps both catalogs when evaluation justifies the operational cost
 | Coordination factor | The fraction of query clauses a document matches | Classic Lucene used it as a discrete soft-coverage multiplier |
 | Vector space model | Coordinates and a similarity score for query and document vectors | A score induces an order with possible ties; deterministic tie-breaking can complete it |
 | Cosine similarity | The dot product divided by both vector lengths | It ranks by angle rather than raw magnitude |
-| Cosine score $`\operatorname{sim}(q,d)`$ | $`q^{\mathsf T}d/(\lVert q\rVert_2\lVert d\rVert_2)`$ for nonzero vectors | Nonnegative lexical vectors give a score in $`[0,1]`$, not an unbounded score |
+| Cosine score $`\mathop{\mathrm{sim}}\nolimits(q,d)`$ | $`q^{\mathsf T}d/(\lVert q\rVert_2\lVert d\rVert_2)`$ for nonzero vectors | Nonnegative lexical vectors give a score in $`[0,1]`$, not an unbounded score |
 | Dot product $`q^{\mathsf T}d`$ | Sum $`q^{\mathsf T}d=\sum_t q_td_t`$ | Both query and document weighting must be specified; IDF on both sides gives squared IDF in the product |
 | Euclidean norm $`\lVert x\rVert_2`$ | The square root of the sum of squared coordinates | Cosine divides by this length for both vectors |
 | Term Frequency (TF) $`f_{t,d}`$ or $`f_{t,d}`$ | The count of term $`t`$ inside one document | Linear TF lets repetition keep buying score |
@@ -126,7 +126,7 @@ The librarian keeps both catalogs when evaluation justifies the operational cost
 
 ## Core mechanics
 ### Mathematical conventions
-Let $`\mathcal V`$ be the indexed vocabulary, $`V=\lvert\mathcal V\rvert`$, $`N`$ the document count, $`T(d)`$ the terms in document $`d`$, and $`Q(q)`$ the set of distinct query terms, with $`n=\lvert Q(q)\rvert\ge1`$. Query $`q`$ and document $`d`$ also denote their vectors when a vector formula is used. Write $`d_{\mathrm{emb}}`$ for dense-vector dimension so that it is not confused with a document. Document frequency is $`n_t=\operatorname{df}(t)`$ and within-document count is $`f_{t,d}\ge0`$. Counts, word lengths and model-token lengths are not interchangeable; BM25 lengths must use one consistent indexed-token convention.
+Let $`\mathcal V`$ be the indexed vocabulary, $`V=\lvert\mathcal V\rvert`$, $`N`$ the document count, $`T(d)`$ the terms in document $`d`$, and $`Q(q)`$ the set of distinct query terms, with $`n=\lvert Q(q)\rvert\ge1`$. Query $`q`$ and document $`d`$ also denote their vectors when a vector formula is used. Write $`d_{\mathrm{emb}}`$ for dense-vector dimension so that it is not confused with a document. Document frequency is $`n_t=\mathop{\mathrm{df}}\nolimits(t)`$ and within-document count is $`f_{t,d}\ge0`$. Counts, word lengths and model-token lengths are not interchangeable; BM25 lengths must use one consistent indexed-token convention.
 All logarithms are natural. Distinguish three weights: classical TF-IDF $`I_{\mathrm{TF}}(t)=\ln(N/n_t)`$ for $`1\le n_t\le N`$; zero-feedback raw RSJ $`w_t^{(0)}=\ln((N-n_t+0.5)/(n_t+0.5))`$; and guarded BM25 $`I_{\mathrm B}(t)=\ln(1+(N-n_t+0.5)/(n_t+0.5))`$. The last two are not equal. Log odds ratios are dimensionless, conventionally reported in nats, not probabilities.
 The clinical TF-IDF example uses the same IDF-weighted query throughout: $`q_t=I_{\mathrm{TF}}(t)\mathbf1[t\in Q(q)]`$ and $`d_t=g(f_{t,d})I_{\mathrm{TF}}(t)`$. Linear TF uses $`g(f)=f`$; sublinear TF uses $`g(0)=0`$ and $`g(f)=1+\ln f`$ for $`f\ge1`$. Thus its unnormalized dot product is $`\sum_{t\in Q(q)}g(f_{t,d})I_{\mathrm{TF}}(t)^2`$. The release-note example separately names a single-IDF linear lexical baseline with unit query indicators; it is not this symmetric TF-IDF dot product. Cosine requires nonzero vectors; define a zero-vector fallback rather than divide by zero.
 For BM25, use positive document length $`L_d`$, positive mean $`\overline L`$, relative length $`\ell_d=L_d/\overline L`$, $`k_1>0`$ and $`b\in[0,1]`$. Each distinct query term occurs once in the score sum; extra query-frequency factors, field-specific parameters and boosts are outside the displayed baseline. A TF saturation curve holds relative length and collection statistics fixed. Literally appending text can also change length and collection statistics.
@@ -140,11 +140,13 @@ Storage uses $`1\,\mathrm{GB}=10^9\,\mathrm B`$ and fp32 payload $`4\,\mathrm{B/
 - Cost: merging two sorted lists gives a basic AND or OR algorithm in $`O(\lvert P_1\rvert+\lvert P_2\rvert)`$ time. NOT is relative to a candidate universe and needs a difference operation. Skips, bitmaps, compression and dynamic pruning change actual work.
 #### Conjunction shrinks geometrically
 For a representative document, assume the $`n`$ query-term presence events are independent with probabilities $`n_i/N`$. Linearity of expectation then gives the count formula below. It does not require document-to-document independence, but corpus marginals alone do not justify the within-document product.
+
 $$
 \mathbb E[\lvert A_{\wedge}\rvert]
 =N\prod_{i=1}^{n}\frac{n_i}{N}
 =\frac{\prod_{i=1}^{n}n_i}{N^{n-1}}.
 $$
+
 - Interpretation: under this model each additional conjunct multiplies the expected count by $`n_i/N`$. Correlated terms require joint or conditional occurrence probabilities instead.
 - Limitation: fewer matches do not establish higher precision or correct user intent. OR expands membership but supplies no relevance ranking by itself.
 - Failure mode: product-like shrinkage can create feast or famine. The count formula is a planning model, not a claim that a particular result count is fractional or deterministically zero.
@@ -155,34 +157,44 @@ $$
 - Dropping a term guesses which part of intent is dispensable. Never relax authorization or another mandatory validity condition merely to obtain results.
 #### Extended Boolean retrieval softens the operator
 For $`n\ge1`$, equal query weights, normalized document-term weights $`w_i(d)\in[0,1]`$ and $`1\le p<\infty`$, define the following graded operators. They are scores, not authorization checks.
+
 $$
 S_{\mathrm{OR},p}(d)=\left(\frac1n\sum_{i=1}^{n}w_i(d)^p\right)^{1/p}.
 $$
+
+
 $$
 S_{\mathrm{AND},p}(d)=1-\left(\frac1n\sum_{i=1}^{n}(1-w_i(d))^p\right)^{1/p}.
 $$
+
 - Soft AND measures normalized distance from the all-present corner; soft OR measures normalized distance from the origin. Both lie in $`[0,1]`$.
 - Exponent $`p`$ controls the trade-off between coverage and strong partial matches. Finite-$`p`$ soft AND can be positive when a term is missing, so it is not a strict conjunction.
 - The source attributes better results at intermediate values, notably $`p=2`$, to Salton, Fox and Wu (1983). That is a reported experiment on their collections, not a universal optimal exponent.
 #### The endpoints explain the model
 At $`p=1`$, the two equal-weight operators are exactly the same arithmetic mean:
+
 $$
 S_{\mathrm{AND},1}(d)=1-\frac1n\sum_{i=1}^{n}(1-w_i(d))=\frac1n\sum_{i=1}^{n}w_i(d)=S_{\mathrm{OR},1}(d).
 $$
+
 At $`p=1`$, these operators no longer distinguish AND from OR. This is valid as a named soft coordination score, but not as a promise of hard AND. As $`p\to\infty`$, $`S_{\mathrm{AND},p}\to\min_i w_i`$ and $`S_{\mathrm{OR},p}\to\max_i w_i`$. On binary weights, those endpoints recover Boolean membership; on graded weights they are fuzzy min/max scores.
 #### The compliance query makes the cliff concrete
 - Inputs: $`N=10^7`$ chunks and frequencies $`1.5\times10^6`$, $`1.2\times10^5`$, $`4\times10^4`$ and $`8\times10^3`$ for customer, deletion, retention and gdpr. Their marginal shares are $`0.15`$, $`0.012`$, $`0.004`$ and $`0.0008`$.
 - Independent-term model: expected conjunction counts are $`1{,}500{,}000\to18{,}000\to72\to0.0576`$. Adding gdpr multiplies the previous expectation by $`0.0008=1/1{,}250`$. Do not round $`0.0576`$ into a guaranteed zero.
-- If document match indicators are also IID, $`\lvert A_{\wedge}\rvert\sim\operatorname{Binomial}(10^7,5.76\times10^{-9})`$ and $`\Pr(\lvert A_{\wedge}\rvert=0)=(1-5.76\times10^{-9})^{10^7}\approx0.944027483`$. Thus an empty result is approximately $`94.4027\%`$ likely in that additional model. From the expectation alone, Markov's inequality gives $`\Pr(\lvert A_{\wedge}\rvert\ge1)\le0.0576`$ without document independence.
+- If document match indicators are also IID, $`\lvert A_{\wedge}\rvert\sim\mathop{\mathrm{Binomial}}\nolimits(10^7,5.76\times10^{-9})`$ and $`\Pr(\lvert A_{\wedge}\rvert=0)=(1-5.76\times10^{-9})^{10^7}\approx0.944027483`$. Thus an empty result is approximately $`94.4027\%`$ likely in that additional model. From the expectation alone, Markov's inequality gives $`\Pr(\lvert A_{\wedge}\rvert\ge1)\le0.0576`$ without document independence.
 - Under the same within-document term-independence model, expected OR membership is $`N[1-(0.85)(0.988)(0.996)(0.9992)]=1{,}642{,}283.5264\approx1.642284\times10^6`$. An actual count is integral. Real term correlations can change both estimates.
 #### The worked soft score exposes the exchange rate
 Let document A have $`(0.9,0.8,0.6,0)`$ and B have $`(0.5,0.5,0.5,0.5)`$. At $`p=2`$:
+
 $$
 S_{\mathrm{AND},2}(A)=1-\sqrt{\frac{0.01+0.04+0.16+1}{4}}=1-\sqrt{0.3025}=0.45.
 $$
+
+
 $$
 S_{\mathrm{AND},2}(B)=0.5.
 $$
+
 A scores $`0.575`$ at $`p=1`$, $`0.45`$ at $`p=2`$, and tends to $`0`$ as $`p\to\infty`$. B scores $`0.5`$ for every $`p\ge1`$, since all its term weights and complements are equal. This is a change in ranking preference, not a change in the documents.
 #### Soft scoring costs more postings work
 - A straightforward graded scorer evaluates the union of matching documents rather than just the hard intersection. That can cost more postings work, but one graded score avoids an implicit unscored fallback ladder.
@@ -202,9 +214,11 @@ A scores $`0.575`$ at $`p=1`$, $`0.45`$ at $`p=2`$, and tends to $`0`$ as $`p\to
 ### 18.2 Vector space model and TF-IDF’s two failures
 #### Vector space scoring creates an order
 Salton, Wong and Yang (1975) are the source's attribution for the vocabulary-space model. For nonzero query and document vectors, cosine similarity is:
+
 $$
-\operatorname{sim}(q,d)=\frac{q^{\mathsf T}d}{\lVert q\rVert_2\lVert d\rVert_2}.
+\mathop{\mathrm{sim}}\nolimits(q,d)=\frac{q^{\mathsf T}d}{\lVert q\rVert_2\lVert d\rVert_2}.
 $$
+
 - A score orders candidates up to ties; it is not automatically a total order. Add a deterministic tie policy if one is required.
 - Cosine lies in $`[-1,1]`$ for general real vectors, and in $`[0,1]`$ for the nonnegative TF-IDF vectors here. Zero vectors need an explicit fallback.
 - Using angle as a relevance proxy is a modeling choice, not a probability guarantee. Sparse dot-product work depends on postings, intersections and the scoring implementation.
@@ -212,21 +226,27 @@ $$
 The classical weight used here is $`I_t=I_{\mathrm{TF}}(t)=\ln(N/n_t)`$ for $`1\le n_t\le N`$. A document coordinate is $`g(f_{t,d})I_t`$ and the clinical query coordinate is $`I_t`$ for each query term. Hence the query-term dot product uses $`I_t^2`$. A unit-weight query would give a different, single-IDF score; mixing the two conventions changes the arithmetic. Corpus rarity and vector normalization address different effects, but neither certifies relevance.
 #### Failure one is linear repetition
 Holding IDF fixed, the derivative of a linear-TF document coordinate is constant. Under this chapter's IDF-weighted clinical query, the corresponding unnormalized dot-product derivative has another IDF factor:
+
 $$
 \frac{\partial(f_{t,d}I_t)}{\partial f_{t,d}}=I_t,
 \qquad
 \frac{\partial(q^{\mathsf T}d)}{\partial f_{t,d}}=I_t^2
 \quad(t\in Q(q)).
 $$
+
 For integer counts these derivatives correspond to constant coordinate or dot-product increments. They do not describe the derivative of normalized cosine, whose denominator also changes. Repetition can distort a lexical relevance proxy, but the existence and severity of a rank reversal depend on the other coordinates and the chosen normalization.
 #### Failure two confuses scope with verbosity
-For fixed linear-TF weights and $`\alpha>0`$, $`\operatorname{sim}(q,\alpha d)=\operatorname{sim}(q,d)`$. This is invariance to rescaling the whole vector, not to repeating only one query term, and raw-text duplication under log TF is not generally a pure rescaling. To isolate breadth, let $`d=\sum_{i=1}^m c_i`$ with mutually orthogonal, equal nonzero norms and $`q^{\mathsf T}c_i=0`$ for $`i>1`$. Then:
+For fixed linear-TF weights and $`\alpha>0`$, $`\mathop{\mathrm{sim}}\nolimits(q,\alpha d)=\mathop{\mathrm{sim}}\nolimits(q,d)`$. This is invariance to rescaling the whole vector, not to repeating only one query term, and raw-text duplication under log TF is not generally a pure rescaling. To isolate breadth, let $`d=\sum_{i=1}^m c_i`$ with mutually orthogonal, equal nonzero norms and $`q^{\mathsf T}c_i=0`$ for $`i>1`$. Then:
+
 $$
 \lVert d\rVert_2=\sqrt{\sum_{i=1}^m\lVert c_i\rVert_2^2}=\sqrt m\,\lVert c_1\rVert_2.
 $$
+
+
 $$
-\operatorname{sim}(q,d)=\frac{\operatorname{sim}(q,c_1)}{\sqrt m}.
+\mathop{\mathrm{sim}}\nolimits(q,d)=\frac{\mathop{\mathrm{sim}}\nolimits(q,c_1)}{\sqrt m}.
 $$
+
 For $`m=10`$, the factor is $`1/\sqrt{10}\approx0.316227766`$, a relative decrease of approximately $`68.3772\%`$. Overlapping, unequal-norm or additionally query-relevant sections change it. Ordinary cosine has no explicit tunable breadth parameter, but it is still bounded; neither this example nor vector-rescaling invariance proves that arbitrary keyword stuffing is free.
 #### Log damping helps but never caps repetition
 Sublinear TF is $`g(0)=0`$ and $`g(f)=1+\ln f`$ for $`f\ge1`$. It reduces the unnormalized clinical A-to-B dot-product ratio from approximately $`4.105133`$ to $`1.372225`$. With $`1{,}000`$ insulin occurrences the ratio is approximately $`3.113775`$. The log-TF coordinate is unbounded as a mathematical function, but normalized cosine is not. The source's scikit-learn example uses `sublinear_tf=True`; an absent term must not be passed to $`\ln0`$.
@@ -243,8 +263,8 @@ The source describes `TfidfVectorizer` defaults `sublinear_tf=False` and `norm='
 - At $`f_{i,A}=1{,}000`$, $`s_A=(1+\ln1{,}000)I_i^2\approx167.704451`$, or approximately $`3.113775`$ times B. This is a mathematical counterexample for the unnormalized score, not an assertion about the final cosine ranking.
 #### Cosine promotes the tiny heading
 - Keep that same IDF-weighted query and log-TF document representation. The query norm is $`\lVert q\rVert_2=\sqrt{I_i^2+I_d^2+I_p^2}\approx5.956837`$.
-- Let heading H contain insulin and dosage once each and no other indexed terms. Its norm is $`\sqrt{I_i^2+I_d^2}\approx5.148737`$, and $`q^{\mathsf T}H=I_i^2+I_d^2\approx26.509491`$. Therefore $`\operatorname{sim}(q,H)\approx0.864340778`$.
-- Stipulate that B's non-query coordinates contribute exactly $`220`$ to its squared weighted norm. This is a toy norm budget, not a fact inferred from its word count. Then $`\lVert B\rVert_2=\sqrt{(1+\ln2)^2(I_i^2+I_d^2)+I_p^2+220}\approx17.463402`$, and $`\operatorname{sim}(q,B)=\frac{53.858881\ldots}{(5.956836\ldots)(17.463402\ldots)}\approx0.517741260`$.
+- Let heading H contain insulin and dosage once each and no other indexed terms. Its norm is $`\sqrt{I_i^2+I_d^2}\approx5.148737`$, and $`q^{\mathsf T}H=I_i^2+I_d^2\approx26.509491`$. Therefore $`\mathop{\mathrm{sim}}\nolimits(q,H)\approx0.864340778`$.
+- Stipulate that B's non-query coordinates contribute exactly $`220`$ to its squared weighted norm. This is a toy norm budget, not a fact inferred from its word count. Then $`\lVert B\rVert_2=\sqrt{(1+\ln2)^2(I_i^2+I_d^2)+I_p^2+220}\approx17.463402`$, and $`\mathop{\mathrm{sim}}\nolimits(q,B)=\frac{53.858881\ldots}{(5.956836\ldots)(17.463402\ldots)}\approx0.517741260`$.
 - H's cosine is approximately $`1.669445`$ times B's. If B is the sole query-contributing section among ten orthogonal equal-norm sections, the whole-document score is $`0.517741260\ldots/\sqrt{10}\approx0.163724162`$. The norm budget and section assumptions drive this illustrative ranking; no answer-quality guarantee follows.
 #### BM25 supplies a tunable alternative
 At $`k_1=1.2`$, $`b=0.75`$, relative length $`\ell=10`$ and $`f=1`$, BM25's TF factor is $`2.2/[1+1.2(0.25+7.5)]\approx0.213592233`$. It is $`1`$ at average length and also $`1`$ at $`b=0`$ for this frequency. The orthogonal-section cosine factor $`0.316227766`$ belongs to a different model; the numbers illustrate tunable versus fixed assumptions, not matched-corpus retrieval quality or a universal ordering of penalties.
@@ -258,6 +278,7 @@ At $`k_1=1.2`$, $`b=0.75`$, relative length $`\ell=10`$ and $`f=1`$, BM25's TF f
 ### 18.3 BM25 saturation and length normalization
 #### BM25 separates rarity from within-document evidence
 The source identifies BM25 with the Okapi Best Match family. The unboosted, distinct-query-term baseline used here is:
+
 $$
 \begin{aligned}
 I_{\mathrm B}(t)
@@ -266,10 +287,11 @@ I_{\mathrm B}(t)
 K_d&=k_1(1-b+b\ell_d),
 \qquad \ell_d=\frac{L_d}{\overline L},\\
 F(f,\ell_d)&=\frac{f(k_1+1)}{f+K_d},\\
-\operatorname{BM25}(q,d)
+\mathop{\mathrm{BM25}}\nolimits(q,d)
 &=\sum_{t\in Q(q)}I_{\mathrm B}(t)F(f_{t,d},\ell_d).
 \end{aligned}
 $$
+
 Rarity and within-document evidence are separate factors. Take $`F(0,\ell)=0`$, $`k_1>0`$, $`b\in[0,1]`$ and $`\ell>0`$. The count $`n_t`$ is a document frequency, not a term occurrence total. Query boosts, repeated-query-term weights, field mixtures and engine-specific norm encodings require their own formulas and bounds.
 #### $`k_1`$ gives a limiting repetition budget at average length
 At $`\ell=1`$, $`F(f,1)=f(k_1+1)/(f+k_1)`$, so $`F(1,1)=1`$ and $`\lim_{f\to\infty}F(f,1)=k_1+1`$. For finite counts $`f\ge1`$, the range is $`[1,k_1+1)`$, with the upper endpoint excluded. Thus later occurrences share a limiting increment $`k_1`$. At another length the first occurrence is $`(k_1+1)/(1+K_d)`$, so the same first-occurrence budget interpretation does not transfer unchanged. A curve that varies $`f`$ while holding $`\ell`$ fixed is a mathematical comparison; adding words to one real document can also alter $`\ell`$.
@@ -277,11 +299,12 @@ At $`\ell=1`$, $`F(f,1)=f(k_1+1)/(f+k_1)`$, so $`F(1,1)=1`$ and $`\lim_{f\to\inf
 At $`k_1=1.2`$ and $`\ell=1`$, $`F=2.2f/(f+1.2)`$. For $`f\in\{1,\,2,\,5,\,10,\,20\}`$, the factors are approximately $`1`$, $`1.375`$, $`1.774193548`$, $`1.964285714`$ and $`2.075471698`$. The second occurrence adds $`0.375`$; moving from ten to twenty adds approximately $`0.111185984`$. Counts five and ten use $`(F-1)/1.2\approx64.5161\%`$ and $`80.3571\%`$ of the limiting later-occurrence budget. Those percentages are not shares of the whole term score.
 #### The two-Poisson argument gives the curve meaning
 The source cites Robertson and Walker (1994) for the two-Poisson motivation. Do not equate a saturating probability with a saturating log odds: the log likelihood ratio between two individual Poisson distributions is linear in the count. A simple mixture illustrates how a finite relevance-evidence limit can arise. Suppose, at fixed length,
+
 $$
 \begin{aligned}
 P(f\mid R=r)
-&=a_r\operatorname{Pois}(f;\mu_E)
- +(1-a_r)\operatorname{Pois}(f;\mu_N),\\
+&=a_r\mathop{\mathrm{Pois}}\nolimits(f;\mu_E)
+ +(1-a_r)\mathop{\mathrm{Pois}}\nolimits(f;\mu_N),\\
 \mu_E&>\mu_N>0,
 \qquad 0<a_0<a_1<1.\\
 \lim_{f\to\infty}
@@ -289,25 +312,34 @@ P(f\mid R=r)
 &=\ln\frac{a_1}{a_0}.
 \end{aligned}
 $$
+
 The high-rate component dominates both mixtures at large $`f`$, producing that finite limit under these particular assumptions. BM25 uses a convenient rational TF shape rather than exactly computing this mixture. The derivation does not make BM25 a calibrated posterior, and changing the mixture assumptions can remove the finite limit.
 #### Log damping loses because it remains purchasable
 With natural logs, $`g(f)=1+\ln f`$ gives approximately $`1`$, $`1.693147`$, $`2.609438`$ and $`4.218876`$ at $`f\in\{1,\,2,\,5,\,25\}`$. At $`f=10{,}000`$, $`g(f)\approx10.210340`$, about $`6.030392`$ times $`g(2)`$. These are unnormalized TF factors. The corresponding BM25 factor at $`\ell=1`$, $`k_1=1.2`$ remains below $`2.2`$. Bounded positive term contributions support safe pruning when the implementation's upper bounds also account for boosts, fields and norm encoding; this is not a statement that normalized TF-IDF cosine is unbounded.
 #### $`b`$ interpolates length adjustment
 Let $`\ell_d=L_d/\overline L`$. BM25 places the length adjustment inside the TF denominator:
+
 $$
 K_d=k_1(1-b+b\ell_d).
 $$
+
+
 $$
 b=0\quad\Longrightarrow\quad K_d=k_1.
 $$
+
+
 $$
 b=1\quad\Longrightarrow\quad K_d=k_1\ell_d.
 $$
+
 For fixed $`f>0`$, compare against average length:
+
 $$
 \frac{F(f,\ell)}{F(f,1)}
 =\frac{f+k_1}{f+k_1(1-b+b\ell)}.
 $$
+
 For $`\ell>1`$ this ratio is at least $`1/\ell`$: the penalty is no stronger than direct division by length. For $`0<\ell<1`$ the ratio is at most $`1/\ell`$: the short-document bonus is no larger than direct division. At $`\ell=1`$ both equal $`1`$. Thus softer means less penalty for long documents and less bonus for short ones, not that BM25 lies below a division curve everywhere. The scorer still cannot identify scope versus verbosity from length alone.
 #### The twice-average example shows the soft discount
 At $`k_1=1.2`$, $`b=0.75`$, $`\ell=2`$ and $`f=1`$, $`K=1.2(0.25+1.5)=2.1`$ and $`F=2.2/3.1\approx0.709677419`$. Relative to its average-length value $`1`$, the discount is approximately $`29.0323\%`$. Direct division gives $`0.5`$, a $`50\%`$ discount. This is a comparison of defined TF factors, not an empirical quality result.
@@ -321,16 +353,18 @@ Raw zero-feedback RSJ $`w_t^{(0)}=\ln((N-n_t+0.5)/(n_t+0.5))`$ is negative for $
 - Direct division by relative length gives $`s_A/0.4\approx32.247551`$ and $`s_B/10\approx18.503975`$, an A-to-B ratio approximately $`1.742736`$. This reversal isolates an intentionally different length rule.
 #### BM25 creates a near-tie, not a candidate-pool guarantee
 At $`k_1=1.2`$, $`b=0.75`$, $`K_A=0.66`$ and $`K_B=9.3`$. In query-term order kubernetes, pod, eviction,
+
 $$
 \begin{aligned}
-\operatorname{BM25}(q,A)
+\mathop{\mathrm{BM25}}\nolimits(q,A)
 &\approx1.214361+1.837256+8.763970
 \approx11.815587,\\
-\operatorname{BM25}(q,B)
+\mathop{\mathrm{BM25}}\nolimits(q,B)
 &\approx1.135684+2.328126+8.495685
 \approx11.959496.
 \end{aligned}
 $$
+
 Totals use unrounded contributions. B's relative lead is approximately $`1.217953\%`$ of A's score, not a probability margin. The pair is close compared with the other two scoring rules, but both reach a reranker only if the rest of the ranking and candidate cutoff permit it.
 #### Sweeping $`b`$ isolates length sensitivity
 With $`k_1=1.2`$ fixed, at $`b=0`$ the scores are approximately $`9.587634`$ and $`15.887339`$ for A and B; at $`b=1`$ they are approximately $`12.822825`$ and $`11.062111`$. The pair ties at $`b\approx0.768972775`$ under these exact inputs. Increasing $`b`$ raises A and lowers B because their relative lengths lie on opposite sides of $`1`$; it does not make that direction correct for every query. A benchmark default is a starting point, not a diagnosis.
@@ -352,44 +386,60 @@ With $`k_1=1.2`$ fixed, at $`b=0`$ the scores are approximately $`9.587634`$ and
 ### 18.4 Probabilistic models and the binary independence assumption
 #### The Probability Ranking Principle starts the derivation
 The source cites Robertson (1977) for PRP. Under fixed selection costs and additive expected utility, ranking by marginal relevance probability is optimal for the corresponding objective. For decreasing nonnegative position weights $`v_j`$, $`\mathbb E[U(\pi)]=\sum_j v_j\Pr(R_{\pi_j}=1\mid d_{\pi_j},q)`$ is maximized by sorting those probabilities. Linearity of expectation does not require independent relevance events across documents. Odds are a convenient strictly increasing transform for probabilities in $`(0,1)`$; handle endpoints by limits and ties explicitly.
+
 $$
 O(R\mid d,q)=\frac{\Pr(R=1\mid d,q)}{\Pr(R=0\mid d,q)}.
 $$
+
+
 $$
 O(R\mid d,q)=\frac{\Pr(R=1\mid q)}{\Pr(R=0\mid q)}\frac{\Pr(d\mid R=1,q)}{\Pr(d\mid R=0,q)}.
 $$
+
 A RAG context often has non-additive value: a second copy of the same fact may add little even if each chunk is relevant. That breaks the additive objective, not necessarily independence of relevance labels. Diversification, MMR or explicit set selection addresses a different utility. Query-level prior odds in this model are constant across documents and can be dropped for within-query ranking; document-specific priors or features cannot simply be canceled.
 #### Binary independence makes document likelihood estimable
 Represent a document by $`x\in\{0,1\}^{V}`$. Assume its term incidences are independent conditional on $`(R,q)`$, and let $`p_t=\Pr(x_t=1\mid R=1,q)`$ and $`u_t=\Pr(x_t=1\mid R=0,q)`$, with $`0<p_t,u_t<1`$. Then:
+
 $$
 \frac{\Pr(x\mid R=1,q)}{\Pr(x\mid R=0,q)}=\prod_{t:x_t=1}\frac{p_t}{u_t}\prod_{t:x_t=0}\frac{1-p_t}{1-u_t}.
 $$
+
 Binary incidence discards counts; conditional term independence discards dependencies beyond what the relevance class explains. The model uses per-term parameters instead of a general joint distribution, but assumes rather than proves that they suffice for relevance. Phrase or interaction information requires additional features or a different model.
 #### Off-query terms collapse into a constant
 For the unexpanded query-term BIM, additionally assume $`p_t=u_t`$ for all $`t\notin Q(q)`$. Expanding the remaining likelihood factors gives:
+
 $$
 \frac{\Pr(x\mid R=1,q)}{\Pr(x\mid R=0,q)}=\prod_{t\in Q(q)\cap T(d)}\frac{p_t(1-u_t)}{u_t(1-p_t)}\prod_{t\in Q(q)}\frac{1-p_t}{1-u_t}.
 $$
+
 The last product is document-independent for a fixed query and model, leaving a sum over matched query terms after logarithms. This unexpanded BIM cannot reward a non-query term. That is not a limitation of every sparse method: query expansion, phrase features, relevance models and learned sparse representations can introduce additional coordinates.
 #### The RSJ weight is a log odds ratio
 Take natural logs and drop only the document-independent factor:
+
 $$
-\operatorname{RSV}(q,d)=\sum_{t\in Q(q)\cap T(d)}w_t.
+\mathop{\mathrm{RSV}}\nolimits(q,d)=\sum_{t\in Q(q)\cap T(d)}w_t.
 $$
+
+
 $$
 w_t=\ln\frac{p_t(1-u_t)}{u_t(1-p_t)}.
 $$
+
 Each weight compares term-presence odds in relevant and non-relevant documents. A zero or unit probability makes some odds undefined or infinite; smoothed finite estimates avoid that numerical failure, not all estimation bias. One two-by-two table per term gives the following estimator.
 #### The contingency table yields the full estimator
 In a fully specified binary-labeled population of $`N`$ documents, let $`S`$ be relevant, $`n_t`$ contain the term and $`s_t`$ satisfy both. Cells are $`a=s_t`$, $`b_{\mathrm{cell}}=S-s_t`$, $`c=n_t-s_t`$ and $`d_{\mathrm{cell}}=N-S-n_t+s_t`$. Feasibility requires $`\max(0,S+n_t-N)\le s_t\le\min(S,n_t)`$. If only some positives are judged and the remaining corpus is unjudged, treating all other documents as non-relevant is an additional proxy assumption, not a verified relevance partition. The worked example makes that proxy explicit. Adding $`0.5`$ to every cell gives:
+
 $$
 w_t=\ln\frac{(s_t+0.5)(N-S-n_t+s_t+0.5)}{(S-s_t+0.5)(n_t-s_t+0.5)}.
 $$
+
 #### Zero feedback gives raw RSJ IDF, not the guarded form
 Algebraically set $`S=s_t=0`$ in this smoothed estimator. The relevant-row pseudocounts are both $`0.5`$ and cancel:
+
 $$
 w_t^{(0)}=\ln\frac{N-n_t+0.5}{n_t+0.5}.
 $$
+
 The half-count choice and the zero-feedback probability model are assumptions, not a theorem of maximal ignorance with no tuning choices. This limit relates a classic IDF to a term-evidence model. Guarded BM25 instead uses $`I_{\mathrm B}(t)=\ln(1+\exp(w_t^{(0)}))`$, so its exact formula requires that further design choice.
 #### Small relevance sets can increase variance
 Feedback can help learn relevance-specific term evidence, but small positive samples and small cells produce unstable estimates. Pseudo-relevance feedback can amplify selection errors. In the toy example, changing the ferry incidence count by one among $`S=20`$ positive examples moves its weight by approximately $`1.148649`$ nats. Keeping $`S`$ fixed is not equivalent to flipping one binary relevance label; that distinction matters in the arithmetic.
@@ -416,12 +466,15 @@ At $`n_t=600{,}000`$ and $`N=10^6`$, raw RSJ gives $`\ln(400{,}000.5/600{,}000.5
 ### 18.5 Why sparse retrieval can protect the long tail
 #### Sparse rarity grows as document frequency falls
 For fixed $`N`$, the guarded IDF decreases monotonically with document frequency:
+
 $$
 I_{\mathrm B}(t)=\ln\!\left(1+\frac{N-n_t+0.5}{n_t+0.5}\right)=\ln\frac{N+1}{n_t+0.5}.
 $$
+
 At $`N=2\times10^6`$, frequency $`400{,}000`$ gives $`I_{\mathrm B}\approx1.609437162`$ and frequency $`12`$ gives $`I_{\mathrm B}\approx11.982929594`$, a ratio approximately $`7.445416`$. The approximations $`\ln5`$ and $`\ln160{,}000`$ are close but not exact with half-counts. Rarity alone does not guarantee a rare-match document beats every competing multi-term document. At fixed $`N`$, this IDF is bounded: $`I_{\mathrm B}(0)=\ln(2(N+1))`$, and the largest value for a term that actually matches a document is at $`n_t=1`$.
 #### Mean-pooling coefficient is not directional ownership
 Use a hypothetical mean-pooled bi-encoder, not a claim that DPR universally mean-pools. Let contextual token states be $`h_i\in\mathbb R^{d_{\mathrm{emb}}}`$ and identifier positions be $`J`$, with $`\lvert J\rvert=m`$ out of $`L`$ positions:
+
 $$
 \overline h=\frac1L\sum_{i=1}^{L}h_i,
 \qquad
@@ -429,6 +482,7 @@ $$
 \le\frac{mH}{L}
 \quad\text{if }\lVert h_i\rVert_2\le H.
 $$
+
 For $`m=10`$ and $`L=180`$, those positions have total averaging coefficient $`m/L=1/18\approx5.5556\%`$. That is not a bound on their share of direction, cosine score, semantics or causal importance. If all other states are zero, those positions can determine the entire pooled direction; cancellation can also make their net contribution zero. Contextual states outside the identifier can themselves encode it. Tokenization, pooling method, normalization and training all matter. The worked dimension is $`d_{\mathrm{emb}}=768`$. There is no explicit document-frequency multiplier in this simple averaging rule, but an encoder can learn rarity or exact-match features. This formula predicts neither rank $`12`$ nor rank $`340`$.
 #### Tail supervision and encoder adaptation are workload-dependent
 Rare identifiers can have few labeled query–document pairs, and releases can introduce unseen strings. Ordinary frequency-weighted training may underserve them, but fine-tuning need not sample in natural proportion: targeted oversampling, synthetic pairs, character-aware features and other adaptation can help. A Zipf-like frequency–rank relation alone does not establish that half the vocabulary occurs once; that needs a frequency histogram or an explicit finite-sampling model. A fixed encoder can represent new strings without retraining, while sparse freshness also waits for analysis, index refresh and replica visibility. Neither path is automatically current merely because a write committed.
@@ -451,7 +505,7 @@ The source's MS MARCO sanity check assumes $`8.8\times10^6`$ passages, approxima
 The source cites Thakur et al. (2021) and BEIR's eighteen datasets as evidence that BM25 remains a competitive zero-shot, out-of-domain baseline. Do not inflate that into a verified claim that BM25 is the strongest method on every dataset or beats a specified dense system on a majority without the matching benchmark table, models and settings. This pass does not independently reproduce those experiments. The practical implication is to evaluate a lexical baseline alongside domain-trained dense and hybrid systems, not to assume a universal winner.
 #### Practical sparse long-tail decisions
 - Keep BM25 as an evaluated baseline or hybrid arm when it protects important exact, tail or fresh queries. Remove it only after measuring the marginal quality, latency, cost and operational trade-off; IDF histograms alone do not prove it unnecessary.
-- Stratify evaluation by query IDF, frequency, exact identifiers, novelty, OCR quality and criticality. Define the cutoff and metric, for example $`\operatorname{Recall}@k`$, rather than comparing unspecified recall values.
+- Stratify evaluation by query IDF, frequency, exact identifiers, novelty, OCR quality and criticality. Define the cutoff and metric, for example $`\mathop{\mathrm{Recall}}\nolimits@k`$, rather than comparing unspecified recall values.
 - Preserve compatible versions, codes and identifiers in an exact field beside a normalized field. An analyzer can split or discard a string, so a whole-token coordinate is conditional on that analyzer contract.
 - Normalize OCR and typo noise where justified without silently changing identifiers. A corrupted rare token may get a high weight; high IDF is not evidence of correctness.
 - RRF avoids directly mixing unrelated score scales but still has hyperparameters and a candidate budget. General dense cosine lies in $`[-1,1]`$, nonnegative TF-IDF cosine in $`[0,1]`$; boundedness does not calibrate either against BM25 or across encoders.
@@ -459,6 +513,7 @@ The source cites Thakur et al. (2021) and BEIR's eighteen datasets as evidence t
 - Learned sparse retrieval needs suitable sparse-vector indexing/scoring support; an existing dense ANN service does not automatically support vocabulary-space vectors efficiently or correctly. Test the actual serving path before replacing a retrieval arm.
 ## Diagrams
 ### Figure 18.1
+
 $$
 \begin{array}{lr}
 \text{Conjunction stage}&\mathbb E[\text{matches}]\\
@@ -469,6 +524,8 @@ $$
 \text{OR of all four}&1{,}642{,}283.5264
 \end{array}
 $$
+
+
 $$
 \begin{aligned}
 A&=(1,0.1),&B&=(0.5,0.5),\\
@@ -479,28 +536,34 @@ S_{\mathrm{AND},2}(A)&=1-\frac{0.9}{\sqrt2}\approx0.363603897,\\
 p_{\mathrm{tie}}&=\frac{\ln2}{\ln1.8}\approx1.179249585.
 \end{aligned}
 $$
+
 Figure $`18.1`$: Panel A gives expected counts under independent term presence, not actual fractional counts or a deterministic zero. With the additional IID-document model, the final empty-result probability is approximately $`94.4027\%`$. Panel B compares a different, two-term pair from the four-term prose example. Its score-$`0.5`$ contour satisfies $`(1-w_1)^p+(1-w_2)^p=2^{1-p}`$ for $`w_i\in[0,1]`$. A wins at $`p=1`$, loses at $`p=2`$ and ties at the stated exact exponent. The exponent changes a soft ranking rule, not a mandatory filter.
 ### Figure 18.2
+
 $$
 \begin{aligned}
 g_{\mathrm{linear}}(f)&=f,&
 g_{\log}(f)&=1+\ln f\quad(f\ge1),\\
 F_{\mathrm{BM25}}(f,1)&=\frac{2.2f}{f+1.2}<2.2,\\
-\operatorname{sim}(q,\alpha d)&=\operatorname{sim}(q,d)\quad(\alpha>0),\\
-\operatorname{sim}\!\left(q,\sum_{i=1}^m c_i\right)
-&=\frac{\operatorname{sim}(q,c_1)}{\sqrt m}
+\mathop{\mathrm{sim}}\nolimits(q,\alpha d)&=\mathop{\mathrm{sim}}\nolimits(q,d)\quad(\alpha>0),\\
+\mathop{\mathrm{sim}}\nolimits\!\left(q,\sum_{i=1}^m c_i\right)
+&=\frac{\mathop{\mathrm{sim}}\nolimits(q,c_1)}{\sqrt m}
 \quad\text{under the section assumptions},\\
 \frac1{\sqrt{10}}&\approx0.316227766.
 \end{aligned}
 $$
+
 Figure $`18.2`$: The first two functions are unnormalized TF weights, not cosine scores. BM25's displayed factor holds average relative length fixed. Positive vector rescaling cancels from cosine. The breadth identity instead requires orthogonal equal-norm sections, only one contributing to the query, and nonzero vectors. Nonnegative TF-IDF cosine always remains in $`[0,1]`$; the square-root identity is not a universal penalty for any document with several topics.
 ### Figure 18.3
+
 $$
 \begin{array}{c|ccccc}
 f&1&2&5&10&20\\
 F(f,1)&1&1.375&1.774194&1.964286&2.075472
 \end{array}
 $$
+
+
 $$
 \begin{aligned}
 F_b(\ell)&=\frac{2.2}{1+1.2(1-b+b\ell)}
@@ -512,6 +575,7 @@ F_1(2)&\approx0.647058824,\\
 F_{0.75}(10)&\approx0.213592233.
 \end{aligned}
 $$
+
 Figure $`18.3`$: At average length the TF factor has finite-count range $`[1,2.2)`$ for $`f\ge1`$, and later occurrences approach an additional budget $`1.2`$. Panel B varies relative length at a fixed count. Relative to direct division, BM25 gives no greater penalty for long documents and no greater bonus for short ones; all curves meet at $`\ell=1`$. It does not replace two unbounded TF-IDF cosine behaviors: cosine was already bounded.
 ### Figure 18.4
 #### Panel A: one two-by-two table per query term
@@ -526,6 +590,7 @@ Figure $`18.3`$: At average length the TF factor has finite-count range $`[1,2.2
 $$
 w_t=\ln\frac{(a+0.5)(d_{\mathrm{cell}}+0.5)}{(b_{\mathrm{cell}}+0.5)(c+0.5)}.
 $$
+
 The estimator is the log ratio of the smoothed diagonal products. Cell labels $`b_{\mathrm{cell}}`$ and $`d_{\mathrm{cell}}`$ are local counts. At $`S=s_t=0`$, the two relevant-row half-counts cancel, yielding $`w_t^{(0)}=\ln((N-n_t+0.5)/(n_t+0.5))`$. That is the raw, potentially negative IDF; the guarded positive form requires a further transformation. A complete relevance partition and an unjudged-as-negative proxy are different data assumptions.
 #### Panel B: what each assumption buys and costs
 ```mermaid
@@ -583,7 +648,7 @@ Inspect counts, lengths, analyzers and per-term contributions first. At fixed fr
 ### 4. What probabilistic assumptions produce BM25’s IDF, and why not use a small feedback set to improve it?
 Additive-utility ranking motivates relevance odds; BIM then assumes binary incidence, term independence conditional on relevance and query, and off-query cancellation. A half-count RSJ estimator at $`S=s_t=0`$ gives raw classic IDF, not the separate positive guard. In the twenty-positive example, a one-count ferry-incidence perturbation at fixed $`S`$ moves a weight by approximately $`1.148649`$ nats; a literal relevance-label flip must also update $`S`$. Small or biased feedback can add variance, so use regularization and held-out evaluation rather than a universal sample-count rule.
 ### 5. Overall recall is high but SKU-query recall is poor. Why keep sparse retrieval?
-The source vignette gives $`92\%`$ overall and $`61\%`$ on SKU queries without specifying the retrieval cutoff here. Do not treat these as a fully defined $`\operatorname{Recall}@k`$ comparison until the gold labels, cohorts, weights and cutoff are known. Aggregate performance can hide important exact-identifier failures. A compatible sparse exact field can help, but measure its marginal gain, freshness, latency and cost against dense and hybrid alternatives. A high-IDF tail or a pooling coefficient alone does not prove an arm should stay or go.
+The source vignette gives $`92\%`$ overall and $`61\%`$ on SKU queries without specifying the retrieval cutoff here. Do not treat these as a fully defined $`\mathop{\mathrm{Recall}}\nolimits@k`$ comparison until the gold labels, cohorts, weights and cutoff are known. Aggregate performance can hide important exact-identifier failures. A compatible sparse exact field can help, but measure its marginal gain, freshness, latency and cost against dense and hybrid alternatives. A high-IDF tail or a pooling coefficient alone does not prove an arm should stay or go.
 ## Key numbers
 
 
@@ -609,7 +674,7 @@ The source vignette gives $`92\%`$ overall and $`61\%`$ on SKU queries without s
 | BM25 near-tie | $`K_A=0.66`$, $`K_B=9.3`$; totals $`11.815587\ldots`$ and $`11.959496\ldots`$; B lead $`\approx1.217953\%`$ of A. Near-tie does not guarantee either candidate enters a cutoff-limited pool |
 | Length sweep | At $`b=0`$, A $`\approx9.587634`$, B $`\approx15.887339`$; at $`b=1`$, A $`\approx12.822825`$, B $`\approx11.062111`$. Exact-input crossover $`b\approx0.768972775`$ |
 | BM25 bound check | Eviction limit $`(k_1+1)I_{\mathrm B}\approx11.656080`$; A/B shares approximately $`75.187970\%`$/$`72.886297\%`$. Counts and lengths both differ. Omitting one common $`2.2`$ multiplier gives totals $`5.370722\ldots`$/$`5.436134\ldots`$ without changing rank |
-| Tuning ranges | $`k_1\in[1.2,2.0]`$ and threefold/tenfold length-spread rules are heuristics. All $`\ell=1`$ makes $`b`$ exactly inert. A source wiki range $`50`$–$`20{,}000`$ tokens is $`400`$-fold; borrowed $`k_1=0.9`$, $`b=0.4`$ and a reported two-point $`\operatorname{Recall}@1000`$ gain do not settle top-ten quality |
+| Tuning ranges | $`k_1\in[1.2,2.0]`$ and threefold/tenfold length-spread rules are heuristics. All $`\ell=1`$ makes $`b`$ exactly inert. A source wiki range $`50`$–$`20{,}000`$ tokens is $`400`$-fold; borrowed $`k_1=0.9`$, $`b=0.4`$ and a reported two-point $`\mathop{\mathrm{Recall}}\nolimits@1000`$ gain do not settle top-ten quality |
 | Probabilistic constants | $`S=s_t=0`$ gives raw RSJ IDF; add $`0.5`$ to each cell. Full candidate pair count $`V(V-1)/2=O(V^2)`$, but a spanning tree has $`V-1`$ edges. Positive guarded IDF is a further choice |
 | Irish Sea initial state | $`N=10^6`$, frequencies $`(8{,}000,\,120{,}000,\,40{,}000)`$; raw weights $`\approx(4.820219572,\,1.992426566,\,3.178041851)`$. RSVs $`\approx6.812646138`$/$`5.170468417`$, A lead $`\approx1.642177720`$ nats |
 | Twenty judgments | $`S=20`$, counts $`(8,14,20)`$; weights $`\approx(4.435545432,\,2.794882894,\,6.892114037)`$. RSVs $`\approx7.230428325`$/$`9.686996930`$, B lead $`\approx2.456568605`$ nats. Unjudged corpus used as a negative proxy |
@@ -622,7 +687,7 @@ The source vignette gives $`92\%`$ overall and $`61\%`$ on SKU queries without s
 | Sparse win | At average length, $`F(2,1)=1.375`$; three common terms give $`6.638928295\ldots`$, one exact rare term $`11.982929594\ldots`$, ratio $`\approx1.804949`$. Two-candidate comparison, not a global rank-one proof |
 | Internal footprint | Assumed posting payload $`0.88\,\mathrm{GB}`$ versus fp32 vector payload $`6.144\,\mathrm{GB}`$, ratio $`\approx6.981818`$; posting addition $`\approx14.322917\%`$ of vectors. Omits index/runtime overhead; rare single-term list has twelve entries |
 | Public footprint | $`8.8\times10^6`$ passages, about $`55`$ words/$`45`$ distinct terms assumed; posting payload $`1.584\,\mathrm{GB}`$, fp32 vectors $`27.0336\,\mathrm{GB}`$, ratio $`\approx17.066667`$. Not all-in resident memory |
-| Reported quality and interview metrics | BEIR: eighteen cited datasets, not a universal BM25-win claim. Source vignettes: a reported four-point $`\operatorname{Recall}@50`$ gain and dense runbook rank $`340`$ versus lexical rank one; SKU recall $`92\%`$ overall/$`61\%`$ for the cohort with cutoff unspecified here. API `3.12` versus `3.9` are version strings, not arithmetic |
+| Reported quality and interview metrics | BEIR: eighteen cited datasets, not a universal BM25-win claim. Source vignettes: a reported four-point $`\mathop{\mathrm{Recall}}\nolimits@50`$ gain and dense runbook rank $`340`$ versus lexical rank one; SKU recall $`92\%`$ overall/$`61\%`$ for the cohort with cutoff unspecified here. API `3.12` versus `3.9` are version strings, not arithmetic |
 
 
 [00-START-HERE](../00-START-HERE.md) · [01-READING-ROUTES](../01-READING-ROUTES.md) · [17\_operating\_a\_vector\_store](../part-05-indexing/17_operating_a_vector_store.md) · [19\_learning\_to\_rank](19_learning_to_rank.md)

@@ -117,25 +117,35 @@ Keep full precision through all calculations and round only the reported result.
 ### 32.1 Set metrics vs rank metrics
 #### What it measures
 Fix query $`q`$ and the conventions above. Define $`P_q(k)`$ and $`r_q(k)`$ as precision and recall, reserving $`R_q`$ for the relevant set. The formulas assume exactly $`k`$ distinct returned units and positive relevant-set size where recall is used:
+
 $$
 P_q(k)=\mathrm{Precision}_q@k=\frac{h_q(k)}{k}.
 $$
+
+
 $$
 r_q(k)=\mathrm{Recall}_q@k=\frac{h_q(k)}{|R_q|},\qquad |R_q|>0.
 $$
+
+
 $$
 F_{1,q}@k=\frac{2P_q(k)r_q(k)}{P_q(k)+r_q(k)}=\frac{2h_q(k)}{k+|R_q|}.
 $$
+
 For a no-hit prefix with $`k>0`$ and $`|R_q|>0`$, set $`F_{1,q}@k=0`$ using the count form; the literal harmonic-mean expression is $`0/0`$. Recall is undefined when $`|R_q|=0`$ unless an explicit reporting convention is imposed. A truly empty prediction list also has undefined ordinary precision; that is not the same situation as a nonempty prefix with zero hits. With fewer than $`k`$ results, fixed-$`k`$ precision pads missing positions as nonrelevant, whereas returned-list precision divides by the actual returned count. Name the convention.
 Query averaging also matters. One query with one of one relevant item recovered and another with zero of one hundred gives mean query recall $`0.5`$, but pooled-count recall $`1/101\approx0.009901`$. Do not change the weighting silently.
 Plain accuracy is:
+
 $$
 \mathrm{Accuracy} = \frac{\mathrm{TP}+\mathrm{TN}}{\mathrm{TP}+\mathrm{TN}+\mathrm{FP}+\mathrm{FN}}
 $$
+
 As a deliberately misleading corpus-wide binary classification metric, mark every unretrieved document negative. With $`N=10^7`$ and four relevant documents, retrieving nothing gives $`\mathrm{TP}=\mathrm{FP}=0`$, $`\mathrm{FN}=4`$ and $`\mathrm{TN}=10^7-4`$:
+
 $$
 \mathrm{Accuracy}=\frac{10^7-4}{10^7}=0.9999996=99.99996\%.
 $$
+
 The decimal is exact for these integer counts. The original source’s $`99.9996\%`$ is not the same value. This all-negative classifier has zero recall, and empty-list precision needs its own convention; high corpus accuracy does not imply useful retrieval.
 True negatives dominate this corpus-wide classification construction. Accuracy can still be informative for a relevance judge on a declared labeled population, but it must be interpreted with prevalence and class errors rather than treated as retrieval success.
 At a fixed cutoff, these set metrics depend only on $`h_q(k)`$, $`k`$ and $`|R_q|`$. Permuting the same prefix preserves them. Moving a relevant document across the cutoff changes the prefix and can change the metrics; “order-blind” does not mean cutoff-independent.
@@ -144,23 +154,33 @@ Rank metrics score positions within a declared cutoff. Reciprocal rank awards $`
 A production prompt is limited by tokens and serialization, not necessarily a fixed number of documents. Measure the final packed evidence after filtering, deduplication and truncation; record partial chunks and per-query depth. Relevance does not guarantee successful reader use, and position effects need not decrease monotonically from the start of context.
 The worked example fixes four relevant chunks and a ten-document result set. System A puts the four hits at ranks 1 through 4. System B puts the same four hits at ranks 7 through 10.
 At $`k = 10`$, both systems score:
+
 $$
 \mathrm{Precision}@10 = \frac{4}{10} = 0.4
 $$
+
+
 $$
 \mathrm{Recall}@10 = \frac{4}{4} = 1.0
 $$
+
+
 $$
 F_1@10=\frac{2(0.4)(1)}{0.4+1}=\frac47\approx0.571429.
 $$
+
 For this toy, use a $`4{,}096`$-token total budget and exactly five complete $`500`$-token chunks: $`2{,}500`$ chunk tokens leave $`1{,}596`$ for the question, instructions, delimiters and any reserved output. Whether that is feasible depends on the actual tokenizer and request layout; it is not a measured universal “4k prompt” configuration.
 At $`k=5`$, System A has precision $`4/5=0.8`$ and recall one; System B has both zero. At depth ten, their first-hit reciprocal ranks are:
+
 $$
 \mathrm{RR}_A@10=1.
 $$
+
+
 $$
 \mathrm{RR}_B@10=\frac17\approx0.142857,\qquad \mathrm{RR}_B@5=0.
 $$
+
 The chapter’s historical MS MARCO passage-ranking example reports MRR@10, illustrating a first-hit objective rather than set accuracy. Benchmark relevance definitions, pooling and official evaluator versions are part of that result; it is not a universal objective for every RAG task.
 #### Failure without it
 A dashboard using only set metrics at depth ten calls these two orders a tie, while their set metrics at the actual five-item cutoff already distinguish them. Rank metrics add information within a fixed prefix; the wrong cutoff is a separate measurement error.
@@ -177,62 +197,86 @@ Once prefix labels, relevant-set size and IDCG are available, hit counts, first 
 ### 32.2 MRR, nDCG, and $`\mathrm{recall}@k`$ derived
 #### What MRR measures
 For each query, let $`\rho_q`$ be the first rank whose grade meets the declared binary threshold, and let $`\rho_q=\infty`$ when there is no such unit. The recall function remains $`r_q(k)`$. The cutoff version is:
+
 $$
 \mathrm{RR}_q@k=\begin{cases}1/\rho_q,&\rho_q\le k,\\0,&\rho_q>k.\end{cases}
 $$
+
 For a nonempty eligible query set $`Q`$, MRR@k averages one term per query, including zero-hit queries:
+
 $$
 \mathrm{MRR}@k=\frac1{|Q|}\sum_{q\in Q}\mathrm{RR}_q@k,\qquad |Q|>0.
 $$
+
 MRR stops scoring after the first qualifying document. It ignores later hits and distinctions among grades that meet the same threshold. It also gives no credit for a hit below its cutoff. Do not average only over successful queries; that changes the metric.
-For one query with hits at ranks one and ten, $`(1+1/10)/10=0.11`$ is not MRR; the reciprocal-rank term is one. Nor is an arbitrary sum of all relevant-hit reciprocals automatically Reciprocal Rank Fusion. RRF assigns each candidate $`d`$ a score such as $`\sum_\ell1/(\kappa+\operatorname{rank}_\ell(d))`$ across input lists containing $`d`$, with a declared offset $`\kappa`$. It is a different, per-candidate fusion operation.
+For one query with hits at ranks one and ten, $`(1+1/10)/10=0.11`$ is not MRR; the reciprocal-rank term is one. Nor is an arbitrary sum of all relevant-hit reciprocals automatically Reciprocal Rank Fusion. RRF assigns each candidate $`d`$ a score such as $`\sum_\ell1/(\kappa+\mathop{\mathrm{rank}}\nolimits_\ell(d))`$ across input lists containing $`d`$, with a declared offset $`\kappa`$. It is a different, per-candidate fusion operation.
 #### What nDCG measures
 Use illustrative grades $`\mathrm{rel}_{q,i}\in\{0,1,2,3\}`$ under an explicit rubric. Fix a nonnegative gain function $`g`$ with $`g(0)=0`$. This chapter’s worked numbers use linear gain $`g(r)=r`$; another common choice is $`g(r)=2^r-1`$. Different gains change values and potentially system comparisons; use the same choice in DCG and IDCG.
 Cumulative gain sums the grades:
+
 $$
 \mathrm{CG}_q@k=\sum_{i=1}^k g(\mathrm{rel}_{q,i}).
 $$
+
 CG uses grades but ignores permutations of the same prefix. DCG adds the logarithmic rank discount:
+
 $$
 \mathrm{DCG}_q@k=\sum_{i=1}^k\frac{g(\mathrm{rel}_{q,i})}{\log_2(i+1)}.
 $$
+
 The plus one keeps rank 1 undiscounted:
+
 $$
 \log_2(1+1) = \log_2 2 = 1
 $$
+
 The discount weight is $`1/\log_2(i+1)`$, not the denominator itself. It is one at rank one; the denominators at ranks two and ten are about $`1.584963`$ and $`3.459432`$. For integer ranks it decays more slowly than $`1/i`$ after rank one. This is a chosen utility model, not a measurement that a generator uses evidence according to that exact law.
 Let $`\mathrm{rel}^{\star}_{q,1},\ldots`$ be grades sorted in descending order over the declared evaluation universe, not merely the current retriever’s candidates. Using the same gain and cutoff gives
+
 $$
 \mathrm{IDCG}_q@k=\sum_{i=1}^k\frac{g(\mathrm{rel}^{\star}_{q,i})}{\log_2(i+1)}.
 $$
+
 If there are fewer than $`k`$ units, pad the ideal list with zero gains under the declared policy. Incomplete qrels supply an ideal over known judgments, not a certified corpus-wide optimum. Dividing by each system’s own candidate-only ideal can hide retrieval failures and make comparisons inconsistent.
+
 $$
 \mathrm{nDCG}_q@k=\frac{\mathrm{DCG}_q@k}{\mathrm{IDCG}_q@k},\qquad \mathrm{IDCG}_q@k>0.
 $$
+
 With nonnegative gains, the same discount and an ideal covering all evaluated units, the score lies in $`[0,1]`$. A value of one means optimal gain through this cutoff, possibly under many tied orders; it says nothing about later ranks or full recall. When IDCG is zero, the ratio is undefined. Choose and report a zero/exclusion convention and the affected query count, rather than silently dropping failures or asserting every query is normalizable.
 #### Why the three metrics disagree
 There are exactly two positive-grade documents in the declared universe: A has grade three and B grade one. All others have grade zero. Use $`k=10`$, linear gain and, initially, binary threshold $`\mathrm{rel}\ge1`$ for recall and MRR.
 Configuration X puts B at rank 1 and A at rank 4. Configuration Y puts A at rank 1 and B at rank 4.
 At threshold one, both have RR@10 equal to one and recall@10 equal to one. For a one-query set, the MRR values also tie. If relevance instead requires grade at least two, X’s first qualifying hit is at rank four and Y’s at rank one, giving $`0.25`$ versus one. The claimed tie depends on the threshold.
 For Configuration X:
+
 $$
 \mathrm{DCG}_X@10=1+\frac3{\log_2 5}\approx2.292029674.
 $$
+
 For Configuration Y:
+
 $$
 \mathrm{DCG}_Y@10=3+\frac1{\log_2 5}\approx3.430676558.
 $$
+
 The ideal order puts A at rank 1 and B at rank 2:
+
 $$
 \mathrm{IDCG}@10=3+\frac1{\log_2 3}\approx3.630929754.
 $$
+
 The normalized scores are:
+
 $$
 \mathrm{nDCG}_X@10=\frac{1+3/\log_2 5}{3+1/\log_2 3}\approx0.631251451.
 $$
+
+
 $$
 \mathrm{nDCG}_Y@10=\frac{3+1/\log_2 5}{3+1/\log_2 3}\approx0.944847957.
 $$
+
 The difference, calculated before rounding, is approximately $`0.313596506`$ nDCG units. These are ratio scores, not probabilities of a correct answer. The displayed three-decimal summaries are $`0.631`$ and $`0.945`$, with gap about $`0.314`$; do not use rounded DCG/IDCG as if they were exact inputs.
 The chapter uses TREC Deep Learning’s graded judgments and nDCG@10 as a historical benchmark example. Reproduce a benchmark with its official grade mapping, gain function, unjudged policy and evaluator; the linear-gain worked toy is not a claim that every official scorer uses this exact convention.
 #### Failure without it
@@ -271,40 +315,54 @@ The judge’s positive labels form a pseudo-relevant set only within the assesse
 The chapter names Haystack’s evaluation tooling as one possible harness. Tool choice does not establish human agreement, complete qrels, unbiased pooling or a calibrated probability model; those are evaluation-design responsibilities.
 #### Worked cost example
 For a one-system illustrative pass, take $`500`$ held-out queries and exactly twenty distinct candidates per query. This produces pair-judgment occurrences, not a complete set of relevance judgments for the corpus:
+
 $$
 J=500(20)=10{,}000\quad\text{query-document judgments}.
 $$
+
 For a comparison, judge a shared union of candidates; its size need not remain ten thousand. Deduplication and cached labels may reduce calls, while adjudication and changed content can add work. The following budget assumes ten thousand fresh, one-call pairs each pass.
 For one human judgment per pair, assume two judgments per minute, or $`120`$ per rater-hour. Training raters, agreement checks and adjudication are excluded:
+
 $$
 H_{\mathrm{human/pass}}=\frac{10{,}000}{120}\,\mathrm{rater\!-\!h}=\frac{250}{3}\,\mathrm{rater\!-\!h}\approx83.333333\,\mathrm{rater\!-\!h}.
 $$
+
 At a hypothetical $`\$25`$ per rater-hour, retaining full precision:
+
 $$
 C_{\mathrm{human/pass}}=\frac{10{,}000}{120}(\$25)=\$2{,}083.333333\ldots.
 $$
+
 One rater requires approximately $`10.416667`$ eight-hour workdays. Ten equally productive parallel raters require about $`8.333333`$ hours of ideal elapsed labeling time, not $`8.333333`$ total rater-hours. Coordination and adjudication add time.
 In a separate short-pair LLM toy, assume $`300`$ total input tokens—including the query, passage, instructions, delimiters and chosen exemplars—and twenty output tokens per call. This is not the earlier $`500`$-token-chunk prompt. Prices are hypothetical: $`\$0.50`$ per million input tokens and $`\$1.50`$ per million output tokens. If the actual few-shot layout does not fit, increase the input budget rather than omit it from the bill.
+
 $$
 c_{\mathrm{call}}=300\frac{\$0.50}{10^6}+20\frac{\$1.50}{10^6}=\$0.00018.
 $$
+
 Ten thousand calls process $`3.0\times10^6`$ input and $`200{,}000`$ output tokens. Their generation bill is:
+
 $$
 C_{\mathrm{LLM/pass}}=10{,}000(\$0.00018)=\$1.80.
 $$
+
 Assume fixed one-second service per call, fifty available slots, adequate rate/token limits and negligible overhead. Then ideal batched elapsed service is:
+
 $$
 t_{\mathrm{LLM/pass}}=\left\lceil\frac{10{,}000}{50}\right\rceil(1\,\mathrm s)=200\,\mathrm s\approx3.333333\,\mathrm{min}.
 $$
+
 Fifty calls per second requires about $`15{,}000`$ input and $`1{,}000`$ output tokens per second under this layout; concurrency alone does not supply that throughput. A human sample of one hundred pairs at the same pace takes fifty minutes, or $`5/6`$ rater-hour, costing $`\$125/6\approx\$20.833333`$. Split its development and held-out uses appropriately; its size does not certify judge quality.
 Across ten fresh passes, the human-only labeling bill is $`10(\$2{,}083.333333\ldots)\approx\$20{,}833.33`$, with $`833.333333`$ rater-hours. This assumes unchanged throughput, ten thousand new judgments each pass and no label reuse.
 For the LLM path, explicitly collect one hundred human labels before pass one and refresh with another hundred before passes four, seven and ten: four samples total. Keep sample uses independent of held-out scoring. The ten-pass bill is
+
 $$
 \begin{aligned}
 C_{\mathrm{10,LLM+human}}&=10(\$1.80)+4\left(\frac{100}{120}\right)(\$25)\\
 &=\$101.333333\ldots\approx\$101.33.
 \end{aligned}
 $$
+
 Using the rounded $`\$21`$ sample price gives $`\$102`$, but that is not the full-precision result. Machine service totals $`2{,}000\,\mathrm s\approx33.333333`$ minutes. The four samples add $`200`$ human minutes; with one rater and serial service, combined work is $`233.333333`$ minutes, or about $`3.888889`$ hours. “Under one hour” describes machine service alone, not this human-inclusive serial workflow. Parallel human work or pre-existing labels can change elapsed time, but not eliminate labor.
 The one-pass human/LLM token-bill ratio is about $`1{,}157.407407`$, but the ten-pass ratio including these four human samples is only $`205.592105`$. Ideal one-pass elapsed ratios are $`1{,}500`$ with one human rater and $`150`$ with ten raters; neither is a universal latency claim. Thus “three orders of magnitude in total cost and latency” does not describe every ledger above.
 If $`s`$ extra input tokens per call were omitted from the $`300`$-token layout, the same price adds $`\$0.005s`$ per ten-thousand-call pass. For $`s=800`$, generation rises from $`\$1.80`$ to $`\$5.80`$. All budgets still omit rubric development, expert adjudication, judge selection, retries, infrastructure and resulting error costs, and do not establish equal label quality.
@@ -326,32 +384,44 @@ A trained classifier can fail after a domain shift even when it was reliable on 
 The following claim-support judge is a separate illustrative task: it labels a generated claim against its cited passage. Query-document retrieval relevance can require a different rubric or graded labels; transferring this judge is a hypothesis to validate, not an identity between tasks.
 On a $`90\%`$-attributable population, an always-attributable judge has exactly $`90\%`$ accuracy and zero recall for non-attributable cases. With the two classes fixed and zero unsupported-class F1, its macro-$`F_1`$ is $`9/19\approx0.473684`$, not $`0.90`$. A mostly-positive judge need not have those exact counts, so inspect its actual confusion matrix.
 Accuracy pools both classes:
+
 $$
 \mathrm{Accuracy} = \frac{\mathrm{TP}+\mathrm{TN}}{N}
 $$
+
 For each class $`c`$ in a declared fixed class set, compute one-versus-rest counts. Precision and recall require positive denominators; declare a convention when no cases are predicted or present. The count form of F1 avoids a spurious $`0/0`$ when both computed precision and recall are zero:
+
 $$
 P_c = \frac{\mathrm{TP}_c}{\mathrm{TP}_c+\mathrm{FP}_c}
 $$
+
+
 $$
 R_c = \frac{\mathrm{TP}_c}{\mathrm{TP}_c+\mathrm{FN}_c}
 $$
+
+
 $$
 F_{1,c}=\frac{2\mathrm{TP}_c}{2\mathrm{TP}_c+\mathrm{FP}_c+\mathrm{FN}_c},\qquad\text{positive denominator}.
 $$
+
 Then it gives every class equal weight:
+
 $$
 F_{1,\mathrm{macro}}=\frac1C\sum_{c=1}^C F_{1,c},\qquad C\ge1.
 $$
+
 With two fixed classes, the class represented by twenty cases counts equally in the macro average to the one with one hundred eighty. But class precision depends on prevalence, so macro-$`F_1`$ is not invariant to the evaluation base rate. Identical $`0.90`$ class recalls give macro-$`F_1=0.90`$ on balanced labels but about $`0.792359`$ at a $`90:10`$ mixture. Report per-class counts and the actual evaluation population, not just an equal-weight average.
 AttributionBench reports a historical fine-tuned GPT-3.5 result near $`80\%`$ binary macro-$`F_1`$. That is not an error probability of one in five, a present-day ceiling or a mathematical limit for few-shot prompts. For example, counts $`(\mathrm{TP},\mathrm{FN},\mathrm{FP},\mathrm{TN})=(27,3,3,7)`$ give macro-$`F_1=0.80`$ but accuracy $`0.85`$. A prompted result above a published reference requires a fair independent evaluation, not automatic distrust solely because it exceeds that number.[\[2\]](https://arxiv.org/html/2402.15089v1)
 #### Why exemplar balance matters
 Prompt construction chooses the exemplar distribution; it does not choose the class balance of independently sampled evaluation traffic. Prompt examples may shift the judge’s label prior or threshold, but a behavioral effect must be measured rather than assumed.
-For eight IID draws with minority probability $`0.1`$, let $`X\sim\operatorname{Binomial}(8,0.1)`$. Then $`\mathbb E[X]=0.8`$ and the majority expectation is $`7.2`$, not a guaranteed seven-to-one draw. Moreover,
+For eight IID draws with minority probability $`0.1`$, let $`X\sim\mathop{\mathrm{Binomial}}\nolimits(8,0.1)`$. Then $`\mathbb E[X]=0.8`$ and the majority expectation is $`7.2`$, not a guaranteed seven-to-one draw. Moreover,
+
 $$
 \Pr(X=0)=0.9^8\approx0.43046721,\qquad
 \Pr(X\le1)=0.9^8+8(0.1)(0.9)^7\approx0.81310473.
 $$
+
 Sampling without replacement from exactly one hundred eighty majority and twenty minority examples is hypergeometric instead, with zero-minority probability $`\binom{180}{8}/\binom{200}{8}\approx0.423644`$. Do not substitute an IID probability as an exact finite-population result.
 Selecting four exemplars per class guarantees representation in that eight-example prompt. Boundary cases can reveal distinctions, while representative easy cases can anchor the rubric. Neither balancing nor hard examples guarantees better classification, removes every shortcut or calibrates production probabilities. Validate selection and ordering on independent data, and preserve the intended evaluation base rate.
 The original AttributionBench error audit examined $`321`$ selected GPT-3.5 chain-of-thought prompting errors, not three hundred errors from the separately fine-tuned system. It reports $`66.0\%`$ fine-grained information insensitivity, including missed nuance and inference problems. The selection uses up to fifty errors per dataset and class balancing for several sets; these are not unbiased production error proportions.[\[2\]](https://arxiv.org/html/2402.15089v1)
@@ -359,54 +429,80 @@ A further $`26.8\%`$ is information-access mismatch, including evidence/context 
 The benchmark uses four in-distribution and three held-out out-of-distribution datasets. This tests particular transfers; success does not prove that a system learned a general rule rather than shortcuts, or cover every future shift.[\[2\]](https://arxiv.org/html/2402.15089v1)
 #### Worked class-balance example
 Use the same $`200`$ held-out triples for both hand-constructed configurations: $`180`$ attributable and twenty non-attributable. Rows are true labels and columns predictions, each ordered as attributable $`A`$, then non-attributable $`\neg A`$:
+
 $$
 C^{(1)}=\begin{pmatrix}171&9\\14&6\end{pmatrix},\qquad
 C^{(2)}=\begin{pmatrix}165&15\\5&15\end{pmatrix}.
 $$
+
 These are stipulated outcome counts, not measured results or predictions derived from the exemplar ratios. Their values illustrate metric behavior. They do not establish that stratifying examples caused the difference or that a published macro score bounds either configuration.
 Configuration 1 uses seven attributable exemplars and one non-attributable exemplar.
 The judge correctly calls 171 of 180 attributable pairs. It correctly calls 6 of 20 non-attributable pairs. The recalls are $`0.95`$ and $`0.30`$.
 It predicts 185 cases as attributable. That total is 171 correct calls plus 14 missed non-attributable cases. It predicts 15 as non-attributable. That total is 6 correct calls plus 9 missed attributable cases.
+
 $$
 P_A^{(1)}=\frac{171}{185}\approx0.924324324.
 $$
+
+
 $$
 F_{1,A}^{(1)}=\frac{2(171)}{2(171)+14+9}=\frac{342}{365}\approx0.936986301.
 $$
+
+
 $$
 P_{\neg A}^{(1)}=\frac6{15}=0.40.
 $$
+
+
 $$
 F_{1,\neg A}^{(1)}=\frac{2(6)}{2(6)+9+14}=\frac{12}{35}\approx0.342857143.
 $$
+
+
 $$
 F_{1,\mathrm{macro}}^{(1)}=\frac12\left(\frac{342}{365}+\frac{12}{35}\right)\approx0.639921722.
 $$
+
+
 $$
 \mathrm{accuracy} = \frac{171+6}{200} = 0.885
 $$
+
 The $`88.5\%`$ accuracy coexists with only $`30\%`$ recall for unsupported cases: fourteen of twenty broken citations are falsely accepted. The macro average exposes a class problem but does not by itself quantify its harm or set a safe action threshold.
 Configuration 2 uses four exemplars from each class.
 Configuration two correctly labels $`165`$ of $`180`$ attributable cases and fifteen of twenty non-attributable ones. Recalls are exactly $`11/12\approx0.916667`$ and $`3/4=0.75`$.
 It predicts 170 cases as attributable. That total is 165 correct calls plus 5 missed non-attributable cases. It predicts 30 as non-attributable. That total is 15 correct calls plus 15 missed attributable cases.
+
 $$
 P_A^{(2)}=\frac{165}{170}=\frac{33}{34}\approx0.970588235.
 $$
+
+
 $$
 F_{1,A}^{(2)}=\frac{330}{330+5+15}=\frac{33}{35}\approx0.942857143.
 $$
+
+
 $$
 P_{\neg A}^{(2)}=\frac{15}{30}=0.50.
 $$
+
+
 $$
 F_{1,\neg A}^{(2)}=\frac{30}{30+15+5}=\frac35=0.600.
 $$
+
+
 $$
 F_{1,\mathrm{macro}}^{(2)}=\frac12\left(\frac{33}{35}+\frac35\right)=\frac{27}{35}\approx0.771428571.
 $$
+
+
 $$
 \mathrm{accuracy} = \frac{165+15}{200} = 0.900
 $$
+
 Computed before rounding, the macro change is approximately $`0.131506849`$ score units, or $`13.150685`$ points on a percent-scaled score. The three-decimal summaries are $`0.640`$ and $`0.771`$, not $`0.772`$. Accuracy increases $`1.5`$ percentage points, from $`88.5\%`$ to $`90\%`$. Majority recall falls about $`3.333333`$ points while minority recall rises $`45`$ points; false accepts fall from fourteen to five, while false rejections rise from nine to fifteen.
 Twenty minority cases leave substantial sampling uncertainty. Under an IID within-class Bernoulli illustration, nominal $`95\%`$ Wilson intervals for recall are about $`[0.145477,0.518973]`$ for six of twenty and $`[0.531299,0.888138]`$ for fifteen of twenty. These are separate recall intervals, not an interval or paired significance test for the change. Aggregate confusion matrices do not identify which individual predictions changed. Use paired item-level or query-clustered comparisons, depending on sampling, and account for prompt selection on development data. A historical $`0.80`$ result is neither a ceiling nor a substitute for this analysis.
 #### Failure without it

@@ -135,9 +135,11 @@ A source pointer establishes an inspectable claimed link. A trustworthy input lo
 - The resulting labor is $`12{,}500(90)=1{,}125{,}000\,\mathrm s=312.5`$ reviewer-hours. Real times and claim counts must be sampled; answer-level clustering matters for uncertainty.
 The attributed reading proxy assumes an average of $`1.5`$ distinct $`50`$-word excerpts per claim at $`200`$ words per minute. One excerpt takes $`(50/200)\,\mathrm{min}=15\,\mathrm s`$. This excludes opening sources, resolving the claim, comparing qualifications, checking multiple excerpts jointly and documenting the verdict.
 The attributed review cost is:
+
 $$
 t_{\mathrm{cited,reading}}=1.5(15\,\mathrm s)=22.5\,\mathrm{s/claim}.
 $$
+
 The reading-only total is $`12{,}500(22.5)=281{,}250\,\mathrm s=78.125`$ reviewer-hours, about $`78.1`$ when reported. Actual verification can take longer even with correct pointers.
 - The modeled time ratio is $`312.5/78.125=4`$, equivalent to a $`75\%`$ reduction or $`234.375`$ reviewer-hours saved under those scopes, not a measured universal improvement.
 - If both workflows additionally need the same $`b\ge0`$ seconds of claim-comparison overhead, their ratio is $`(90+b)/(22.5+b)`$, which approaches one as common overhead grows.
@@ -182,17 +184,23 @@ The chapter cites AIS applications to conversational QA, summarization and table
 - Let $`I`$ denote interpretability and $`A`$ source support after resolution. The joint pass probability satisfies $`P(I\cap A)=P(I)P(A\mid I)`$, without assuming the gates are independent.
 - Count untested support separately from failures so the conditional denominator remains clear.
 Three sentences remain uninterpretable; $`47`$ pass gate one. Their support status is untested.
+
 $$
 \widehat P(I)=\frac{47}{50}=0.94=94\%.
 $$
+
 Among the $`47`$ interpretable sentences, eight fail support: five have insufficient evidence and three conflict with their citations. A date or numerical conflict is a failure even if described as “mild.” The remaining $`39`$ pass.
+
 $$
 \widehat P(A\mid I)=\frac{39}{47}\approx0.829787234=82.9787234\%.
 $$
+
 The end-to-end AIS rate is:
+
 $$
 \widehat P(I\cap A)=\frac{47}{50}\frac{39}{47}=\frac{39}{50}=0.78=78\%.
 $$
+
 - The joint pass rate is $`78\%`$. The eight interpretable support failures are $`8/50=16\%`$ of the full batch, while the three resolution failures are $`6\%`$; total joint failure is $`22\%`$.
 - This pass rate is neither an automatic judge’s accuracy nor its macro-$`F_1`$. Similarity to an unrelated $`80\%`$ benchmark score is not a sanity check, and a genuine $`99\%`$ pass rate is not disproved by either number.
 - If these fifty sentences were IID draws, a nominal $`95\%`$ Wilson interval for the joint pass rate would be about $`[0.6476,0.8725]`$. Answer-level clustering or selected samples require a different uncertainty design. High rates need audited evidence and denominators, not rejection merely for being high.
@@ -212,9 +220,11 @@ Putting a source in context creates an opportunity for it to influence the write
 #### Citation presence can be nearly uninformative
 Min et al.’s FActScore analysis reports citations on $`36.0\%`$ of supported and $`37.6\%`$ of unsupported sentences for the evaluated PerplexityAI biography setting. Those nearby rates make citation presence weakly discriminative for that support label. “Both exceed thirty percent” alone would not establish that: rates $`99\%`$ and $`31\%`$ also exceed thirty but have a likelihood ratio above three. The paper evaluates a search-enabled system; these rates do not identify whether every citation was attached before or after generation or prove a causal failure of all post-hoc architectures.[\[2\]](https://arxiv.org/html/2305.14251)
 For the following independent toy, let $`C`$ mean correctness under a defined reference criterion and let $`c`$ be the event “has a citation.” Treat $`C`$ and its complement as an exhaustive binary partition. The odds update, when its denominators are positive, is:
+
 $$
 \frac{P(C\mid c)}{P(\neg C\mid c)}=\frac{P(C)}{P(\neg C)}\frac{P(c\mid C)}{P(c\mid\neg C)}.
 $$
+
 The last factor is $`\mathrm{LR}_c`$. A value of one leaves the prior odds unchanged; closeness to one depends on the actual conditional rates, not a common lower bound. For FActScore’s support label, the reported-rate ratio is $`0.36/0.376=45/47\approx0.957447`$. If one additionally assumed a fifty-percent prior support rate in that same population, citation presence would imply about $`48.913043\%`$ support, not an increase in world-truth probability. The hypothetical prior and the support-versus-truth distinction matter.
 #### A correct answer can still have a decorative citation
 - A correct claim may have an unrelated citation, and a false claim may have a topically similar one.
@@ -226,13 +236,17 @@ The claim can be right while the citation remains evidentially empty.
 - For an explicitly hypothetical correctness signal, set $`P(c\mid C)=0.35`$ and $`P(c\mid\neg C)=0.31`$.
 - These illustrative rates are not FActScore’s measured rates and do not describe every citation system. Supply a prior and a valid evaluation population before interpreting the update.
 The four-point gap gives:
+
 $$
 \mathrm{LR}_c=\frac{0.35}{0.31}=\frac{35}{31}\approx1.129032258.
 $$
+
 With the additional prior $`P(C)=0.50`$, use the unrounded likelihood ratio:
+
 $$
 P(C\mid c)=\frac{0.35(0.50)}{0.35(0.50)+0.31(0.50)}=\frac{35}{66}\approx0.530303030.
 $$
+
 The increase is about $`3.030303`$ percentage points, not a verification guarantee. Under the stated $`5{,}000`$-claim population and prior, expected cited counts are $`875`$ correct and $`775`$ incorrect, so $`875/(875+775)=35/66`$. A prior of $`0.90`$ instead gives about $`91.040462\%`$ posterior correctness; the posterior is not fixed by the likelihood ratio alone.
 The earlier $`94\%`$ interpretability and $`78\%`$ joint AIS pass rates differ by sixteen percentage points because eight of fifty sentences fail the second gate. That is not a Bayesian confidence gain and is not comparable as an effect size with the citation marker’s $`3.030303`$-point posterior update. They are different events, denominators and populations.
 #### Deployment rules for post-hoc citations
@@ -271,12 +285,16 @@ A judge can miss the one clause that resolves a claim. A fluent reader can also 
 - Compare review load under the additional assumption that evidence retries need no human follow-up; verification compute and all other work are excluded.
 The toy router sends $`180`$ insufficient-evidence cases to a bounded retrieval/verification path and only the $`120`$ contradictions to immediate human review. If retries later escalate or new claims require review, that additional load must be counted.
 The source gives no priced end-to-end retry workload. “Cents” is not enough to infer cost-effectiveness: include retrieval, generation, judging, unresolved retries and any resulting human queue.
+
 $$
 H_{\mathrm{ideal}}=120\frac{3\,\mathrm{min}}{60\,\mathrm{min/h}}=6\,\mathrm{reviewer\!\!-\!hours/day}.
 $$
+
+
 $$
 \frac{15-6}{15}=0.60=60\%\quad\text{modeled immediate review-load reduction}.
 $$
+
 The $`60\%`$ saving assumes perfect routing and no retry escalation. A binary macro-$`F_1`$ of $`0.80`$ neither supplies a three-way error rate nor determines human load. With counts $`N_{ij}`$ from true class $`i`$ to predicted class $`j`$, and predicted classes $`A,E,C`$, immediate review is $`H=(3/60)\sum_iN_{iC}`$ hours; unsupported auto-ships include $`N_{EA}+N_{CA}`$. If a fraction $`q`$ of the predicted-$`E`$ queue later escalates, add $`(3q/60)\sum_iN_{iE}`$ hours under the same review time.
 Mistakes need not make apparent savings lower: a bad router can send too few dangerous cases to review. For example, routing only eighty cases to humans costs four hours and appears to save $`73.333333\%`$, yet can also auto-ship fifty unsupported claims. Review volume without a confusion matrix and harm/cost ledger is not a quality result.
 #### Production label decisions
@@ -293,6 +311,7 @@ Held-out datasets test transfer beyond the chosen training distributions. A stro
 - Equal class weights expose failures that raw accuracy can hide on a skewed population, but one macro average still does not reveal every error type or probability calibration.
 - Report per-class counts, precision, recall, accuracy and the macro score together, with the evaluation distribution and zero-denominator convention.
 The metric is:
+
 $$
 \begin{aligned}
 F_{1,A}&=\frac{2\mathrm{TP}}{2\mathrm{TP}+\mathrm{FP}+\mathrm{FN}},\\
@@ -300,6 +319,7 @@ F_{1,\neg A}&=\frac{2\mathrm{TN}}{2\mathrm{TN}+\mathrm{FP}+\mathrm{FN}},\\
 F_{1,\mathrm{macro}}&=\frac{F_{1,A}+F_{1,\neg A}}{2}.
 \end{aligned}
 $$
+
 For nondegenerate denominators, let $`e=(\mathrm{FP}+\mathrm{FN})/N`$ and $`d=(\mathrm{TP}-\mathrm{TN})/N`$. Algebra gives $`F_{1,\mathrm{macro}}=1-e/(1-d^2)`$. Equality with accuracy $`1-e`$ holds when the relevant asymmetry vanishes, not simply because true labels are balanced.
 For example, counts $`(\mathrm{TP},\mathrm{FN},\mathrm{FP},\mathrm{TN})=(27,3,3,7)`$ give class scores $`0.9`$ and $`0.7`$, hence macro-$`F_1=0.8`$ but accuracy $`34/40=0.85`$. Even balanced true classes can differ: $`(50,0,20,30)`$ gives accuracy $`0.80`$ and macro-$`F_1=19/24\approx0.791667`$. Thus subtracting a macro score from one is not generally an error-rate calculation.
 #### A historical result near $`80\%`$ macro-$`F_1`$, not a universal ceiling
@@ -311,12 +331,15 @@ Multiplying the rounded $`66.0\%`$ by $`321`$ gives $`211.86`$, approximately $`
 Fine-grained errors include overlooking qualifications, relevant evidence or necessary inference, and drawing invalid inferences. More text alone cannot be assumed to fix these errors. The chapter’s Thailand-population example is an illustration of a support judgment against a specified reference, not an independently verified current population fact or evidence that every missed number is cured the same way.
 Likewise, $`321(0.268)=86.028`$ suggests about $`86`$ access-related cases from rounded proportions, not the original asserted eighty-one. Percentages and selected counts need their own denominators.
 Access mismatch includes different source scopes, missing conversational context, ambiguous references and possible label problems. Equalize the authorized evidence seen by judge and annotator for the question being scored. If the target is support from the generator’s chunk, adding unseen full-page evidence changes the target rather than proving that the original chunk supported the answer. If the target is external verification, both graders may instead use the declared expanded source scope.
+
 $$
 66.0\%+26.8\%=92.8\%,\qquad100\%-92.8\%=7.2\%.
 $$
+
 The $`7.2\%`$ residual follows from rounded reported proportions and need not identify exact category counts. These selected-error proportions are not fractions of all judged claims, and the label “access mismatch” does not imply a guaranteed correctable fraction.
 #### Worked judge-quality example
 Build a separate, explicit error-budget scenario rather than infer it from macro-$`F_1`$. Suppose $`10{,}000`$ daily binary verdicts have this symmetric confusion ledger, where rows are true labels and columns predictions:
+
 $$
 \begin{array}{c|rr}
  & A & \neg A\\\hline
@@ -324,28 +347,41 @@ A&4{,}000&1{,}000\\
 \neg A&1{,}000&4{,}000
 \end{array}
 $$
+
 This stipulated ledger has both accuracy and macro-$`F_1`$ equal to $`0.80`$, with a measured-in-the-scenario error fraction $`e_0=0.20`$. The equality comes from these counts, not balance alone. It is not an observed deployment or a reconstruction of the benchmark.
+
 $$
 E_0=1{,}000+1{,}000=10{,}000(0.20)=2{,}000\quad\text{wrong verdicts/day in the scenario}.
 $$
+
 For sensitivity analysis only, additionally suppose the selected prompting audit’s rounded category shares transfer unchanged to this different daily error population. That unverified transfer gives:
+
 $$
 E_{\mathrm{fine}}=2{,}000(0.660)=1{,}320.
 $$
+
+
 $$
 E_{\mathrm{access}}=2{,}000(0.268)=536,\qquad E_{\mathrm{other}}=2{,}000(0.072)=144.
 $$
+
 Now make a best-case intervention assumption: all $`536`$ access-related wrong verdicts become correct, no new errors appear, and all other verdicts and evaluation labels stay fixed. The remaining $`1{,}320+144`$ errors are unchanged. Equal source access alone does not imply these assumptions; longer inputs can create distractions, higher cost, truncation and new mistakes, and changing evidence scope can change the gold label itself.
+
 $$
 E_{\mathrm{best\ case}}=2{,}000-536=1{,}464\quad\text{wrong verdicts/day}.
 $$
+
+
 $$
 e_{\mathrm{best\ case}}=\frac{1{,}464}{10{,}000}=0.1464=14.64\%.
 $$
+
 More generally, if a fraction $`q\in[0,1]`$ of that access-related bucket is fixed and new errors add fraction $`\nu\ge0`$ of all judgments, with other effects held fixed,
+
 $$
 e_{\mathrm{new}}=e_0(1-0.268q)+\nu.
 $$
+
 Under $`\nu=0`$, $`q=1`$ gives the $`14.64\%`$ best case and $`q=0.5`$ gives $`17.32\%`$. These are conditional scenarios, not a guaranteed improvement or a new macro-$`F_1`$. Evaluate the intervention on the same target evidence scope and account for latency, token cost and newly introduced errors.
 Only under complete correction and no new errors does this scenario cut wrong verdicts by $`26.8\%`$, or the error rate by $`5.36`$ percentage points, leaving about one in $`6.83`$ wrong. Actual correction can be smaller, zero or negative. Recompute a full post-intervention confusion matrix; an error count alone does not identify its macro-$`F_1`$.
 #### Production judge decisions

@@ -35,7 +35,7 @@ The complete lesson is one library policy. Choose each representation by the fai
 | One-hot vector | A vector with one active coordinate for one term | It makes different terms orthogonal by construction |
 | Term frequency and inverse document frequency | A weighting that rewards terms in a document and discounts common terms | It lets rare terms dominate lexical scores |
 | Best Matching $`25`$ (BM25) | A lexical ranking function with inverse document frequency and saturated term frequency | It remains strong for rare tokens and out-of-domain retrieval |
-| Inverse document frequency ($`\operatorname{idf}`$) | A weight that rises as a term appears in fewer documents | It gives rare identifiers strong ranking power |
+| Inverse document frequency ($`\mathop{\mathrm{idf}}\nolimits`$) | A weight that rises as a term appears in fewer documents | It gives rare identifiers strong ranking power |
 | Diagonal weighting | Scaling each fixed term axis without mixing axes | It cannot create synonym similarity |
 | Orthogonal terms | Terms whose vectors have zero inner product | Exact separation helps literal match and blocks synonymy |
 | Static embedding | One learned dense vector for each surface word form | It captures semantic neighbors but mixes word senses |
@@ -63,7 +63,7 @@ The complete lesson is one library policy. Choose each representation by the fai
 | Rank fusion | Combining ordered result lists rather than raw scores | It merges legs whose scores are not directly comparable |
 | Hierarchical Navigable Small World (HNSW) graph | A neighbor graph for approximate dense-vector search | It adds memory beyond the vectors |
 | Approximate nearest neighbor search | Fast search that trades exact scanning for an indexed candidate path | Encoder dimension changes require a new recall and latency sweep |
-| Pointwise Mutual Information ($`\operatorname{PMI}`$) | A log ratio measuring how strongly a word and context occur together | Count changes directly alter distributional geometry |
+| Pointwise Mutual Information ($`\mathop{\mathrm{PMI}}\nolimits`$) | A log ratio measuring how strongly a word and context occur together | Count changes directly alter distributional geometry |
 | Meaning drift | A change in a word’s context distribution over time | A frozen encoder can become mismatched to a live corpus |
 | Law of conformity | The reported pattern that frequent words change more slowly | Rare terms can drift faster |
 | Law of innovation | The reported pattern that polysemous words change faster | Ambiguous terms deserve closer drift monitoring |
@@ -77,7 +77,7 @@ The complete lesson is one library policy. Choose each representation by the fai
 | Dense vector | A lower-dimensional vector whose coordinates are all stored | Every chunk pays for every coordinate |
 | Ambient dimension | The size of the mathematical space containing a vector | It is different from the amount of stored support |
 | Support | The coordinates with nonzero values | It determines sparse per-document storage |
-| Nonzero count ($`\operatorname{nnz}`$) | The number of active coordinates in a vector | It is the right first estimate for sparse index size |
+| Nonzero count ($`\mathop{\mathrm{nnz}}\nolimits`$) | The number of active coordinates in a vector | It is the right first estimate for sparse index size |
 | Fixed basis | Coordinates assigned meanings before model training | It makes lexical coordinates readable across index builds |
 | Learned basis | Coordinates chosen by training and defined only up to rotation | An individual dense dimension has no stable label |
 | Exact-match gate | A literal term either contributes a lexical posting or contributes nothing | It creates a large, auditable distinction |
@@ -121,10 +121,10 @@ The complete lesson is one library policy. Choose each representation by the fai
 | Attention sink | Attention mass concentrating on an early position | It helps explain why one projected vector can carry document information |
 | Multi-hop question | A question that combines a hierarchy of facts | One projected vector has limited structure for this case |
 | $`V`$, $`d`$, $`W`$, $`e_i`$, $`\delta_{ij}`$, $`m`$, $`v_j`$, $`v_w`$, $`n`$, $`v_i`$, and $`f`$ | Vocabulary and embedding sizes, lexical weighting, basis vectors, the equality indicator, sense count and vectors, sequence length, contextual token vector, and encoder | These symbols define the four representation eras and the clean polysemy bound |
-| $`D`$, $`\operatorname{number}(w,c)`$, $`P(w,c)`$, $`u_w`$, $`v_c`$, $`b_w`$, $`b_c`$, $`k`$, $`r`$, and $`\Delta\operatorname{PMI}`$ | $`n_{wc},n_w,n_c,T_{\mathrm{pair}}`$ are compatible word-context-pair counts; $`u_w,v_c,b_w,b_c,k`$ are factorization parameters | PMI drift includes total-pair renormalization; $`r=m/n_w`$ is term-use growth, not corpus growth |
+| $`D`$, $`\mathop{\mathrm{number}}\nolimits(w,c)`$, $`P(w,c)`$, $`u_w`$, $`v_c`$, $`b_w`$, $`b_c`$, $`k`$, $`r`$, and $`\Delta\mathop{\mathrm{PMI}}\nolimits`$ | $`n_{wc},n_w,n_c,T_{\mathrm{pair}}`$ are compatible word-context-pair counts; $`u_w,v_c,b_w,b_c,k`$ are factorization parameters | PMI drift includes total-pair renormalization; $`r=m/n_w`$ is term-use growth, not corpus growth |
 | $`Q`$, $`W_t`$, $`W_{t+1}`$, $`I`$, $`USV^{\mathsf{T}}`$, and $`\lVert\cdot\rVert_F`$ | Orthogonal alignment map, embedding matrices at two times, identity matrix, singular value decomposition factors, and Frobenius norm | These symbols state why model spaces need alignment before drift comparison |
-| $`x`$, $`z`$, $`\operatorname{nnz}`$, $`\rho`$, $`S`$, $`N`$, $`d`$, $`M`$, $`m`$, $`k`$, and $`\beta`$ | Sparse and dense vectors, support size, mean token correlation, token-vector sum, corpus and vector sizes, graph degree, Welch vector count, and Heaps-law constants | These symbols price sparse support, dense storage, exact-match margin, and directional capacity |
-| $`x_i`$, $`x_i^{+}`$, $`h_i`$, $`h_i^{+}`$, $`\tau`$, $`\operatorname{loss}_i`$, $`c`$, $`p`$, $`m_1`$, $`m_2`$, $`u_i`$, $`v_i`$, $`e(x)`$, $`\widehat{x}(t)`$, $`t`$, and product-quantization $`m`$ | Contrastive texts and vectors, temperature and loss, critical-token count, dropout rate and masks, masked views, encoder output, iterative text guess, correction round, and subvector count | These symbols define the contrastive, dropout, inversion, and quantization mechanisms |
+| $`x`$, $`z`$, $`\mathop{\mathrm{nnz}}\nolimits`$, $`\rho`$, $`S`$, $`N`$, $`d`$, $`M`$, $`m`$, $`k`$, and $`\beta`$ | Sparse and dense vectors, support size, mean token correlation, token-vector sum, corpus and vector sizes, graph degree, Welch vector count, and Heaps-law constants | These symbols price sparse support, dense storage, exact-match margin, and directional capacity |
+| $`x_i`$, $`x_i^{+}`$, $`h_i`$, $`h_i^{+}`$, $`\tau`$, $`\mathop{\mathrm{loss}}\nolimits_i`$, $`c`$, $`p`$, $`m_1`$, $`m_2`$, $`u_i`$, $`v_i`$, $`e(x)`$, $`\widehat{x}(t)`$, $`t`$, and product-quantization $`m`$ | Contrastive texts and vectors, temperature and loss, critical-token count, dropout rate and masks, masked views, encoder output, iterative text guess, correction round, and subvector count | These symbols define the contrastive, dropout, inversion, and quantization mechanisms |
 
 
 ## Core mechanics
@@ -137,11 +137,13 @@ Use natural logarithms and nats except for explicit $`\log_2`$ information calcu
 > 🧩 **What it is:**
 
 
-Fix a vocabulary $`\mathcal V`$ with size $`V=\lvert\mathcal V\rvert`$. A chunk becomes a vector in $`\mathbb R^V`$ whose coordinate $`t`$ depends on the count of term $`t`$. A vocabulary near $`10^5`$ is the chapter’s scenario scale. TF–IDF and BM25 retain the same lexical basis, but use different term-frequency, query and document-length weights; BM25 need not be a symmetric dot product of identically transformed vectors. With diagonal $`W=\operatorname{diag}(\operatorname{idf}_1,\ldots,\operatorname{idf}_V)`$, a weighted bilinear score has:
+Fix a vocabulary $`\mathcal V`$ with size $`V=\lvert\mathcal V\rvert`$. A chunk becomes a vector in $`\mathbb R^V`$ whose coordinate $`t`$ depends on the count of term $`t`$. A vocabulary near $`10^5`$ is the chapter’s scenario scale. TF–IDF and BM25 retain the same lexical basis, but use different term-frequency, query and document-length weights; BM25 need not be a symmetric dot product of identically transformed vectors. With diagonal $`W=\mathop{\mathrm{diag}}\nolimits(\mathop{\mathrm{idf}}\nolimits_1,\ldots,\mathop{\mathrm{idf}}\nolimits_V)`$, a weighted bilinear score has:
+
 $$
-\langle e_i, W e_j\rangle = \operatorname{idf}_i\cdot\delta_{ij}
+\langle e_i, W e_j\rangle = \mathop{\mathrm{idf}}\nolimits_i\cdot\delta_{ij}
 $$
-For the ordinary dot product of two vectors each multiplied by $`W`$, the diagonal weights are squared: $`\langle We_i,We_j\rangle=\operatorname{idf}_i^2\delta_{ij}`$. Neither convention creates off-diagonal synonym similarity.
+
+For the ordinary dot product of two vectors each multiplied by $`W`$, the diagonal weights are squared: $`\langle We_i,We_j\rangle=\mathop{\mathrm{idf}}\nolimits_i^2\delta_{ij}`$. Neither convention creates off-diagonal synonym similarity.
 
 
 > 🎯 **Why it exists:**
@@ -167,9 +169,12 @@ The worked corpus has $`5\times10^6`$ chunks and about $`150`$ distinct terms pe
 
 
 Project vocabulary axes into about 300 learned dimensions. Similar contexts place words near one another. CBOW predicts the center word from its surrounding window. Skip-gram predicts the surrounding window from the center word (Mikolov et al., 2013). GloVe factorizes a global co-occurrence matrix (Pennington et al., 2014). For $`m`$ equally frequent, mutually orthogonal unit senses $`v_{j}`$, Arora et al. (2018) give the cited clean-case superposition:
+
 $$
 v_w = \frac{1}{\sqrt{m}}\sum_{j=1}^{m}v_j
 $$
+
+
 $$
 \cos(v_w,v_j) = \frac{1}{\sqrt{m}}
 $$
@@ -198,9 +203,11 @@ Mean-pooling 300-dimensional static vectors for $`5\times 10^{6}`$ chunks costs 
 
 
 Token $`i`$ becomes a function of the full sequence.
+
 $$
 v_i = f(w_1,\ldots,w_n)_i
 $$
+
 ELMo stacks two bidirectional LSTM layers and learns a mixture of them (Peters et al., 2018). BERT uses a bidirectional transformer trained by masked language modeling (Devlin et al., 2019).
 
 
@@ -247,13 +254,17 @@ Separate monolingual or unimodal spaces cannot directly answer a cross-space que
 A $`1{,}024`$-dimensional fp32 vector payload for $`5\times10^6`$ chunks is $`20.48\,\mathrm{GB}`$. If $`M_0=32`$ means exactly $`32`$ allocated base-layer neighbor slots of $`4\,\mathrm B`$ per node, links add $`128\,\mathrm{B/vector}`$ or $`0.64\,\mathrm{GB}`$, a $`3.125\%`$ ratio to vector payload. This differs from the common HNSW parameter convention $`M=32`$, which allows $`2M=64`$ base-layer slots and budgets $`1.28\,\mathrm{GB}`$. Neither is a complete index-memory estimate.
 #### The rare-token worked example {color="gray_bg"}
 The corpus has $`5\times10^6`$ chunks of $`250`$ tokens, four languages and $`10{,}000`$ daily queries. Consider `ERR_0x8007005F failed to write registry key`. Assume the code is one lexical term, $`to`$ is removed as a stopword, and the four remaining ordinary terms have the stated frequencies. The code occurs in three chunks. With the specified positive BM25 IDF convention:
+
 $$
-\operatorname{idf}_{\mathrm{code}}=\ln\!\left(\frac{5\times10^6-3+0.5}{3+0.5}+1\right)\approx14.17218570.
+\mathop{\mathrm{idf}}\nolimits_{\mathrm{code}}=\ln\!\left(\frac{5\times10^6-3+0.5}{3+0.5}+1\right)\approx14.17218570.
 $$
+
 If each retained ordinary term occurs in $`10^6`$ chunks, its IDF is $`\ln[(5{,}000{,}001)/(1{,}000{,}000.5)]\approx1.60943761`$. Assuming equal query and term-saturation factors, the code’s score share is:
+
 $$
-\frac{\operatorname{idf}_{\mathrm{code}}}{\operatorname{idf}_{\mathrm{code}}+4\operatorname{idf}_{\mathrm{ordinary}}}\approx0.687638506\approx68.764\%.
+\frac{\mathop{\mathrm{idf}}\nolimits_{\mathrm{code}}}{\mathop{\mathrm{idf}}\nolimits_{\mathrm{code}}+4\mathop{\mathrm{idf}}\nolimits_{\mathrm{ordinary}}}\approx0.687638506\approx68.764\%.
 $$
+
 Mean pooling gives each final token vector coefficient $`1/250=0.4\%`$. That coefficient and the $`68.764\%`$ lexical score share measure different things; their ratio is not a $`170`$-fold influence comparison. Token fragmentation, contextualization, pooling and normalization determine the dense effect. A $`1{,}024`$-dimensional fp32 vector uses $`4{,}096\,\mathrm B`$. If this $`250`$-token English chunk uses about $`4\,\mathrm{B/token}`$, its source payload is about $`1{,}000\,\mathrm B`$, giving a $`4.096{:}1`$ vector/text-payload ratio. This language-dependent approximation excludes both systems’ overhead.
 
 
@@ -271,17 +282,24 @@ Default to hybrid retrieval with a sparse leg and a contextual or universal dens
 
 
 The distributional hypothesis estimates representations from observed contexts. The chapter traces it to Harris (1954), Firth (1957) and Wittgenstein (1953). Let $`n_{wc}`$ count observed word-context pairs, $`n_w=\sum_c n_{wc}`$, $`n_c=\sum_w n_{wc}`$, and $`T_{\mathrm{pair}}=\sum_{w,c}n_{wc}`$. These are consistent pair-event counts, not a mix of corpus tokens, documents and bytes. For positive relevant counts, PMI is:
+
 $$
-\operatorname{PMI}(w,c)=\ln\frac{P(w,c)}{P(w)P(c)}.
+\mathop{\mathrm{PMI}}\nolimits(w,c)=\ln\frac{P(w,c)}{P(w)P(c)}.
 $$
+
+
 $$
-\operatorname{PMI}(w,c)=\ln\frac{n_{wc}T_{\mathrm{pair}}}{n_wn_c}.
+\mathop{\mathrm{PMI}}\nolimits(w,c)=\ln\frac{n_{wc}T_{\mathrm{pair}}}{n_wn_c}.
 $$
+
 At the unconstrained positive-count optimum of skip-gram negative sampling, with $`k>0`$ negatives per positive and context sampling distribution $`q(c)>0`$, the score is $`\ln[P(c\mid w)/(kq(c))]`$. The familiar shifted-PMI form below requires $`q(c)=P(c)`$; smoothed unigram negative sampling introduces an additional context-dependent term (Levy and Goldberg, 2014). Finite-rank fitting and regularization need not attain each pairwise optimum.
+
 $$
-u_w^{\mathsf T}v_c=\operatorname{PMI}(w,c)-\ln k\qquad\text{at the ideal optimum when }q(c)=P(c).
+u_w^{\mathsf T}v_c=\mathop{\mathrm{PMI}}\nolimits(w,c)-\ln k\qquad\text{at the ideal optimum when }q(c)=P(c).
 $$
+
 GloVe uses the following weighted least-squares target for positive co-occurrence counts, not an identity that every pair satisfies at a finite-dimensional fitted optimum:
+
 $$
 u_w^{\mathsf T}v_c+b_w+b_c\approx\ln n_{wc}.
 $$
@@ -299,12 +317,14 @@ It turns observed use into computable geometry.
 A representation cannot learn semantic neighborhoods from unlabeled corpora. **Its limit:** The vector describes one corpus at one moment. It does not store an eternal meaning.
 #### Count drift {color="gray_bg"}
 Append $`m`$ word-context pair events for $`w`$, all in contexts other than the old $`c`$, and leave $`n_{wc}`$ and $`n_c`$ unchanged. Let $`r=m/n_w`$, using the original $`n_w>0`$. The old conditional-context association falls by $`-\ln(1+r)`$. PMI also includes the changed total pair count:
+
 $$
 \begin{aligned}
 \Delta\ln P(c\mid w)&=-\ln(1+r),\\
-\Delta\operatorname{PMI}(w,c)&=\ln\left(1+\frac{m}{T_{\mathrm{pair}}}\right)-\ln(1+r).
+\Delta\mathop{\mathrm{PMI}}\nolimits(w,c)&=\ln\left(1+\frac{m}{T_{\mathrm{pair}}}\right)-\ln(1+r).
 \end{aligned}
 $$
+
 At $`r=0.5`$, the conditional change is $`-\ln1.5\approx-0.405465`$ nats and the conditional association is multiplied by $`2/3`$. PMI has approximately the same change only when $`m/T_{\mathrm{pair}}`$ is negligible; otherwise use the additional normalization term.
 
 
@@ -331,12 +351,16 @@ Two independent models can place the same relative triangle at different absolut
 
 
 Without known compatibility, a cross-version cosine mixes coordinate mismatch with semantic differences and cannot isolate drift. For equal-dimensional row-vector anchor matrices, the orthogonal alignment problem is: The stated Procrustes problem is:
+
 $$
 \min_{Q}\;\lVert W_tQ-W_{t+1}\rVert_F
 $$
+
+
 $$
 \text{subject to}\quad Q^{\mathsf{T}}Q=I
 $$
+
 If $`W_t^{\mathsf{T}}W_{t+1}`$ has SVD $`USV^{\mathsf{T}}`$, the stated closed-form map is $`Q = UV^{\mathsf{T}}`$. The chapter attributes this closed form to Schoenemann (1966).
 
 
@@ -348,17 +372,23 @@ Alignment needs matched stable anchors, equal dimensions for this orthogonal map
 Stale content requires correcting or recrawling the source. A stale index requires indexing a current document. A stale representation may require adapting or replacing the encoder and then consistently re-embedding, or adding validated lexical and alias handling. Re-encoding unchanged text with an unchanged deterministic encoder produces the same vector and cannot by itself repair a semantic mismatch. Incremental content writes and representation adaptation address different failures.
 #### The engineering-wiki worked example {color="gray_bg"}
 The wiki has $`2\times10^6`$ chunks of $`250`$ tokens, encoded into $`768`$ dimensions by a $`110`$-million-parameter model. The corpus grows $`4\%`$ monthly. The term `agent` appears in $`12{,}000`$ original chunks; $`6{,}000`$ new chunks use the software sense after nine months. In a separate one-use-per-chunk conditional-frequency toy, $`r=6{,}000/12{,}000=0.5`$ gives the $`-0.405465`$-nat old-context change. These document counts alone do not establish a pair-count PMI change. A frozen contextual encoder may or may not already represent the new sense; measure relevant-query ranking, not just consistency. Mixing old v1 vectors with v2 queries is a separate compatibility risk. For independently oriented isotropic unit vectors in $`d=768`$, the cross-cosine reference is mean zero with SD:
+
 $$
-\operatorname{sd}(u^{\mathsf T}v)=\frac1{\sqrt{768}}\approx0.03608439.
+\mathop{\mathrm{sd}}\nolimits(u^{\mathsf T}v)=\frac1{\sqrt{768}}\approx0.03608439.
 $$
+
 A threshold $`0.6`$ is $`0.6\sqrt{768}\approx16.6277`$ SDs above that reference mean. Real encoder-version pairs need not have random orientations or isotropic vectors; this comparison is not a measured tail probability or proof that the old index becomes unreachable. The next growth equation requires the term’s own use count to grow $`4\%`$ monthly, with all added uses in disjoint new contexts. Corpus-wide growth alone does not imply it.
+
 $$
 1+r(t)=1.04^t\qquad\text{only under the stated term-count growth model}.
 $$
+
 The association-halving threshold arrives at:
+
 $$
 t_{1/2}=\frac{\ln2}{\ln1.04}\approx17.672988\ \mathrm{months}.
 $$
+
 A term whose own occurrence count doubles each quarter solely through disjoint new contexts halves this old-context conditional association in a quarter. This is not an encoder-quality deadline or a universal PMI clock. Re-embedding $`2\times10^6`$ chunks of $`250`$ tokens processes $`5\times10^8`$ tokens; the forward proxy is $`1.1\times10^{17}\,\mathrm{FLOP}`$, $`323.5294\,\mathrm{s}`$ or $`5.3922`$ minutes. It becomes a repair only with corrected text or a changed/adapted representation. Validation and rollout set the actual schedule.
 #### Decisions from section 12.2 {color="gray_bg"}
 Make the model version part of the index identity. Use one collection per encoder and revision pair. Refuse partial migrations unless an alignment map has passed held-out paraphrase validation. Trigger representation review from measured retrieval degradation rather than a calendar alone; re-embedding unchanged text with unchanged weights does not repair it. The chapter’s default monitor reports terms whose document frequency more than doubled since build time. It intersects that list with query logs and considers encoder adaptation, replacement or lexical support when such a term appears in more than $`1\%`$ of queries; a representation change then requires consistent re-embedding. Separate a new token from a new sense. A sparse index handles a new surface token as soon as it is written. It does not separate two senses of an old term. Freeze $`200\text{–}300`$ query and known-relevant-chunk probe pairs at index build time. Report the known chunk’s rank monthly. Refresh the probe set when it stops matching live traffic. Mark that refresh as a discontinuity. Use continued contrastive training when permanent domain senses have tens of thousands of in-domain pairs. When examples number only in the hundreds, the chapter recommends a cheaper and more auditable alias or sparse expansion layer.
@@ -369,7 +399,7 @@ Make the model version part of the index identity. Use one collection per encode
 > 🧩 **What it is:**
 
 
-A sparse vector $`x\in\mathbb R^V`$ has $`\operatorname{nnz}(x)`$ nonzero entries. A typical dense vector $`z\in\mathbb R^d`$ stores all $`d`$ coordinates, whether or not some happen to be zero. For $`250`$ tokens at type-token ratio $`0.64`$, the scenario uses $`160`$ distinct terms; at $`V=30{,}522`$, density is $`160/30{,}522\approx0.5242\%`$. A $`768`$-coordinate dense payload stores $`768/160=4.8`$ times the scalar values, but sparse values also require identifiers and indexing overhead. Exact zeros depend on architecture and quantization, not the definition of dense storage.
+A sparse vector $`x\in\mathbb R^V`$ has $`\mathop{\mathrm{nnz}}\nolimits(x)`$ nonzero entries. A typical dense vector $`z\in\mathbb R^d`$ stores all $`d`$ coordinates, whether or not some happen to be zero. For $`250`$ tokens at type-token ratio $`0.64`$, the scenario uses $`160`$ distinct terms; at $`V=30{,}522`$, density is $`160/30{,}522\approx0.5242\%`$. A $`768`$-coordinate dense payload stores $`768/160=4.8`$ times the scalar values, but sparse values also require identifiers and indexing overhead. Exact zeros depend on architecture and quantization, not the definition of dense storage.
 
 
 > 🎯 **Why the distinction exists:**
@@ -403,13 +433,17 @@ A rare term owns one axis. A new term gets an axis when indexed.
 An individual dense coordinate cannot carry a stable label. The dense objective depends on inner products. Any orthogonal rotation rewrites coordinates while preserving retrieval. **Claim limit:** A probe can find a predictive direction. The symmetry rules out a stable claim about one coordinate, not every analysis of a direction. Interpretability comes from the fixed basis, not sparsity alone. Learned sparse models preserve a vocabulary basis but change the coordinate claim. SPLADE can activate a term absent from the document. The weight then means the term is a useful query for that document, not that the document contains it.
 #### Exact match as gate versus margin {color="gray_bg"}
 Take unit token vectors $`v_{1}`$ through $`v_{n}`$ with mean pairwise inner product $`\rho`$. Let $`S`$ be their sum.
+
 $$
 \lVert S\rVert = \sqrt{n+n(n-1)\rho}
 $$
+
 For $`q=v_t`$, the matching token supplies a numerator term $`q^{\mathsf T}v_t=1`$. Dividing that term by $`\lVert S\rVert`$ gives its own-term coefficient, not automatically the change in cosine relative to a nonmatching chunk. Under a stronger comparison toy in which every distinct token pair has inner product $`\rho`$ and replacing $`v_t`$ by a nonmatching unit token preserves the sum norm, the actual matched-versus-replaced score difference is:
+
 $$
 \Delta\cos=\frac{1-\rho}{\sqrt{n+n(n-1)\rho}}\qquad\text{under the matched-replacement toy}.
 $$
+
 For $`n=250,\rho=0`$, this toy difference is $`1/\sqrt{250}\approx0.06324555`$. At $`\rho=0.5`$, $`\lVert S\rVert=\sqrt{31{,}375}\approx177.129896`$; the own-term coefficient is approximately $`0.00564557`$, but the matched-replacement difference is approximately $`0.002822787`$. Real contextual vectors need not satisfy this equicorrelation or fixed-norm comparison.
 
 
@@ -419,13 +453,17 @@ For $`n=250,\rho=0`$, this toy difference is $`1/\sqrt{250}\approx0.06324555`$. 
 A measured exact-match advantage must be judged against the candidate-score spread; neither $`0.00564557`$ nor $`0.00282279`$ is a universal production margin. The chapter cites Ethayarajh (2019) for last-layer GPT-2 word cosine near $`1.0`$ and increasing anisotropy with depth in BERT and ELMo. On the sparse side, a document without the term scores exactly $`0`$ for that term. The distinction is a gate rather than a small margin.
 #### Why more dense dimensions do not fix the objective {color="gray_bg"}
 Raising $`d`$ from $`768`$ to $`4{,}096`$ for $`10^7`$ fp32 vectors increases payload from $`30.72\,\mathrm{GB}`$ to $`163.84\,\mathrm{GB}`$, a ratio of $`16/3\approx5.3333`$. To state what the Welch bound does and does not show, let $`m>d`$ unit vectors have maximum absolute coherence $`\mu`$:
+
 $$
 \mu=\max_{i\ne j}\lvert v_i^{\mathsf T}v_j\rvert\ \ge\ \sqrt{\frac{m-d}{d(m-1)}}.
 $$
+
 For $`m = 30{,}522`$ and $`d = 768`$, it is:
+
 $$
 \sqrt{\frac{30{,}522-768}{768\times30{,}521}}\approx0.035628102.
 $$
+
 This is close to the random-unit-vector chance level $`\frac{1}{\sqrt{768}} = 0.036`$.
 
 
@@ -435,9 +473,11 @@ This is close to the random-unit-vector chance level $`\frac{1}{\sqrt{768}} = 0.
 This is a necessary lower bound, not a construction or an upper bound proving that all vocabulary vectors can attain coherence near $`0.0356281`$. Its proximity to $`1/\sqrt{768}`$, the SD of a random pair, does not control the maximum over all pairs. Higher dimension can help some literal and semantic retrieval failures; dimension alone does not reserve an exact term-match gate. Use measured retrieval slices to decide whether a lexical leg or a stronger dense encoder is the better repair.
 #### Ten-million-chunk memory example {color="gray_bg"}
 Take $`N = 10^{7}`$ chunks, 250 tokens each, 160 distinct terms per chunk, and $`d = 768`$. The inverted index has $`10^{7}\times 160 = 1.6\times 10^{9}`$ postings. Naive 4-byte document identifiers plus 4-byte term frequencies cost $`12.8`$ GB. Sorted identifiers permit gap coding. The chapter states the approximate information cost:
+
 $$
 \log_2\!\binom{N}{n} \approx n\cdot\left(\log_2\!\frac{N}{n}+\log_2(e)\right)\;\text{bits}
 $$
+
 At posting-list length $`n=10^5`$, the leading sparse-subset approximation gives $`8.086551`$ bits, or $`1.010819\,\mathrm{B/posting}`$. The corresponding leading values are about $`0.5956\,\mathrm{B}`$ at $`n=10^6`$ and $`2.6718\,\mathrm{B}`$ at $`n=10`$. This is an idealized coding scale for a uniformly distributed subset, not a promise about a real gap codec. It also omits finite-density corrections. A corpus-wide average needs the posting-list frequency distribution and codec.
 If one independently assumes $`1\,\mathrm{B}`$ per document identifier on average and $`0.25\,\mathrm{B}`$ per frequency, $`1.6\times10^9`$ postings have a $`2.00\,\mathrm{GB}`$ payload budget. The dictionary, positions, skips and other overhead are extra. Raw dense payload is $`30.72\,\mathrm{GB}`$; HNSW with $`M=32`$ and $`64`$ four-byte base-layer slots adds $`2.56\,\mathrm{GB}`$, totaling a scoped $`33.28\,\mathrm{GB}`$. This is $`16.64`$ times the conditional sparse payload, not a complete-index benchmark.
 Heaps’ scenario $`V(T)=30T^{0.5}`$ at $`T=2.5\times10^9`$ predicts $`1.5\times10^6`$ types, or about $`1{,}953.125`$ times $`768`$. It does not by itself establish a $`2\,\mathrm{GB}`$ dictionary-plus-postings budget. The exact-match toy above gives about $`0.00282279`$ for $`n=250,\rho=0.5`$; measure actual paired chunks instead of treating it as a universal margin. fp16 halves vector payload to $`15.36\,\mathrm{GB}`$, but rounding can alter geometry and recall. For $`21{,}015{,}324`$ DPR passages at $`768`$ fp32 coordinates, payload is $`64.559075\,\mathrm{GB}`$, consistent with a rounded $`65\,\mathrm{GB}`$ release description. A classical-index estimate near $`2\,\mathrm{GB}`$ needs its own terms, postings and codec assumptions.
@@ -465,9 +505,11 @@ Pairwise cross-encoding does not scale to retrieval collections. For $`10^{4}`$ 
 Masked language modeling never asks a pooled sentence vector to place paraphrases together. Pooling alone cannot add that property.
 #### Contrastive training and positive sensitivity {color="gray_bg"}
 For anchor $`x_{i}`$, positive $`x_{i}^{+}`$, batch size $`N`$, and temperature $`\tau`$, the stated loss is:
+
 $$
-\operatorname{loss}_i = -\log\!\left(\frac{\exp\!\left(\cos(h_i,h_i^{+})/\tau\right)}{\sum_{j=1}^{N}\exp\!\left(\cos(h_i,h_j^{+})/\tau\right)}\right)
+\mathop{\mathrm{loss}}\nolimits_i = -\log\!\left(\frac{\exp\!\left(\cos(h_i,h_i^{+})/\tau\right)}{\sum_{j=1}^{N}\exp\!\left(\cos(h_i,h_j^{+})/\tau\right)}\right)
 $$
+
 The chapter sets $`\tau = 0.05`$. A cosine gap of $`0.1`$ becomes a logit gap of 2.
 
 
@@ -483,9 +525,11 @@ The loss directly asks the sentence space to recognize designated equivalents.
 A corrupted positive teaches the encoder to merge different meanings.
 #### Why vision augmentation does not transfer {color="gray_bg"}
 A $`224\times224\times3`$ image has $`150{,}528`$ scalar values; particular vision augmentations may preserve a label but are not guaranteed to do so. Text sequences lie in a discrete token space. Inserting $`not`$ into a six-token claim changes one of seven resulting positions and can reverse its meaning; this is an edit-fraction convention, not a semantic distance. Suppose $`c`$ critical positions are each independently edited with probability $`\rho`$. The probability of touching at least one is:
+
 $$
 \Pr(\text{at least one critical position edited})=1-(1-\rho)^c.
 $$
+
 For $`c=2`$, the probabilities are $`19\%,36\%,51\%`$ at $`\rho=0.1,0.2,0.3`$. They equal semantic corruption only under the extra assumption that every critical edit invalidates equivalence and no other edit does. Contiguous cropping does not follow the independent-position model. One uniformly selected deletion in a $`20`$-token sentence with two critical positions touches one with probability $`2/20=10\%`$, not $`19\%`$.
 
 
@@ -495,24 +539,34 @@ For $`c=2`$, the probabilities are $`19\%,36\%,51\%`$ at $`\rho=0.1,0.2,0.3`$. T
 The contrastive loss cannot identify mislabeled pairs. It pulls a claim toward its negation exactly as instructed. **Claim limit:** The chapter does not claim every generated paraphrase is bad. It requires measuring semantic corruption rather than assuming label preservation.
 #### Dropout moves the function, not the input {color="gray_bg"}
 Feed the same tokens through the same encoder with independent dropout masks $`m_{1}`$ and $`m_{2}`$.
+
 $$
 h_1 = f_{m_1}(x),\qquad h_2 = f_{m_2}(x)
 $$
+
 For a fixed nonzero hidden vector $`h`$, independently Bernoulli-masked coordinates in both views, and $`0\le p<1`$, consider this output-mask toy with inverted scaling:
+
 $$
 u_i = \frac{m_{1i}h_i}{1-p},\qquad v_i = \frac{m_{2i}h_i}{1-p}
 $$
+
 The stated expectations are:
+
 $$
 \mathbb{E}[\langle u,v\rangle] = \lVert h\rVert^2
 $$
+
+
 $$
 \mathbb{E}[\lVert u\rVert^2] = \frac{\lVert h\rVert^2}{1-p}
 $$
+
 Ratios of these expectations do not equal the expectation of a cosine. If masked norms concentrate, effective dimension is large and the views are nonzero, the toy gives the approximation:
+
 $$
 \cos(u,v) \approx 1-p
 $$
+
 Under those assumptions, the cosine is approximately $`0.90`$ at $`p=0.1`$ and $`0.50`$ at $`p=0.5`$. A shared mask gives cosine $`1`$ only for a nonzero resulting vector. This output-mask toy is not an exact analysis of a transformer with dropout at many internal layers.
 
 
@@ -549,9 +603,11 @@ The cited results support dropout as a strong default when labeled positives are
 
 
 A $`d = 768`$ vector in 32-bit floating point stores:
+
 $$
 768\cdot32 = 24{,}576\;\text{bits} = 3{,}072\;\text{bytes}
 $$
+
 The rough English estimate uses $`32\times4=128`$ characters and about $`1`$ bit of entropy per character, giving $`128`$ estimated content bits versus $`24{,}576`$ stored vector bits, a ratio of $`192`$. This is not a per-passage entropy measurement: identifiers, languages, source distributions and side information change the budget, while floating-point coordinates can be redundant and need not carry independent information.
 
 
@@ -561,9 +617,11 @@ The rough English estimate uses $`32\times4=128`$ characters and about $`1`$ bit
 This rough capacity comparison does not rule out recovery of a short passage, but it does not prove injectivity, preserved content or practical inversion. Privacy risk comes from an attack model and measured leakage, not from container size alone.
 #### Iterative inversion {color="gray_bg"}
 The naive decoder emits text once from $`e(x)`$. It cannot grade whether its guess maps near the target. The cited correction method emits hypothesis $`\widehat{x}(t)`$, re-embeds it, and conditions the next correction on the target vector, current text, and current vector.
+
 $$
-\widehat{x}(t+1) = \operatorname{corrector}\!\left(e(x),\widehat{x}(t),e(\widehat{x}(t))\right)
+\widehat{x}(t+1) = \mathop{\mathrm{corrector}}\nolimits\!\left(e(x),\widehat{x}(t),e(\widehat{x}(t))\right)
 $$
+
 The same public encoder supplies the objective distance between $`e(\widehat{x})`$ and $`e(x)`$.
 
 

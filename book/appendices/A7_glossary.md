@@ -60,7 +60,7 @@ The traveler succeeds by reading the translation board, checking each warning ca
 | Parametric memory | Information represented by learned parameters | No native fact-key delete; rollback, editing, unlearning and retraining have distinct guarantees |
 | Product quantization | $`m`$ subquantizers with $`k`$ centroids per subspace | At most $`k^m`$ combinations; $`km`$ subspace centroids contain $`kd`$ scalars for equal subspaces |
 | Indirect prompt injection | Adversarial instructions embedded in an external data channel | Retrieved text, tool results and other untrusted sources can carry them |
-| $`\operatorname{Recall}@k`$ | Relevant eligible items recovered within cutoff | Specify judged versus exact-neighbor reference, aggregation and zero-denominator policy |
+| $`\mathop{\mathrm{Recall}}\nolimits@k`$ | Relevant eligible items recovered within cutoff | Specify judged versus exact-neighbor reference, aggregation and zero-denominator policy |
 | Reranking | Score/reorder first-stage candidates | May improve ordering, not guaranteed; pure reranking cannot add absent evidence |
 | Reciprocal rank fusion | Unweighted score $`\sum_{\ell:d\in L_\ell}1/(c+r_\ell(d))`$ | One-based ranks, stated constant and absent-list zero; not a context-depth formula |
 | Self-RAG | A generator emits reflection tokens that control retrieval and critique its own output | The generator learns control as well as generation. Section $`26.6`$ |
@@ -372,7 +372,7 @@ Why: It identifies a trust-boundary failure; retrieval is a common entry point b
 Failure or qualifier: It is a major RAG threat model, not the only security risk. Instruction/data formatting alone does not establish immunity.
 Cost or complexity: No attack rate or defense cost is stated here.
 Cross-reference: Section $`36.4`$.
-#### $`\operatorname{Recall}@k`$
+#### $`\mathop{\mathrm{Recall}}\nolimits@k`$
 What: Relevant items returned within top $`k`$, divided by all relevant eligible items under the stated judgments. Record macro/micro aggregation and the zero-relevant-item policy.
 Why: It measures coverage at a chosen retrieval depth.
 Failure or qualifier: ANN recall instead compares recovery of an exact-neighbor reference under the same metric, corpus and eligibility. The word recall alone does not determine which denominator is intended.
@@ -476,7 +476,7 @@ State the local convention and competing meanings, but do not use a book convent
 | Inverted file index | $`n_{\mathrm{probe}}`$ nearest cells | The appendix gives no fixed probe count |
 | LSH | Conditional sublinear query bounds | State approximation, parameter, output and workload assumptions |
 | Product quantization | At most $`k^m`$ combinations; $`kd`$ scalars | Count subspace centroid dimensions, code bits, packing, IDs and runtime separately |
-| $`\operatorname{Recall}@k`$ | Top $`k`$ | Index and retrieval recall use different reference standards |
+| $`\mathop{\mathrm{Recall}}\nolimits@k`$ | Top $`k`$ | Index and retrieval recall use different reference standards |
 | Reranking | Candidate-only scoring | Additional compute may improve order but does not guarantee accuracy or missing evidence recovery |
 | Retrieval gate | $`g(x)`$, decision 1 | The function decides whether to retrieve at all |
 | RRF | $`\sum_{\ell:d\in L_\ell}1/(c+r_\ell(d))`$ | Ranks start at one; absent lists contribute zero; state constant/weights/ties |

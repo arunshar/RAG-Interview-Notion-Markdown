@@ -1,5 +1,12 @@
 # Changelog
 
+## Math rendering compatibility
+
+- Fixed unsupported operator macros throughout the complete book without changing equation meanings.
+- Fixed display equations being parsed as paragraph text and table-bar delimiter ambiguity.
+- Added a live-rendered math compatibility page and dependency-free regression checks in CI.
+- Rebuilt the complete import ZIP and refreshed book and archive checksums.
+
 ## Initial publication
 
 - Published the complete 60-page RAG interview study collection.

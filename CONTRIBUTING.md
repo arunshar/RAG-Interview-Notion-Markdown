@@ -24,6 +24,7 @@ python3 scripts/build_import.py --check
 ```
 
 5. Include the updated manifest, ZIP, and checksum when their contents change.
+6. Follow the [math compatibility guide](docs/MATH_COMPATIBILITY.md), run `python3 -m unittest discover -s tests`, and inspect affected GitHub previews. Static validation is not a substitute for checking the actual renderer.
 
 Python 3.11 or later is sufficient; there are no third-party runtime dependencies. Do not include private workspace exports, API keys, access tokens, or personal account metadata.
 

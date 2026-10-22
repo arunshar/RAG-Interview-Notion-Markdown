@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate book inventory, checksums, local links, and the import archive."""
+"""Validate book inventory, checksums, local links, math, and the import archive."""
 from __future__ import annotations
 
 import argparse
@@ -11,6 +11,7 @@ import sys
 from urllib.parse import unquote, urlsplit
 
 from build_import import verify_archive
+from validate_math import validate_paths
 
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / 'EXPORT-MANIFEST.json'
@@ -96,12 +97,16 @@ def main() -> int:
             elif not target.exists():
                 errors.append(f'Missing local target: {relative} -> {url}')
             links_checked += 1
+    math_errors, math_stats = validate_paths(markdown)
+    errors.extend(math_errors)
     errors.extend(verify_archive())
     if errors:
         print('\n'.join('ERROR: ' + e for e in errors), file=sys.stderr)
         return 1
     print(f'PASS: 60 book pages; {len(markdown)} Markdown files; '
-          f'{links_checked} local file links; all book and archive checksums.')
+          f'{links_checked} local file links; '
+          f'{math_stats["inline"]} inline and {math_stats["display"]} display equations; '
+          f'all book and archive checksums.')
     return 0
 
 

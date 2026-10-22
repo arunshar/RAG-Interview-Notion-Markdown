@@ -13,7 +13,7 @@ Purpose: Explain how learning-to-rank objectives relate to ranked-list metrics, 
 Imagine a parcel depot that must place the most urgent parcels at the front of a conveyor.
 Each customer request is a query. Each parcel is a candidate document. Human inspectors attach priority stickers from $`0`$ to $`4`$, which are relevance grades. The numbers show an order, but they do not promise that the jump from $`1`$ to $`2`$ is the same size as the jump from $`3`$ to $`4`$.
 The depot first hires a clerk who minimizes numeric squared error. That error can fall while the conveyor order stays fixed. The shipping metric cannot distinguish two score vectors that induce the same ranking, even if their magnitudes differ greatly. This illustrates an objective mismatch in this setup, not a theorem that regression can never learn a useful order.
-The sorting gate, $`\operatorname{argsort}`$, retains order and a tie policy. For fixed labels, the ranked-list metric is locally constant wherever no relevant score order changes. Gradient-based training therefore needs a surrogate, a relaxation or a defined update rule; derivative-free optimization is another possibility, so a differentiable surrogate is not logically unavoidable for every learning algorithm.
+The sorting gate, $`\mathop{\mathrm{argsort}}\nolimits`$, retains order and a tie policy. For fixed labels, the ranked-list metric is locally constant wherever no relevant score order changes. Gradient-based training therefore needs a surrogate, a relaxation or a defined update rule; derivative-free optimization is another possibility, so a differentiable surrogate is not logically unavoidable for every learning algorithm.
 A five-class pointwise inspector should not discard its distribution by emitting only the winning class: that creates at most five score buckets. Computing expected gain uses the whole distribution and matches a specified DCG utility. An ordinal inspector can learn a latent line with ordered thresholds, but a continuous output can still tie and does not by itself certify a metric-optimal ranking.
 A pairwise referee asks which parcel should precede another. RankSVM and RankNet smooth preference errors; ordinary equal-weight pair losses do not directly price rank position. LambdaRank multiplies the repair force by the metric change of a swap. Whether a repair is valuable depends on both gains, both positions and the metric cutoff—not position alone.
 A listwise supervisor can use a list-aware objective, pseudo-gradient or scorer. Gaussian score smoothing leads to rank probabilities, but a simple recurrence using unconditional pairwise probabilities approximates their dependence. LambdaMART fits trees to metric-weighted update targets. SetRank-style self-attention can preserve input-order symmetry without removing dependence on the competing set.
@@ -40,9 +40,9 @@ The depot retrieves candidates, then reranks a limited window when evaluation ju
 | Scorer $`f_{\theta}`$ | A model that maps features to a real score | Its scores induce the ranking |
 | Parameters $`\theta`$ and metric $`M`$ | The scorer’s learned values and the ranked-list evaluation function | Training seeks parameters whose induced permutation raises the metric |
 | Score $`s_i`$ | The scalar assigned to candidate $`i`$ | Sorting scores produces the output order |
-| $`\operatorname{argsort}`$ | The operation that returns indices in score order | It discards score magnitudes and keeps order |
+| $`\mathop{\mathrm{argsort}}\nolimits`$ | The operation that returns indices in score order | It discards score magnitudes and keeps order |
 | Permutation $`\pi _q`$ | The ordered candidate list for query $`q`$ | Ranking metrics read this object |
-| Normalized Discounted Cumulative Gain at $`k`$ ($`\operatorname{NDCG}@k`$) | A top-weighted graded ranking score normalized by the ideal order | It is the main reported metric |
+| Normalized Discounted Cumulative Gain at $`k`$ ($`\mathop{\mathrm{NDCG}}\nolimits@k`$) | A top-weighted graded ranking score normalized by the ideal order | It is the main reported metric |
 | Discounted Cumulative Gain (DCG) | Graded gain reduced by rank-dependent discounts | It values useful documents near the top |
 | Ideal Discounted Cumulative Gain (IDCG) | The best DCG over the declared candidate or judged universe | Use the same positive normalizer across compared orders; declare an all-zero-gain policy |
 | Mean Reciprocal Rank (MRR) | A rank metric named by the source | It also reads order rather than score scale |
@@ -69,7 +69,7 @@ The depot retrieves candidates, then reranks a limited window when evaluation ju
 | Classifier | A model predicting a class distribution | Utility scoring needs the full probabilities and a chosen gain; classification is not the only valid pointwise approach |
 | Softmax | A normalized distribution over classes | A flat softmax treats grades as exchangeable classes |
 | Cross-entropy | A loss for predicted class or preference probabilities | McRank and RankNet use forms of it |
-| $`\operatorname*{Arg\,max}`$ | Choosing the class with largest probability | It creates large tied buckets in graded ranking |
+| $`\mathop{\mathrm{Arg\,max}}`$ | Choosing the class with largest probability | It creates large tied buckets in graded ranking |
 | Mode | The most probable class | It is not the same as expected relevance |
 | Predicted distribution $`p_j(d)`$ | The probability that document $`d`$ has grade $`j`$ | Its full shape supports expected gain |
 | Expected relevance | The probability-weighted mean of numeric grade codes | It can differ in order from expected exponential gain and can still tie |
@@ -133,7 +133,7 @@ The depot retrieves candidates, then reranks a limited window when evaluation ju
 | Hybrid model | A sum or funnel using representation and interaction | It combines channels that fail differently |
 | Bi-encoder | A modern representation model with separate encoders | It supports corpus-scale retrieval |
 | Cross-encoder | A scorer jointly encoding the query and candidate text | Its scorer arity and training-loss arity are separate; quality and cost are empirical |
-| Similarity function $`\operatorname{sim}`$ | Cosine or dot-product comparison of vectors | It joins precomputed representations |
+| Similarity function $`\mathop{\mathrm{sim}}\nolimits`$ | Cosine or dot-product comparison of vectors | It joins precomputed representations |
 | Encoders $`\eta_q,\eta_d`$ | $`\eta_q`$ and $`\eta_d`$ map texts to comparable vectors | Their parameters may be shared or distinct |
 | Corpus size $`N`$ | The number of indexed documents | It separates offline document work from per-query work |
 | Index-time precomputation | Computing query-independent document work before requests arrive | Possible for single-vector and many late-interaction models, not their complete unknown-query score |
@@ -162,7 +162,7 @@ The depot retrieves candidates, then reranks a limited window when evaluation ju
 | Large language model (LLM) reranker | A listwise or pointwise reranker using an LLM | Its serving boundary depends on windowing and latency |
 | Floating-point operations (FLOPs) | Arithmetic work | The source contrasts it with bytes moved |
 | $`p_{99}`$ latency | The 99th-percentile response time | It is the tail-latency budget in a design probe |
-| $`\operatorname{Recall}@k`$ | Fraction of a declared gold set returned by cutoff $`k`$ | Input coverage caps downstream recall; an NDCG ceiling depends on available gains instead |
+| $`\mathop{\mathrm{Recall}}\nolimits@k`$ | Fraction of a declared gold set returned by cutoff $`k`$ | Input coverage caps downstream recall; an NDCG ceiling depends on available gains instead |
 | MaxSim | A late-interaction token-matching aggregation named by the source | Its cost must be measured; an unmatched latency ratio cannot isolate its contribution |
 | Contextualized Late Interaction over Bidirectional Encoder Representations from Transformers (ColBERT) | A multi-vector late-interaction system named by the source | Its reported latency is not a matched validation of the simple payload-read proxy |
 
@@ -178,39 +178,51 @@ Use decimal units, $`1\,\mathrm{GB}=10^9\,\mathrm B`$, $`1\,\mathrm{TB}=10^{12}\
 ### 19.1 The LTR setup and limits of raw-label regression
 #### What it is
 Data contain $`(q,d,y)`$ records and features $`\phi(q,d)\in\mathbb R^m`$, for example lexical scores, PageRank, URL depth or behavioral signals. The source reports $`46`$ LETOR $`4.0`$ features and $`136`$ MSLR-WEB30K features; benchmark schemas and label subsets should be checked rather than assuming every named collection has identical grade support. A univariate scorer and its score-descending order are:
+
 $$
 s_i = f_{\theta}\bigl(\phi(q,d_i)\bigr)
 $$
+
+
 $$
-\pi_q = \operatorname{argsort}_{\downarrow}\bigl(s_1,\ldots,s_{\lvert D_q\rvert}\bigr)
+\pi_q = \mathop{\mathrm{argsort}}\nolimits_{\downarrow}\bigl(s_1,\ldots,s_{\lvert D_q\rvert}\bigr)
 $$
+
 With a fixed evaluation universe and tie policy, the per-query metric is $`M(\pi_q,y_q)`$. A macro-query objective, or an explicitly chosen weighted version, is:
+
 $$
 \max_\theta\ \sum_q\omega_q M(\pi_q,y_q),\qquad \omega_q\ge0,\quad\sum_q\omega_q=1.
 $$
+
 As a function of the scores, this metric is constant inside regions with a fixed strict order. With suitable continuous scorers it is locally constant in parameters in those regions. A crossing can create a jump when gains and discounts differ; equal-gain swaps need not change it. Ties and discontinuous scorers require their own handling. There is no useful ordinary metric gradient in the fixed-order regions.
 #### Why it exists
 Gradient methods use a differentiable surrogate, relaxation or pseudo-gradient. Pointwise, pairwise and listwise primarily describe how supervision or list structure enters the objective; they do not force the scorer to have the same arity. Pointwise training may use a set-dependent encoder, and pairwise RankNet may use a univariate scorer. Derivative-free metric optimization is also possible, with different costs.
 #### What fails without alignment
 Squared error is:
+
 $$
 \mathcal L_{\mathrm{reg}}(\theta)=\sum_q\sum_{i=1}^{n_q}(s_{q,i}-y_{q,i})^2.
 $$
+
 Squared error is not invariant to a common score shift. Adding $`c`$ within one query preserves the ranking but changes the numeric loss by:
+
 $$
 L_q(\boldsymbol s+c\boldsymbol1,y)-L_q(\boldsymbol s,y)=2c\sum_{i=1}^{n_q}(s_i-y_i)+n_qc^2.
 $$
+
 Three distinctions matter. First, lacking shift invariance shows that squared error also calibrates magnitudes; it is not proof that it cannot learn a good ranking. Pointwise cross-entropy is not shift-invariant in every parameterization either. Second, ordinal labels supply order, while squared error on their numeric coding selects a spacing. Exponential gain is itself an explicit utility choice: $`g(4)/g(3)=15/7\approx2.142857`$ versus coding ratio $`4/3\approx1.333333`$, a ratio of ratios approximately $`1.607143`$. Ordinal labels alone give no intrinsic meaning to either ratio. Regression to $`g(y)`$ estimates $`\mathbb E[g(y)\mid\phi]`$ under squared loss in an ideal well-specified population model, so it can be appropriate for expected DCG.
 Third, row-summed loss assigns more total coefficient mass to deeper query groups. With $`500`$ versus $`5`$ judged rows and equal per-row weights, coefficient mass is $`100{:}1`$, or $`500/505\approx99.0099\%`$ versus $`0.9901\%`$; actual loss contributions also depend on errors. A two-query macro metric instead weights each query $`50\%`$. Per-query normalization addresses that weighting, not every utility mismatch. Within-query $`z`$-scoring adds its own numeric assumptions, can be undefined at zero variance, and makes targets depend on the candidate group. Classification, ordinal models and regression to a chosen gain are all possible pointwise approaches.
 #### Worked example
 Use five candidates with grades $`y = (4, 3, 0, 0, 0)`$. The ideal discounted gain is:
+
 $$
-Z=\operatorname{IDCG}=15+\frac7{\log_2 3}\approx19.416508275.
+Z=\mathop{\mathrm{IDCG}}\nolimits=15+\frac7{\log_2 3}\approx19.416508275.
 $$
+
 For grades $`(4,3,0,0,0)`$, A predicts $`(2,2.1,0,0,0)`$ and has squared error $`4.81`$. Its top pair is inverted: $`\mathrm{DCG}_A=7+15/\log_2 3\approx16.463946304`$ and $`\mathrm{NDCG}_A\approx0.847935482`$. B predicts $`(0.5,0.2,0.1,0.1,0.1)`$, has squared error $`20.12`$, and has the ideal order, hence NDCG $`1`$. The numeric-loss ratio is $`20.12/4.81\approx4.182952`$, while the NDCG difference is approximately $`0.152064518`$, or $`15.206452`$ percentage points on its zero-to-one scale.
 For $`L=\sum_i(s_i-y_i)^2`$, the score-gradient $`\ell_1`$ norms are $`5.8`$ and $`13.2`$, ratio approximately $`2.275862`$. These are gradients with respect to scores, not parameter-gradient norms or guaranteed model-update sizes; parameter gradients also include $`\partial s_i/\partial\theta`$. The example shows different preferences for calibration and order, not universal inconsistency of squared loss. The source cites McRank's reported classification/regression comparison and named survey baselines as empirical context, not a proof that omitted methods cannot work.
 #### Cost, complexity, and practice choices
-The source's motivating project has $`40{,}000`$ judged rows, a quarter of work, a six-figure budget, halved training loss and only $`0.004`$ movement in held-out $`\operatorname{NDCG}@10`$. Those are a vignette, not a controlled causal result. Validate the objective, features, sampling and labels instead of assuming more epochs will fix the problem. For a row-decomposed macro-query objective, weight by $`1/n_q`$ or use balanced sampling; a pair-summed loss instead needs its own query normalization, such as $`1/\lvert I_q\rvert`$ when nonzero. Explicit traffic weighting is a different choice.
+The source's motivating project has $`40{,}000`$ judged rows, a quarter of work, a six-figure budget, halved training loss and only $`0.004`$ movement in held-out $`\mathop{\mathrm{NDCG}}\nolimits@10`$. Those are a vignette, not a controlled causal result. Validate the objective, features, sampling and labels instead of assuming more epochs will fix the problem. For a row-decomposed macro-query objective, weight by $`1/n_q`$ or use balanced sampling; a pair-summed loss instead needs its own query normalization, such as $`1/\lvert I_q\rvert`$ when nonzero. Explicit traffic weighting is a different choice.
 Freeze candidate generation or use a common judged evaluation universe when comparing rankers, and report retrieval coverage separately. A final set cannot include an excluded item. With gold set $`G_q`$, reranker input $`S_q`$ and final cutoff $`k`$, its recall is at most $`\min(k,\lvert G_q\cap S_q\rvert)/\lvert G_q\rvert`$ for $`\lvert G_q\rvert>0`$. An NDCG ceiling instead depends on which gains are available and their ideal attainable positions; it is not numerically the recall value.
 Use a frozen evaluation set, query-level uncertainty and the product's final metric as release evidence. Surrogate loss also diagnoses optimization before it diverges, but raw loss levels are not calibrated quality. Collapsing grades or rewriting a noisy boundary is a source heuristic requiring validation. Binary labels remove one graded-utility issue but not exposure bias, sampling bias or metric mismatch. Dwell time is numeric, yet censoring, intent, confounding and cross-query comparability still matter; equal thirty-second durations need not mean equal usefulness.
 ### 19.2 Pointwise classification and ordinal regression
@@ -218,32 +230,42 @@ Use a frozen evaluation set, query-level uncertainty and the product's final met
 A pointwise objective decomposes over labeled examples but should retain query groups for weighting, sampling and evaluation. A univariate $`s(q,d)`$ with candidate-independent features permits per-pair caching and document batching under an appropriate model/version key. The objective alone does not guarantee that property. Score $`n`$ candidates, sort with a tie policy, and cut at the chosen $`k`$; class count $`K`$ is separate. A binary classifier can rank by $`P(y=1\mid q,d)`$ rather than its hard predicted class. Index changes, feature normalization or candidate membership can still alter the serving problem.
 #### Why expected gain fixes the head
 An unconstrained flat softmax treats class names symmetrically in its loss; it does not encode ordinal distances by itself. Hard $`\arg\max`$ classes place $`100`$ candidates into at most $`K=5`$ score buckets, with ties whenever sufficiently many candidates share a predicted class. Let $`p_j(d)=P(y=j\mid q,d)`$ and choose $`g(y)=2^y-1`$. The expected gain is:
+
 $$
 \mathbb{E}[g(y_d)] = \sum_{j=0}^{K-1}(2^j-1)p_j(d)
 $$
+
 For a fixed candidate set and permutation, linearity of expectation gives:
+
 $$
 \mathbb E[\mathrm{DCG}@k]=\sum_{\ell=1}^{\min(k,n)}\frac{\mathbb E[g(Y_{\pi(\ell)})]}{\log_2(\ell+1)}.
 $$
+
 Decreasing discounts and the rearrangement argument make descending $`\mathbb E[g(y_i)]`$ optimal for expected DCG if those conditional expectations are correct. Label independence is unnecessary. McRank's expected grade $`\sum_j j p_j`$ uses linear utility instead. It need not agree with exponential gain: grade three with certainty has mean grade $`3`$ and gain $`7`$, while a fifty-fifty mixture of grades four and zero has mean grade $`2`$ but expected gain $`7.5`$.
-Expected NDCG requires care. If IDCG is a fixed positive normalizer, maximizing expected DCG also maximizes the normalized objective. If the whole label vector $`Y`$ and $`Z(Y)=\operatorname{IDCG}(Y)`$ are uncertain, the optimal additive terms are instead $`\mathbb E[g(Y_i)/Z(Y)]`$ under the declared zero-normalizer policy. Counterexample at cutoff one: with probability $`0.1`$ only A has gain $`15`$; with probability $`0.9`$ only B has gain $`1`$. Expected gains favor A, $`1.5>0.9`$, but expected NDCG favors B, $`0.9>0.1`$. Thus expected-gain ranking is a principled expected-DCG score, not an unconditional expected-NDCG theorem.
+Expected NDCG requires care. If IDCG is a fixed positive normalizer, maximizing expected DCG also maximizes the normalized objective. If the whole label vector $`Y`$ and $`Z(Y)=\mathop{\mathrm{IDCG}}\nolimits(Y)`$ are uncertain, the optimal additive terms are instead $`\mathbb E[g(Y_i)/Z(Y)]`$ under the declared zero-normalizer policy. Counterexample at cutoff one: with probability $`0.1`$ only A has gain $`15`$; with probability $`0.9`$ only B has gain $`1`$. Expected gains favor A, $`1.5>0.9`$, but expected NDCG favors B, $`0.9>0.1`$. Thus expected-gain ranking is a principled expected-DCG score, not an unconditional expected-NDCG theorem.
 #### Ordinal alternative
 For zero-based grades, an ordinal model learns latent score $`z=w^{\mathsf T}\phi`$ and $`K-1`$ ordered finite cut points. Add endpoint sentinels when using a first-boundary expression:
+
 $$
 b_0=-\infty,\qquad b_1\le\cdots\le b_{K-1},\qquad b_K=+\infty.
 $$
+
 With equality assigned to the upper interval, the two equivalent predictions are:
+
 $$
 \widehat y=\sum_{r=1}^{K-1}\mathbf1[z\ge b_r]=\min\{r\in\{1,\ldots,K\}:z<b_r\}-1.
 $$
+
 The source attributes PRank to Crammer and Singer (2001), and a large-margin ordinal construction to Shashua and Levin (2002). Their update rules and threshold-order constraints are method-specific. The continuous latent score can rank after thresholds are discarded, but can still tie and need not equal expected metric gain. If probabilities are required, an ordered-probability model can supply a distribution for utility scoring. More than five grades or noisy adjacent labels does not mathematically guarantee an ordinal model wins.
 #### What fails without it
 Ranking by maximum class confidence is not ranking by utility; a high-confidence low grade can lose to a less certain higher-grade distribution. The full distribution and chosen gain determine the expectation. Pointwise objectives do not directly compare within-query preferences unless coupled through features or the model. With equal row weights, $`500`$ versus $`20`$ examples gives $`25{:}1`$ coefficient mass, not necessarily that loss ratio. A $`90\%`$ majority class can produce high classification accuracy without a useful top ranking. At $`K=2`$, expected grade and exponential expected gain both equal $`p_1`$; hard argmax remains binary and does not become the continuous probability score.
 #### Worked example
 Use $`10`$ candidates. Truth is $`A = 4`$, $`B = C = 3`$, $`D = E = F = 2`$, and the final four are $`0`$. Exponential gains are $`15, 7, 7, 3, 3, 3`$, then four zeros. The source reports the ideal value as:
+
 $$
 Z_{10}=15+\frac7{\log_2 3}+\frac7{\log_2 4}+\frac3{\log_2 5}+\frac3{\log_2 6}+\frac3{\log_2 7}\approx26.437717932.
 $$
+
 Truth is A grade $`4`$, B/C grade $`3`$, D/E/F grade $`2`$, and four grade-zero candidates. For A at positions one, two or three, keeping the remaining gains ideally placed, DCGs are approximately $`26.437717932`$, $`23.485155961`$ and $`22.437717932`$. NDCGs are $`1`$, $`0.888320090`$ and $`0.848701011`$; the latter placements lose approximately $`2.952561971`$ and exactly $`4`$ DCG.
 Use distributions $`p(A)=(0,0.05,0.15,0.45,0.35)`$, $`p(B)=(0,0.05,0.25,0.50,0.20)`$ and $`p(C)=(0.05,0.10,0.30,0.45,0.10)`$. All modes are class three. If the six head orders are uniformly likely, each A position occurs twice and mean NDCG is approximately $`0.912340367`$. Expected grade scores $`(3.10,2.85,2.45)`$ and exponential gain scores $`(8.90,7.30,5.65)`$ both rank A/B/C in this particular example and give NDCG $`1`$, with the other seven held fixed. Relative to uniform ties, the gain is approximately $`0.087659633`$ absolute, or $`9.608216\%`$ relative.
 A different baseline breaks the modal tie by class-three confidence and then places A before C under an explicit secondary tie policy: B/A/C scores $`0.888320090`$. Against that baseline, ideal scoring gains approximately $`0.111679910`$ absolute, or $`12.572035\%`$ relative—not the uniform-tie improvement. Computing expectations from existing probabilities needs no extra encoder evaluation, but does require a calibrated or otherwise useful distribution. The source names monoT5's true/false token scoring; the precise probability normalization is implementation-specific and should not be inferred from the ordinal example.
@@ -254,81 +276,112 @@ A width-$`20`$, stride-$`10`$ window over $`100`$ candidates has $`1+(100-20)/10
 ### 19.3 Pairwise RankSVM, RankNet, and LambdaRank
 #### What it is
 Within one query, use only strictly preferred labeled pairs; ties require a separate policy:
+
 $$
 I_q=\{(i,j):y_i>y_j\}.
 $$
+
 Keep every pair within its query. For a linear scorer $`s_i=w^{\mathsf T}x_i+b`$, the common intercept cancels: $`s_i-s_j=w^{\mathsf T}(x_i-x_j)`$. Thus the difference-vector preference test is through the origin; this does not forbid bias terms in all underlying scorers. A soft-margin RankSVM program, with $`C_{\mathrm{SVM}}>0`$, is:
+
 $$
 \min_{w,\{\xi_{ij}\}}\ \frac12\lVert w\rVert_2^2+C_{\mathrm{SVM}}\sum_{(i,j)\in I_q}\xi_{ij}.
 $$
+
+
 $$
 w^{\mathsf T}(x_i-x_j)\ge1-\xi_{ij},\qquad \xi_{ij}\ge0\quad\text{for every }(i,j)\in I_q.
 $$
+
 The source attributes the method to Herbrich and colleagues (2000), with a search application by Joachims (2002). Its click example turns a click on result three after skipping results one and two into two inferred preferences. Such behavior is not a verified relevance label: exposure, position and examination bias affect which comparisons are defensible.
 #### RankNet and factorization
 RankNet, attributed to Burges and colleagues (2005), can use a univariate neural scorer. For a strictly preferred pair, set the probability target to one and use a logistic link of steepness $`\gamma>0`$:
+
 $$
 P_{ij}=\frac1{1+\exp[-\gamma(s_i-s_j)]},\qquad \overline P_{ij}=1\quad ((i,j)\in I_q).
 $$
+
 Cross-entropy collapses to:
+
 $$
 C_{ij}=\log\bigl(1+\exp(-\gamma(s_i-s_j))\bigr)
 $$
+
 Differentiate with respect to scores. Define the positive update force $`\lambda_{ij}`$ to raise the preferred document under gradient descent:
+
 $$
 \frac{\partial C_{ij}}{\partial s_i}=-\frac{\gamma}{1+\exp[\gamma(s_i-s_j)]}=-\lambda_{ij}.
 $$
+
+
 $$
 \frac{\partial C_{ij}}{\partial s_j}=+\lambda_{ij}.
 $$
+
 Aggregate the signed update forces over the query; then $`\sum_i\lambda_i=0`$ because each pair contributes once with each sign:
+
 $$
 \lambda_i=\sum_{j:(i,j)\in I_q}\lambda_{ij}-\sum_{j:(j,i)\in I_q}\lambda_{ji}.
 $$
+
 For $`C=\sum_{(i,j)\in I_q}C_{ij}`$ and differentiable scores, the chain rule therefore gives the negative sign below. A descent update is $`\theta\leftarrow\theta+\eta\sum_i\lambda_i\nabla_\theta s_i`$, for learning rate $`\eta>0`$:
+
 $$
 \nabla_\theta C=-\sum_{i=1}^{n_q}\lambda_i\nabla_\theta s_i.
 $$
+
 Compute $`n_q`$ query–document scores and retain their computation graph; the pair loop then assembles $`O(\lvert I_q\rvert)`$ forces before backpropagation. This counts scored examples, not necessarily separate network calls: batching can combine them. The factorization requires reusable univariate scores and does not apply unchanged to a genuinely joint pair comparator. Any query-normalization factor must also multiply the gradient.
 #### Why LambdaRank exists
 Ordinary equal-weight RankSVM and RankNet use score gaps without directly pricing positions. At equal gaps they treat preferences alike unless sampling or other weights intervene. The source attributes LambdaRank to Burges, Ragno and Le (2006). Use the chosen gain $`g_i=2^{y_i}-1`$, fixed positive normalizer $`Z_q`$ and cutoff discount $`w_k`$ to compute the swap magnitude:
+
 $$
 \bigl|\Delta_{ij}(\mathrm{NDCG}@k)\bigr|=\frac{\lvert g_i-g_j\rvert\,\lvert w_k(r_i)-w_k(r_j)\rvert}{Z_q},\qquad Z_q>0.
 $$
+
+
 $$
 \lambda_{ij}^{\mathrm{LR}}=\frac{\gamma\,\lvert\Delta_{ij}(\mathrm{NDCG}@k)\rvert}{1+\exp[\gamma(s_i-s_j)]},\qquad (i,j)\in I_q.
 $$
+
 Multiplication by an already available swap weight is one extra scalar multiplication per pair, but obtaining ranks, discounts and normalizers also costs work. The source says more than ten candidate approximations were tested. For $`w(r)=1/\log_2(1+r)`$, $`\lvert w'(100)\rvert\approx3.222092428\times10^{-4}`$ and $`w(100)-w(101)\approx3.199415917\times10^{-4}`$. The derivative differs by approximately $`0.708770\%`$ of the discrete step, so “within $`0.71\%`$” is the appropriate rounded statement. This is a finite-difference analogy, not a proof that the entire metric has an ordinary position gradient.
 #### What fails without it
-The source vignette raises pairwise validation accuracy from $`0.71`$ to $`0.84`$ over six hours while $`\operatorname{NDCG}@10`$ stays near $`0.3869`$. That is possible because improvements outside the cutoff need not affect the product metric. Pairwise accuracy is diagnostic, not a substitute for the release metric. If metric swap weights are frozen, weighted RankNet has an ordinary weighted logistic loss. Recomputing rank-dependent weights gives a piecewise update rule; it does not automatically yield the gradient of one globally smooth scalar objective or a convergence guarantee. Having an update vector is enough to run an optimizer, not enough to prove descent. The source cites Donmez, Svore and Burges (2009) for empirical evidence, and Wang and colleagues (2018) for LambdaLoss formulations. Those formulations and implementations must be distinguished rather than assuming every lambda variant is the same loss.
+The source vignette raises pairwise validation accuracy from $`0.71`$ to $`0.84`$ over six hours while $`\mathop{\mathrm{NDCG}}\nolimits@10`$ stays near $`0.3869`$. That is possible because improvements outside the cutoff need not affect the product metric. Pairwise accuracy is diagnostic, not a substitute for the release metric. If metric swap weights are frozen, weighted RankNet has an ordinary weighted logistic loss. Recomputing rank-dependent weights gives a piecewise update rule; it does not automatically yield the gradient of one globally smooth scalar objective or a convergence guarantee. Having an update vector is enough to run an optimizer, not enough to prove descent. The source cites Donmez, Svore and Burges (2009) for empirical evidence, and Wang and colleagues (2018) for LambdaLoss formulations. Those formulations and implementations must be distinguished rather than assuming every lambda variant is the same loss.
 #### Worked example
 Take $`n=120`$ candidates with binary relevance, positives at ranks two and $`51`$, score drop $`\alpha=0.1`$ per rank, and $`\gamma=1`$. Then $`Z=1+1/\log_2 3\approx1.630929754`$. Swaps $`1\leftrightarrow2`$ and $`50\leftrightarrow51`$ each have preferred-document score margin $`-0.1`$, RankSVM unit-margin slack $`1.1`$, and RankNet force $`1/(1+\exp(-0.1))\approx0.524979187`$. The opposite exponential sign gives $`0.475020813`$ and would be the wrong value for this margin.
 There are $`236`$ positive–negative preference pairs. Summing the positive pair-force magnitudes, pairs with both endpoints below rank ten receive approximately $`71.384845\%`$ of ordinary RankNet mass. With full-list NDCG weights, the head-swap magnitude is $`0.226294386`$ and the rank-$`50`$ magnitude is $`0.000531212828`$, a ratio approximately $`425.995709`$. The both-below-ten pair-force share falls to approximately $`21.561205\%`$. These are shares of pair-force sums, not norms of the aggregated document or parameter gradients, where cancellation and Jacobians matter.
-For $`\operatorname{NDCG}@10`$ weights, pairs with both endpoints below ten have exactly zero weight. A deep document can still receive force through a pair that crosses the cutoff. The top repair changes $`\operatorname{NDCG}@10`$ from approximately $`0.386852807`$ to $`0.613147193`$: an absolute gain $`0.226294386`$, or approximately $`58.496250\%`$ relative. The $`50/51`$ repair changes that truncated metric by zero. In this actual label configuration, candidates at ranks $`100`$ and $`101`$ are both irrelevant, so their swap has zero full-list and truncated metric change; a positive–negative pair there would be a different hypothetical configuration.
+For $`\mathop{\mathrm{NDCG}}\nolimits@10`$ weights, pairs with both endpoints below ten have exactly zero weight. A deep document can still receive force through a pair that crosses the cutoff. The top repair changes $`\mathop{\mathrm{NDCG}}\nolimits@10`$ from approximately $`0.386852807`$ to $`0.613147193`$: an absolute gain $`0.226294386`$, or approximately $`58.496250\%`$ relative. The $`50/51`$ repair changes that truncated metric by zero. In this actual label configuration, candidates at ranks $`100`$ and $`101`$ are both irrelevant, so their swap has zero full-list and truncated metric change; a positive–negative pair there would be a different hypothetical configuration.
 #### Cost, complexity, and practice choices
 For a separate grade-count split $`(80,20,12,6,2)`$ across grades zero through four, $`\binom{120}{2}=7{,}140`$ unordered pairs contain $`3{,}432`$ same-grade and $`3{,}708`$ unequal-grade pairs. A deliberately naive unshared univariate implementation evaluating both documents for every preferred pair performs $`2\times3{,}708=7{,}416`$ document-score evaluations, versus $`120`$ reused scores: $`61.8`$ times as much document-scoring work. The number $`3{,}708/120=30.9`$ is a pair-count/document-count ratio, not a same-unit network-call or latency speedup. A joint pair comparator instead consumes $`3{,}708`$ pair inputs and is a different architecture. Pair enumeration and backward aggregation still cost work after scores are reused; the ratio grows on the order of $`n`$ only when a nonvanishing fraction of all pairs remains unequal-grade.
 For the explicit full-bin rank recurrence in Section $`19.4`$, $`O(n^2)`$ describes one document's rank distribution; repeating it for all $`n`$ documents gives $`O(n^3)`$ by that algorithm. Do not confuse those scopes or treat them as a lower bound for all implementations.
-Use metric-aware weighting as a baseline when the product metric is truncated and discounted, and validate it against alternatives. At a fixed ten-chunk serving cutoff, $`\Delta\operatorname{NDCG}@10`$ explicitly matches that depth; retune if the served depth changes. Assert query-local pair construction and a deliberate per-query weighting policy. For pure $`\operatorname{Recall}@100`$, swap change is zero except for relevant–irrelevant pairs crossing the cutoff. Truncated NDCG at $`100`$ is a useful possible surrogate, not exact recall optimization. A generator sensitive to ordering also needs measures beyond candidate recall.
+Use metric-aware weighting as a baseline when the product metric is truncated and discounted, and validate it against alternatives. At a fixed ten-chunk serving cutoff, $`\Delta\mathop{\mathrm{NDCG}}\nolimits@10`$ explicitly matches that depth; retune if the served depth changes. Assert query-local pair construction and a deliberate per-query weighting policy. For pure $`\mathop{\mathrm{Recall}}\nolimits@100`$, swap change is zero except for relevant–irrelevant pairs crossing the cutoff. Truncated NDCG at $`100`$ is a useful possible surrogate, not exact recall optimization. A generator sensitive to ordering also needs measures beyond candidate recall.
 ### 19.4 Listwise SoftRank, LambdaMART, and SetRank
 #### What it is
 For fixed labels and one-based ranks, use the same cutoff and ideal normalizer in training and evaluation:
+
 $$
 \mathrm{DCG}@k=\sum_{j=1}^{n}g(y_j)w_k(r_j),\qquad w_k(r)=\frac{\mathbf1[r\le k]}{\log_2(1+r)}.
 $$
+
+
 $$
 \mathrm{NDCG}@k=\frac{\mathrm{DCG}@k}{Z_q},\qquad Z_q=\mathrm{IDCG}@k>0.
 $$
+
 A small score change that preserves the strict order leaves the metric fixed. A crossing may jump the metric when the swapped gains and discounts differ; equal-gain or both-below-cutoff swaps need not change it. The ordinary score gradient is zero inside strict-order regions and may be undefined at consequential boundaries. The following routes change the objective, update rule or scorer in different ways.
 #### Route one: SoftRank
 The source attributes SoftRank to Taylor and colleagues (2008). Gaussian score smoothing starts from model means $`\mu_j=f(x_j)`$ and independent noise $`\varepsilon_j`$ with a positive standard deviation $`\sigma_G`$:
+
 $$
 Z_j=\mu_j+\varepsilon_j,\qquad \varepsilon_j\overset{\mathrm{iid}}\sim\mathcal N(0,\sigma_G^2),\qquad \sigma_G>0.
 $$
+
 Independent score noises give the following marginal pair probability. They do not make different comparisons against the shared random score $`Z_j`$ independent:
+
 $$
 \pi_{ij}=\Pr(Z_i>Z_j)=\Phi\!\left(\frac{\mu_i-\mu_j}{\sqrt2\,\sigma_G}\right).
 $$
+
 Enumerate the other candidates as $`i_1,\ldots,i_{n-1}`$. A shortcut treats their outranking indicators as independent Bernoulli variables with these marginal probabilities. Writing $`u`$ for the zero-based count ahead of $`j`$, its approximate recurrence is:
+
 $$
 \begin{aligned}
 \widetilde b_{j,0}(u)&=\mathbf1[u=0],\\
@@ -337,8 +390,10 @@ $$
 \widetilde p_j(r)&=\widetilde b_{j,n-1}(r-1),\qquad r\in\{1,\ldots,n\}.
 \end{aligned}
 $$
+
 Out-of-range bin values are zero. The number ahead starts at $`u=0`$, but the corresponding rank is $`r=u+1`$, so its discount is $`1/\log_2(2+u)`$, never $`1/\log_2(1+u)`$. Smooth pair probabilities make this shortcut differentiable; they do not make it the exact Gaussian rank law. For three equal-mean iid scores, exact ranks are uniform $`(1/3,1/3,1/3)`$, whereas the marginal shortcut gives $`(1/4,1/2,1/4)`$.
 To compute the exact rank distribution under the stated independent Gaussian score model, condition on $`Z_j=z`$. Then comparisons are independent conditional on $`z`$, with $`a_i(z)=\Pr(Z_i>z)=\Phi((\mu_i-z)/\sigma_G)`$. Apply the same recurrence to $`b_{j,m}(u;z)`$ using $`a_{i_m}(z)`$ instead of $`\pi_{i_mj}`$, and integrate over $`z`$. The displayed shortcut is being qualified here; this does not assert that every algorithm or variant in the original SoftRank literature uses that approximation. With fixed labels, the exact smoothed expected NDCG is:
+
 $$
 \begin{aligned}
 p_j(r)&=\int_{-\infty}^{\infty}\varphi_{\sigma_G}(z-\mu_j)
@@ -347,81 +402,100 @@ p_j(r)&=\int_{-\infty}^{\infty}\varphi_{\sigma_G}(z-\mu_j)
 &=\frac1{Z_q}\sum_{j=1}^{n}g(y_j)\sum_{r=1}^{n}p_j(r)w_k(r),\qquad Z_q>0.
 \end{aligned}
 $$
+
 Here $`\varphi_{\sigma_G}`$ is the zero-mean Gaussian density with standard deviation $`\sigma_G`$. Substituting $`\widetilde p_j`$ yields the shortcut objective instead. A direct full-bin recurrence uses $`O(n^2)`$ updates for one document and $`O(n^3)`$ for all documents. One rectangular implementation counts $`n^2(n-1)`$ bin updates; skipping inactive bins gives $`n(n-1)(n+2)/2`$. Keeping only top-$`k`$ bins while retaining all candidates gives an $`O(n^2k)`$ implementation. Numerical conditioning/integration adds work, for example a quadrature-node factor. These are costs of stated algorithms, not universal complexity lower bounds. The direct recurrence has an insertion dependency, but vectorization, convolution-based methods and alternative algorithms can change scheduling and constants.
 #### Route two: LambdaMART
 LambdaMART instead uses rank-weighted pseudo-gradients for a scorer, often a univariate tree ensemble. Retain the positive preferred-document update-force convention from Section $`19.3`$ rather than silently reversing its sign:
+
 $$
 \lambda_{ij}^{\mathrm{LR}}=\frac{\gamma\,\lvert\Delta_{ij}(\mathrm{NDCG}@k)\rvert}{1+\exp[\gamma(s_i-s_j)]}>0\quad\text{when its swap weight is positive}.
 $$
+
 Aggregate signed forces $`\lambda_i`$ as before and fit trees to those negative-score-gradient targets. With swap weights held fixed, a pair contributes curvature $`h_{ij}=\gamma^2\lvert\Delta_{ij}(\mathrm{NDCG}@k)\rvert P_{ij}(1-P_{ij})\ge0`$ to each endpoint's diagonal; let $`h_i`$ sum incident contributions. An illustrative regularized Newton leaf update is $`\Delta v=\sum_{i\in L}\lambda_i/(\sum_{i\in L}h_i+\rho)`$ for $`\rho\ge0`$, with a zero-denominator guard and a separate learning rate. Tree construction, leaf formulas and regularization vary by implementation; rank-dependent weights are not a fixed global Hessian. The source favors tree ensembles for heterogeneous numeric features such as BM25, PageRank, click-through rate and domain age. Trees can also accept dense embedding coordinates; whether they are a good use of those features is empirical.
 #### Route three: SetRank
 SoftRank-style objectives and LambdaMART can use univariate scores, although the objective alone does not force that architecture. SetRank, attributed to Pang and colleagues (2020), uses a candidate-set-dependent scorer with one output row per input candidate:
+
 $$
 \boldsymbol s=f(q,D),\qquad D=(d_1,\ldots,d_n),\qquad \boldsymbol s\in\mathbb R^n.
 $$
+
 Candidate interactions make scores depend on competitor membership. Input-order symmetry requires permutation equivariance, not invariant output rows. For one attention head with row-wise softmax and head width $`d_h`$, permuting the query, key and value rows consistently gives:
+
 $$
-\operatorname{softmax}_{\mathrm{row}}\!\left(\frac{P Q K^{\mathsf T}P^{\mathsf T}}{\sqrt{d_h}}\right)PV
-=P\operatorname{softmax}_{\mathrm{row}}\!\left(\frac{QK^{\mathsf T}}{\sqrt{d_h}}\right)V.
+\mathop{\mathrm{softmax}}\nolimits_{\mathrm{row}}\!\left(\frac{P Q K^{\mathsf T}P^{\mathsf T}}{\sqrt{d_h}}\right)PV
+=P\mathop{\mathrm{softmax}}\nolimits_{\mathrm{row}}\!\left(\frac{QK^{\mathsf T}}{\sqrt{d_h}}\right)V.
 $$
+
 The identity extends through row-wise projections, shared feed-forward layers and compatible attention blocks if features and masks are permuted consistently. Evaluation must disable stochastic dropout or otherwise compare the same deterministic computation, and tie handling must be consistent. Removing arbitrary position tags is necessary for this particular construction, not sufficient to certify an entire serving pipeline. An intentional first-stage-rank embedding can preserve equivariance if it travels with its document as an attached feature; it must not be recomputed from the shuffled input position. Test that prior-rank feature by ablation. Equivariance under reordering does not make scores invariant to adding, removing or replacing competitors, so it does not by itself make shard-local scores mergeable or pagination stable.
 #### Other listwise likelihood methods
 The source attributes ListNet to Cao and colleagues (2007), using a top-one Plackett–Luce softmax and cross-entropy against a label-derived distribution. Evaluating that top-one loss is $`O(n)`$ after scores are available; encoders, feature construction and any sorting are separate. ListMLE, attributed to Xia and colleagues (2008), maximizes a labeled permutation likelihood and needs a policy for equal-grade permutations. Neither likelihood is identical to NDCG. The source also names NeuralSort (Grover and colleagues, 2019) and differentiable ranking (Blondel and colleagues, 2020) as later relaxation approaches. All-zero-gain query handling must remain consistent across objectives and evaluation.
 #### What fails and what the evidence limits
-In the source's thousand-candidate vignette, many errors lie between ranks $`300`$ and $`800`$. Full-list discounts there are approximately $`0.121453266`$ and $`0.103673586`$, versus one at rank one; under $`\operatorname{NDCG}@10`$, both positions instead have zero discount. Pairwise cross-entropy may fall from $`0.61`$ to $`0.54`$ to $`0.49`$ over three weeks while the top-ten metric stays fixed. The direct full-bin Gaussian smoothing calculation can be expensive. Its positive width is in score units: a score rescaling changes its meaning, but a feature-normalization change does not inevitably rescale final scores or require a new width. Validate rather than assert retuning.
+In the source's thousand-candidate vignette, many errors lie between ranks $`300`$ and $`800`$. Full-list discounts there are approximately $`0.121453266`$ and $`0.103673586`$, versus one at rank one; under $`\mathop{\mathrm{NDCG}}\nolimits@10`$, both positions instead have zero discount. Pairwise cross-entropy may fall from $`0.61`$ to $`0.54`$ to $`0.49`$ over three weeks while the top-ten metric stays fixed. The direct full-bin Gaussian smoothing calculation can be expensive. Its positive width is in score units: a score rescaling changes its meaning, but a feature-normalization change does not inevitably rescale final scores or require a new width. Validate rather than assert retuning.
 The source reports that a winning Track 1 blend in the 2010 Yahoo challenge combined twelve models, eight LambdaMART, in a 2011 report. It names LightGBM's `objective=lambdarank` and XGBoost's `rank:ndcg`; current options and behavior need version-specific checking. Availability of a particular SoftRank implementation is not established by an absolute claim about every mainstream library. Candidate-set dependence can invalidate shard-local merging or stable cached pagination. Use a controlled input-order test and an interaction ablation, plus an end-to-end deployment test; these are different requirements.
 #### Worked cost example
 Use $`10{,}000`$ query groups with $`n=1{,}000`$ candidates and $`136`$ features per query–document record. For the direct recurrence, the convenient $`n^3`$ proxy is $`10^9`$ bin updates per query and $`10^{13}`$ per epoch. The exact rectangular loop count is $`999{,}000{,}000`$ per query; growing only active bins gives $`500{,}499{,}000`$. They have different constants but the same cubic order. Keeping the same thousand candidates and only the top hundred rank bins gives an $`n^2k=10^8`$ proxy, about ten times lower than $`n^3`$, without dropping candidate coverage. Reducing the input candidate set to a hundred instead gives a $`100^3=10^6`$ proxy and $`10^{10}`$ per epoch, a thousandfold reduction with a different input. A conditional quadrature implementation adds its own integration cost. Sequential insertion passes describe the direct algorithm, not a proof that all implementations must execute serially.
-If the same gold sets and averaging convention give first-stage $`\operatorname{Recall}@100=0.86`$ and $`\operatorname{Recall}@1{,}000=0.94`$, cutting the input loses eight percentage points of available gold coverage on that workload. This is not automatically an eight-point loss in downstream NDCG or answer quality. Under the additional binary-label assumption that all five relevant candidates share the same positive grade, there are $`5\times995=4{,}975`$ unequal-label pairs per query, or $`49{,}750{,}000`$ per epoch. Differently graded positives would add more pairs. The numerical ratio $`10^9/4{,}975\approx201{,}005.025`$ compares bin updates with pair evaluations, not like-for-like FLOPs or wall time. LambdaMART also pays for sorting, tree-feature evaluation, histogram construction and leaf updates.
+If the same gold sets and averaging convention give first-stage $`\mathop{\mathrm{Recall}}\nolimits@100=0.86`$ and $`\mathop{\mathrm{Recall}}\nolimits@1{,}000=0.94`$, cutting the input loses eight percentage points of available gold coverage on that workload. This is not automatically an eight-point loss in downstream NDCG or answer quality. Under the additional binary-label assumption that all five relevant candidates share the same positive grade, there are $`5\times995=4{,}975`$ unequal-label pairs per query, or $`49{,}750{,}000`$ per epoch. Differently graded positives would add more pairs. The numerical ratio $`10^9/4{,}975\approx201{,}005.025`$ compares bin updates with pair evaluations, not like-for-like FLOPs or wall time. LambdaMART also pays for sorting, tree-feature evaluation, histogram construction and leaf updates.
 For a SetRank-style cost proxy, take three attention blocks, model width $`d_{\mathrm{model}}=256`$, head widths summing to that width, and feed-forward width $`4d_{\mathrm{model}}`$. With one multiply-accumulate counted as two FLOPs, each block uses $`4n^2d_{\mathrm{model}}=1{,}024{,}000{,}000`$ attention FLOPs, $`8nd_{\mathrm{model}}^2=524{,}288{,}000`$ projection FLOPs and $`16nd_{\mathrm{model}}^2=1{,}048{,}576{,}000`$ feed-forward FLOPs. Their sum is $`2{,}596{,}864{,}000`$ per block and $`7{,}790{,}592{,}000`$ per three-block forward pass. Using a stipulated training multiplier of three yields $`23{,}371{,}776{,}000`$ FLOPs per query and $`233{,}717{,}760{,}000{,}000`$ per epoch. Dividing by $`3.4\times10^{14}\,\mathrm{FLOP\,s^{-1}}`$ gives $`0.687405176\,\mathrm s`$ of ideal arithmetic work, not a predicted training epoch time. The feature payload alone is $`10^4\times10^3\times136\times4\,\mathrm B=5.44\,\mathrm{GB}`$. Text encoders, the initial feature projection, normalization, softmax, memory movement, kernels, feature loading, losses, optimization and communication are omitted. Dense kernels may be efficient, but unlike work counts do not prove which method is faster.
 The source's MSLR-WEB30K totals give $`3{,}771{,}125/31{,}531\approx119.600552`$ records per query. A representative size $`120`$ has $`120^3=1{,}728{,}000`$, approximately $`578.703704`$ times below the thousand-candidate cubic proxy. Actual total work requires $`\sum_q n_q^3`$, not the cube of the mean times query count; list-size variation increases this convex cost.
 #### Practice choices
 LambdaMART is a useful baseline for heterogeneous numeric features, not an architecture that is forbidden to read $`768`$ embedding coordinates. Compare trees, neural scorers and hybrid features under matched tuning and data budgets. Train or sample candidate depths to reflect serving while measuring the impact of distribution changes. Deepen the cut when available gold coverage or high-gain misses materially limit the product objective. Remove arbitrary position tags; retain first-stage rank only as an intentional attached, ablatable feature. Ten candidate-order shuffles are a diagnostic, not a mathematical proof of symmetry.
-In the staff vignette, $`\operatorname{NDCG}@10`$ rises from $`0.412`$ to $`0.431`$, an absolute $`0.019`$ gain. If only the new model varies by $`\pm0.015`$, its scores range from $`0.416`$ to $`0.446`$ and gains against a fixed baseline range from $`0.004`$ to $`0.034`$. That does not automatically reverse the gain's sign, and a shuffle range is not a statistical confidence interval. A truly equivariant deterministic implementation should not move materially merely because candidate rows are reordered; such spread calls for inspecting features, masks, ties and code paths. Query-sampling uncertainty and variation in the baseline need separate analysis.
+In the staff vignette, $`\mathop{\mathrm{NDCG}}\nolimits@10`$ rises from $`0.412`$ to $`0.431`$, an absolute $`0.019`$ gain. If only the new model varies by $`\pm0.015`$, its scores range from $`0.416`$ to $`0.446`$ and gains against a fixed baseline range from $`0.004`$ to $`0.034`$. That does not automatically reverse the gain's sign, and a shuffle range is not a statistical confidence interval. A truly equivariant deterministic implementation should not move materially merely because candidate rows are reordered; such spread calls for inspecting features, masks, ties and code paths. Query-sampling uncertainty and variation in the baseline need separate analysis.
 If removing attention preserves the gain in a controlled ablation, interaction was not necessary for that observed gain; this does not uniquely identify its cause or prove all set interactions useless. If a robust interaction gain survives matched-capacity, tuning and seed checks, consider a global rerank above the eight-shard merge. Budget and evaluate that global candidate pool: equivariance alone does not justify merging independently contextualized shard scores.
 ### 19.5 Neural LTR representation, interaction, and hybrid scoring
 #### What it is
 Neural LTR learns text features but can still use pointwise, pairwise or listwise supervision. The source illustrates that distinction across a 2016 convolutional ranker, a 2020 bi-encoder and a 2024 LLM reranker. A single-vector representation scorer may factor as:
+
 $$
-s_{\mathrm{rep}}(q,d)=\operatorname{sim}(\eta_q(q),\eta_d(d)),\qquad \eta_q(q),\eta_d(d)\in\mathbb R^m.
+s_{\mathrm{rep}}(q,d)=\mathop{\mathrm{sim}}\nolimits(\eta_q(q),\eta_d(d)),\qquad \eta_q(q),\eta_d(d)\in\mathbb R^m.
 $$
+
 The indexed document vector $`\eta_d(d)`$ is query-independent and can be computed at index time. The query and document encoders may share weights, but need not. For interaction scoring, the notation below only says that the final computation uses joint features; it does not alone prove that no algebraic factorization is possible:
+
 $$
 s_{\mathrm{int}}(q,d)=f\bigl(\phi(q,d)\bigr)
 $$
+
 Distinguish single-vector separation, late interaction over precomputed document token vectors, and a cross-encoder whose document states depend on the query. Interaction models can precompute query-independent embeddings and other features; what remains online is query-dependent matching or joint encoding. A complete joint score cannot generally be stored independently of an unknown query. Parameter count alone does not determine this boundary.
 #### Representation lineage
 The source attributes DSSM to Huang and colleagues (2013): letter-trigram hashing, a reported $`128`$-dimensional projection and cosine scoring with click-derived supervision. Under an assumed thirty-symbol alphabet, there are at most $`30^3=27{,}000`$ ordered trigrams; this is an alphabet-specific counting bound, not a universal Unicode vocabulary size or a verification of a particular hashing table. The stated twenty-six letters plus boundary and punctuation symbols must actually total thirty for that bound to apply. A multi-hot/count feature vector and the chosen normalization are implementation details to record.
 Softmax against sampled alternatives is a recurring contrastive pattern, also used in representation retrieval. It does not make DSSM, DPR, Contriever and SPLADE objectives identical: supervision, negative sampling, distillation and sparsity regularization can differ. Unclicked is not automatically irrelevant. The source attributes C-DSSM to Shen and colleagues (2014), with convolution and max pooling, and LSTM-DSSM to Palangi and colleagues (2016). Recurrent networks have practical optimization and long-range dependency limits, not a mathematical prohibition against processing hundreds of tokens. Transformers change the computation and inductive biases; they do not by themselves remove fixed-representation compression.
 #### Interaction lineage
 The source attributes MatchPyramid to Pang and colleagues (2016). For nonzero query/document token vectors $`q_i`$ and $`d_j`$, its similarity grid may use:
+
 $$
 M_{ij}=\frac{q_i^{\mathsf T}d_j}{\lVert q_i\rVert_2\lVert d_j\rVert_2}.
 $$
+
 A hundred query tokens and a hundred document tokens give $`100\times100=10{,}000`$ pair similarities. A two-dimensional CNN over that grid can combine local match patterns along both text axes, while later layers or pooling expand its receptive field. Convolution remains local in the grid; it is not mathematically equivalent to attention with its softmax removed. Attention also mixes value vectors, which this similarity grid alone does not do.
 DRMM, attributed to Guo and colleagues (2016), aggregates each query token's similarities into fixed-width histograms before a learned scorer and query-term weighting. Fixed output width controls downstream feature size; forming the matches can still cost $`O(L_qL_d)`$ for token counts $`L_q,L_d`$, and pooling can also handle variable-sized matrices without inherently forcing truncation. Histograms discard the ordering of their similarity entries. With noncontextual token features this loses document word order; contextual token states can carry order information before aggregation, so not every such architecture loses all order. Direction-sensitive queries such as Boston-to-Denver versus its reverse need a measured order-sensitive signal, not an assumption that a histogram is adequate for every task.
 #### Representation bottleneck and hybrid repair
 A single-vector encoder compresses a document without knowing its future query. An fp32 vector of width $`m=128`$ has a nominal $`128\times32=4{,}096`$-bit payload and at most $`2^{4096}`$ bit patterns. For all possible fixed-length sequences of four hundred tokens from a vocabulary of size $`30{,}522`$, the log-cardinality is:
+
 $$
 \log_2(30{,}522^{400})=400\log_2(30{,}522)\approx5{,}959.024752\ \mathrm{bits}.
 $$
+
 A fixed-length lossless binary code for every such token sequence needs at least $`\lceil5{,}959.024752\ldots\rceil=5{,}960`$ bits. The vector offers $`4{,}096/400=10.24`$ nominal bits per token, compared with $`\log_2(30{,}522)\approx14.897562`$ under this all-sequences count. Pigeonhole collisions are inevitable over that complete hypothetical sequence space; the calculation is not the entropy of natural language, the number of useful semantic distinctions, or a proof that a real ten-million-document corpus cannot be encoded distinctly. Naming ten million corpus IDs alone needs only $`\lceil\log_2(10^7)\rceil=24`$ bits. Useful similarity geometry and generalization are additional requirements beyond unique IDs.
 The constraint motivates measuring rare-literal failures, but does not prove that a part number appearing in one of a million documents has no influence or needs its own dedicated coordinate. Width $`128\to768`$ multiplies fp32 payload by six and can increase representational capacity; it neither guarantees nor makes impossible exact-match recovery. Training, retrieval geometry and indexing matter. The source attributes Duet to Mitra, Diaz and Craswell (2017), combining representation and interaction channels, with a reported gain over either half. Test complementary head/tail failures and the hybrid's incremental quality and actual serving cost. High rank correlation alone does not establish redundancy on the rare cases that matter, nor must adding one channel exactly double cost.
 #### Worked cost example
 Use $`N=10^7`$ passages for a worked payload model; the cited MS MARCO comparison has about $`8.8\times10^6`$, so these are not identical corpus sizes. Assume a hundred query-independent fp32 token vectors of width $`300`$ per passage, and ten query token vectors. These assumptions describe precomputed-token interaction, not a full joint cross-encoder. Suppose the relevant memory path supplies $`3.35\times10^{12}\,\mathrm{B\,s^{-1}}`$ and the arithmetic proxy uses $`3.4\times10^{14}\,\mathrm{FLOP\,s^{-1}}`$. A complete uncached scan of the stored token payload reads:
+
 $$
 (10^7)(100)(300)(4\,\mathrm B)=1.2\times10^{12}\,\mathrm B=1.2\,\mathrm{TB}.
 $$
+
 At that stipulated bandwidth, the division gives $`0.358208955\,\mathrm s=358.208955\,\mathrm{ms}`$. The token dot products alone cost $`N L_q L_d(2\times300)=6\times10^{12}`$ FLOPs, or $`17.647059\,\mathrm{ms}`$ at the stipulated arithmetic rate, before CNN/histogram scoring, query encoding and other overhead. These are separate work proxies, not values to sum blindly if work overlaps. A $`1.2\,\mathrm{TB}`$ payload may exceed one device's memory, but no device capacity was specified here. Applying its local high-bandwidth-memory rate to data resident in host memory or other devices would be invalid without a placement and transfer model. A single-vector representation scan instead reads:
+
 $$
 (10^7)(128)(4\,\mathrm B)=5.12\times10^9\,\mathrm B=5.12\,\mathrm{GB}.
 $$
+
 Its payload division is $`1.528358209\,\mathrm{ms}`$. Dot products require $`2Nm=2.56\times10^9`$ FLOPs, whose ideal arithmetic division is $`7.529412\,\mathrm{\mu s}`$. The read/compute ratio is approximately $`202.985075`$ under these assumptions, not a measured bottleneck or an ANN-search latency. The full token payload is $`234.375`$ times the single-vector payload.
 Reranking a hundred candidates with the same precomputed token payload reads $`100\times100\times300\times4\,\mathrm B=12\,\mathrm{MB}`$, whose division is $`3.582090\,\mathrm{\mu s}`$; the token dot products add $`60\times10^6`$ FLOPs of work. Candidate fraction is $`100/10^7=10^{-5}`$. The token payload-read proxy is $`0.234375\%`$ of the representation payload-read proxy, not the fraction of end-to-end query latency added by a cross-encoder. That scorer also pays its model/activation/encoding costs. No reranker recovers a candidate excluded from its input.
 With $`10^4`$ corpus documents, the same token payload is $`1.2\,\mathrm{GB}`$ and the read division is $`0.358209\,\mathrm{ms}`$. This alone does not prove a first stage is unnecessary: compute, memory placement, quality and the actual SLO decide. A separate multi-vector example storing a hundred width-$`128`$ fp32 vectors per passage has $`512\,\mathrm{GB}`$, a hundred times the width-$`128`$ single-vector payload, and a $`152.835821\,\mathrm{ms}`$ read division. Its width differs from the width-$`300`$ token example. The cited ColBERT $`458\,\mathrm{ms}`$ end-to-end measurement is numerically about $`2.996680`$ times that read proxy, but hardware, corpus, precision, compression and ANN/code paths are unmatched. That ratio neither validates the proxy nor identifies the causes of the residual.
 #### Practice choices and limits
 A representation first stage plus a bounded interaction reranker is a useful starting point, not a universal optimum. Count indexed bytes, resident placement, query work and end-to-end latency separately. A deep cross-encoder can be compute-intensive on a short list, but a compute-bound claim needs profiling. Fixed-width aggregation may help when document lengths vary; “more than three times” is a source heuristic, not a complexity threshold. Uniform chunks can limit padding waste without proving a matrix model best. Obtain quality and cost curves before choosing width: the same ten-million-document fp32 payload grows from $`5.12\,\mathrm{GB}`$ at width $`128`$ to $`30.72\,\mathrm{GB}`$ at width $`768`$.
-For rare literal misses, test sparse and late-interaction signals as well as width and training changes. The staff probe lowers a $`p_{99}`$ target from $`400\,\mathrm{ms}`$ to $`80\,\mathrm{ms}`$. Cutting the rerank input from a thousand to fifty reduces candidate count twentyfold, not necessarily wall time twentyfold. Measure the whole request distribution under load; individual component $`p_{99}`$ values cannot generally be added. If $`\operatorname{Recall}@50`$ is within one percentage point of $`\operatorname{Recall}@1{,}000`$, that bounds the measured gold-coverage difference under its weighting—not NDCG loss, high-severity misses or answer-quality loss. Validate the product metric and important cohorts before calling the cut inexpensive.
+For rare literal misses, test sparse and late-interaction signals as well as width and training changes. The staff probe lowers a $`p_{99}`$ target from $`400\,\mathrm{ms}`$ to $`80\,\mathrm{ms}`$. Cutting the rerank input from a thousand to fifty reduces candidate count twentyfold, not necessarily wall time twentyfold. Measure the whole request distribution under load; individual component $`p_{99}`$ values cannot generally be added. If $`\mathop{\mathrm{Recall}}\nolimits@50`$ is within one percentage point of $`\mathop{\mathrm{Recall}}\nolimits@1{,}000`$, that bounds the measured gold-coverage difference under its weighting—not NDCG loss, high-severity misses or answer-quality loss. Validate the product metric and important cohorts before calling the cut inexpensive.
 ## Diagrams
 ### Figure 19.1
 ```mermaid
@@ -446,6 +520,7 @@ flowchart TD
 Figure $`19.1`$: For fixed labels and a tie rule, sorting removes score magnitudes from the metric. Gradient-based learning can use a surrogate or relaxation; this does not rule out derivative-free learning. Here squared error prefers A by a numeric-loss ratio approximately $`4.182952`$, while NDCG prefers B by approximately $`0.152064518`$, or $`15.206452`$ percentage points. The example shows a calibration/order mismatch, not a theorem that every regression target is inappropriate.
 ### Figure 19.2
 (a) Ranking by the hard class $`\arg\max_j p_j`$ puts $`n`$ candidates into at most $`K=5`$ buckets. The three head documents all have modal class three; ordering that bucket requires an explicit tie policy.
+
 $$
 \begin{array}{ccccc}
 \text{class }0&\text{class }1&\text{class }2&\text{class }3&\text{class }4\\
@@ -453,7 +528,9 @@ $$
 &&&\text{tie policy required}&
 \end{array}
 $$
+
 (b) The same distributions yield distinct expected grades and distinct expected gains in this example. Ordinal latent scores are a different model output; their learned cut points should not be drawn as if they were fitted to these expectations.
+
 $$
 \begin{array}{c|ccc}
 \text{document}&A&B&C\\\hline
@@ -461,6 +538,7 @@ $$
 \mathbb E[2^y-1]&8.90&7.30&5.65
 \end{array}
 $$
+
 Figure $`19.2`$: These distributions rank A/B/C by either expectation, without another encoder pass. Taking the mode alone leaves a tie, and a confidence-based tie policy instead yields B/A/C. Computing an expectation still needs arithmetic and useful probabilities; continuous scores can tie on other data. Expected gain optimizes expected DCG under fixed discounts, not expected NDCG with an arbitrary random IDCG denominator.
 ### Figure 19.3
 ```mermaid
@@ -497,6 +575,7 @@ flowchart TD
     J --> K["Equivariant score rows"]
 ```
 Marginal shortcut, with $`u`$ candidates ahead and one-based rank $`r=u+1`$:
+
 $$
 \begin{aligned}
 \widetilde b_{j,0}(u)&=\mathbf1[u=0],\\
@@ -505,10 +584,13 @@ $$
 \widetilde p_j(r)&=\widetilde b_{j,n-1}(r-1),\qquad r\in\{1,\ldots,n\}.
 \end{aligned}
 $$
+
 Set-score equivariance, with every attached feature and mask permuted consistently:
+
 $$
 f(q,PD)=Pf(q,D)\qquad\text{for every permutation }P
 $$
+
 Figure $`19.4`$: Independent Gaussian scores have dependent comparison events when they share a candidate score. The displayed marginal recurrence is therefore an approximation: three equal-mean scores have exact rank probabilities $`(1/3,1/3,1/3)`$, not $`(1/4,1/2,1/4)`$. Conditional integration in Section $`19.4`$ gives the exact law. The stated direct full-bin algorithm is cubic across all candidates; keeping only top-$`k`$ bins and cutting candidate input are different optimizations. SetRank-style equivariance instead concerns scorer symmetry under reordering, and does not ensure stability under changes of candidate membership.
 ### Figure 19.5
 ```mermaid
@@ -571,7 +653,7 @@ Compare LambdaMART and neural baselines on the actual features; trees can read e
 | Grades $`0`$ through $`4`$ | Standard five-point relevance scale used throughout |
 | $`46`$ features | LETOR $`4.0`$ feature count |
 | $`136`$ features | MSLR-WEB30K feature count |
-| Loss halved, $`\operatorname{NDCG}@10`$ moved $`0.004`$ | Opening evidence of objective mismatch |
+| Loss halved, $`\mathop{\mathrm{NDCG}}\nolimits@10`$ moved $`0.004`$ | Opening evidence of objective mismatch |
 | $`15/7\approx2.142857`$, $`4/3\approx1.333333`$, ratio $`\approx1.607143`$ | Exponential-gain and raw-label coding ratios; ordinal grades do not intrinsically specify either utility ratio |
 | $`500`$ versus $`5`$ rows; coefficient ratio $`100{:}1`$ | Equal row weights give coefficient shares approximately $`99.0099\%`$ and $`0.9901\%`$; a two-query macro objective gives each query $`50\%`$. Actual loss shares also depend on errors |
 | $`Z\approx19.416508275`$ | Five-document example IDCG from unrounded discounts |
@@ -599,10 +681,10 @@ Compare LambdaMART and neural baselines on the actual features; trees can read e
 | $`2001`$ and $`2002`$ | PRank and its cited large-margin ordinal successor |
 | $`2007`$, $`2009`$, $`2020`$ | McRank, the cited LTR survey, and monoT5 years |
 | Width $`20`$, stride $`10`$, $`9`$ windows over $`100`$ candidates | The count is exact for this schedule; calls are sequential only if later windows depend on earlier results |
-| $`82\%`$ accuracy | Pointwise interview example with weak $`\operatorname{NDCG}@10`$ |
+| $`82\%`$ accuracy | Pointwise interview example with weak $`\mathop{\mathrm{NDCG}}\nolimits@10`$ |
 | $`800`$ QPS and hourly updates | Hot-path constraints in the pointwise staff example |
 | $`0.71`$ to $`0.84`$ over six hours | Pairwise validation accuracy rise |
-| $`\operatorname{NDCG}@10`$ $`0.3869`$ | Metric that remained stalled |
+| $`\mathop{\mathrm{NDCG}}\nolimits@10`$ $`0.3869`$ | Metric that remained stalled |
 | $`F = 136`$ | MSLR-WEB30K pairwise feature count |
 | RankSVM years $`2000`$ and $`2002`$ | Introduction and search application cited by the source |
 | RankNet $`2005`$ | Cited introduction year |
@@ -629,7 +711,7 @@ Compare LambdaMART and neural baselines on the actual features; trees can read e
 | $`1{,}000`$ candidates | Main listwise worked-example depth |
 | Ranks $`300`$ through $`800`$ | Region containing most stated misordered pairs |
 | $`w(300)\approx0.121453266`$, $`w(800)\approx0.103673586`$, $`w(1)=1`$ | Full-list discounts; both deep positions instead have zero cutoff-ten discount |
-| Loss $`0.61`$, $`0.54`$, $`0.49`$ over three weeks | Falling pairwise loss with flat $`\operatorname{NDCG}@10`$ |
+| Loss $`0.61`$, $`0.54`$, $`0.49`$ over three weeks | Falling pairwise loss with flat $`\mathop{\mathrm{NDCG}}\nolimits@10`$ |
 | $`O(n^3)`$ for the stated direct all-document full-bin algorithm | A scope-specific algorithmic cost, not a universal lower bound on Gaussian rank smoothing |
 | $`O(n^2)`$ for one document's full rank recurrence | Repeating the calculation for all candidates gives cubic work by that direct algorithm |
 | $`12`$ models, $`8`$ LambdaMART | Stated composition of the $`2010`$ Yahoo winning blend |
@@ -640,7 +722,7 @@ Compare LambdaMART and neural baselines on the actual features; trees can read e
 | $`n^3=10^9`$ per query; $`10^{13}`$ per epoch | Convenient proxy; rectangular count is $`999{,}000{,}000`$ and growing-bin count $`500{,}499{,}000`$ per query. Conditional quadrature adds integration cost |
 | $`100`$ input candidates: $`10^6`$ per query and $`10^{10}`$ per epoch | This cuts input coverage. Keeping all $`1{,}000`$ candidates and only $`100`$ rank bins instead gives an $`n^2k=10^8`$ proxy per query |
 | $`1{,}000`$ times for candidate truncation; about $`10`$ for top-bin truncation | These compare different recurrence-work proxies and are not measured runtime speedups |
-| $`\operatorname{Recall}@100=0.86`$, $`\operatorname{Recall}@1{,}000=0.94`$ | Same gold sets and query weighting assumed; this is coverage rather than a NDCG value |
+| $`\mathop{\mathrm{Recall}}\nolimits@100=0.86`$, $`\mathop{\mathrm{Recall}}\nolimits@1{,}000=0.94`$ | Same gold sets and query weighting assumed; this is coverage rather than a NDCG value |
 | $`8`$ percentage points | Available gold-coverage difference when dropping input candidates, not necessarily downstream NDCG or answer-quality loss |
 | $`4{,}975`$ pairs per query; $`49{,}750{,}000`$ per epoch | Binary-label unequal pairs; sorting, tree-feature work, histograms and leaf updates are additional |
 | $`10^9/4{,}975\approx201{,}005.025`$ | Bin-update/pair-evaluation count ratio with unlike work units; not a latency or FLOP speedup |
@@ -657,7 +739,7 @@ Compare LambdaMART and neural baselines on the actual features; trees can read e
 | $`0.412\to0.431`$; absolute gain $`0.019`$ | Reported staff vignette; a controlled ablation and query-level uncertainty are still required |
 | New score variation $`\pm0.015`$ | Against fixed baseline $`0.412`$, scores span $`0.416`$–$`0.446`$ and gains $`0.004`$–$`0.034`$. This need not reverse the gain and is not a sampling confidence interval |
 | Eight shards | Deployment constraint in that probe |
-| $`0.03`$ $`\operatorname{NDCG}@10`$ drop | Retriever-swap probe from BM25 to dense candidates |
+| $`0.03`$ $`\mathop{\mathrm{NDCG}}\nolimits@10`$ drop | Retriever-swap probe from BM25 to dense candidates |
 | $`100\times100=10{,}000`$ | Token interaction cells for one pair |
 | $`30^3=27{,}000`$ | Maximum ordered trigrams under an assumed thirty-symbol alphabet, not a universal language or implementation-vocabulary bound |
 | $`26`$ letters | Main alphabet count inside the trigram bound |

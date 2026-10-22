@@ -170,6 +170,7 @@ $$
 x = [s \Vert e_{1:m} \Vert d_{1:k} \Vert q],
 \qquad p_{\theta}(y \mid x)
 $$
+
 The slots are instruction, demonstrations, retrieved passages, and query.
 #### Rung 1: completion
 
@@ -237,6 +238,7 @@ Query dependence is not exclusive to RAG: demonstration selection can also depen
 $$
 \rho = \frac{M t_f}{k t_c}
 $$
+
 #### Binding latency
 
 
@@ -251,6 +253,7 @@ $$
 $$
 \text{stale fraction} = \min\left(1, \frac{\tau}{\Delta}\right)
 $$
+
 #### Why the growing system prompt loses
 
 
@@ -323,6 +326,7 @@ $$
 p_{\theta}(a \mid x) =
 \sum_z p_{\theta}(a \mid z, x) p_{\theta}(z \mid x)
 $$
+
 Three complete paths can reach the answer “yes, with a $`\$40`$ cap” with joint probabilities $`0.20`$, $`0.18`$, and $`0.15`$.
 Their answer mass totals $`0.53`$.
 One path can reach “no” with probability $`0.25`$.
@@ -360,6 +364,7 @@ P(\text{majority correct}) =
 \sum_{i=\lfloor m/2 \rfloor + 1}^{m}
 \binom{m}{i} p^i (1-p)^{m-i}
 $$
+
 Voting can improve accuracy when the correct answer has sufficient probability under the sampled distribution. It does not generally eliminate systematic bias; treating vote share as calibrated confidence requires validation.
 #### Chain, fan, tree, and graph
 
@@ -422,17 +427,23 @@ Wang et al. reported PaLM-540B on GSM8K at $`56.5\%`$ for greedy CoT and $`74.4\
 In the source example, that pipeline scores $`61.2\%`$ on the full multi-hop slice.
 A two-line fan of five scores $`68.0\%`$ in one round at one sixth of the calls.
 For $`c`$ stages that are all required to succeed, let $`q_j`$ be the conditional probability that stage $`j`$ succeeds given previous required successes. The chain rule then gives the product below without an independence assumption. Using unconditional $`q_j`$ would need independence or another justified joint model. Requiring every exploratory call to succeed is a pessimistic scenario, not a necessity for all tree algorithms.
+
 $$
 e = \prod_{j=1}^{c} q_j
 $$
+
 Realized accuracy mixes the perfectly executed design with its misfire state:
+
 $$
 A = e p_s + (1-e) p_d
 $$
+
 For $`p_s>p_d`$, the equality with incumbent accuracy is $`e^\star=(A_0-p_d)/(p_s-p_d)`$. A target above $`p_s`$ is infeasible, a target at or below $`p_d`$ requires no execution improvement, and $`p_s=p_d`$ has no meaningful execution crossover. An architectural label does not identify these conditional accuracies.
+
 $$
 e^\star = \frac{A_0-p_d}{p_s-p_d}
 $$
+
 Use $`A_0 = 0.683`$, $`p_s = 0.85`$, and $`p_d = 0.45`$.
 The equality is $`e^\star=(0.683-0.45)/(0.85-0.45)=0.5825`$.
 A thirty-call tree therefore needs per-call reliability of $`0.982`$.
@@ -459,7 +470,7 @@ A five-sample fan gets all five parseable outputs with probability $`0.904`$ at 
 Exactly four parse with probability $`0.092`$.
 Fewer than four parse with probability $`0.004`$.
 A four-sample vote with random tie-breaking scores $`0.648`$ at $`p = 0.60`$.
-Define the parseability policy explicitly: $`J\sim\operatorname{Binom}(5,0.98)`$ valid samples, correctness $`p=0.60`$ conditional on validity, random tie-breaking for even $`J`$, and fallback accuracy $`0.45`$ when $`J=0`$. Summing over $`J`$ gives accuracy $`0.67923578`$, or $`67.9236\%`$, compared with ideal five-vote accuracy $`0.68256`$. Other fallback, invalidity/correctness dependence or retry policies change the result.
+Define the parseability policy explicitly: $`J\sim\mathop{\mathrm{Binom}}\nolimits(5,0.98)`$ valid samples, correctness $`p=0.60`$ conditional on validity, random tie-breaking for even $`J`$, and fallback accuracy $`0.45`$ when $`J=0`$. Summing over $`J`$ gives accuracy $`0.67923578`$, or $`67.9236\%`$, compared with ideal five-vote accuracy $`0.68256`$. Other fallback, invalidity/correctness dependence or retry policies change the result.
 A thirty-call tree at $`98\%`$ execution and a perfect scorer realizes $`0.668`$.
 The scenario tree uses $`30`$ calls versus $`5`$ for the fan and has three dependent generate-and-score levels. At $`q=0.98`$ and perfect pruning, its accuracy $`0.66819373`$ trails the explicitly modeled fan by $`1.1042`$ percentage points; arithmetic work is not a wall-clock latency guarantee.
 If its evaluator keeps the correct branch $`90\%`$ of the time, full execution falls to $`0.398`$.
@@ -488,9 +499,11 @@ A two-point change on $`500`$ questions is not resolved by looking at one arm's 
 
 
 The naive model assumes perfect use of the gold passage and closed-book fallback otherwise.
+
 $$
 A_{\text{naive}}(k) = R(k) + (1-R(k))p_0
 $$
+
 This expression can only rise with recall.
 Production breaks its two assumptions.
 When the gold passage is absent, the model can ground in a plausible wrong passage instead of returning to parametric memory.
@@ -509,28 +522,35 @@ This co-occurrence substitution gives no-gold accuracy $`m`$, with $`m \lt p_0`$
 $$
 u(k) = \Phi(\mu)^{k-1}
 $$
+
 The relative penalty per added passage is $`\beta = 1 - \Phi(\mu)`$.
 At $`\mu = 2.0`$, $`\beta = 0.0228`$.
 At $`\mu = 2.5`$, $`\beta = 0.0062`$.
 At $`\mu = 3.0`$, $`\beta = 0.00135`$.
 A reranker can change selected passages and order, but a larger retrieval-score margin does not automatically increase the generator’s effective score margin. That causal link requires a separate intervention or measurement.
 #### The non-monotone accuracy model
+
 $$
 A(k) = m + (1-m) R(k) u(k)
 $$
+
 $`G(k)=R(k)u(k)`$ is the probability of selecting the gold passage in this scenario, not measured grounding or faithfulness. The accuracy formula further assumes correctness whenever gold is selected and constant fallback accuracy $`m`$ in every other state, including gold present but not selected. Measuring $`m`$ only after deleting gold does not establish that second conditional accuracy.
 Recall rises with $`k`$ while utilization falls.
 Karpukhin et al. (2020) reported Dense Passage Retrieval (DPR) accuracy on Natural Questions of $`78.4\%`$ at top-20 and $`85.4\%`$ at top-100.
 The reported anchors bracket $`20\le k\le100`$. Use a log-linear scenario curve there; values at $`5\le k<20`$ are extrapolations, not interpolation or reported DPR measurements:
+
 $$
 R(k)=0.784+c\ln(k/20),\qquad c=\frac{0.854-0.784}{\ln5}\approx0.04349345.
 $$
+
 Marginal recall decays as $`\frac{c}{k}`$.
 Marginal dilution stays near constant at $`\beta`$.
 The optimum solves:
+
 $$
 k^\star R(k^\star) = \frac{c}{-\ln\Phi(\mu)} \approx \frac{c}{\beta}
 $$
+
 At $`\mu=3`$, the continuous stationary point of this scenario is $`k\approx39.571`$. Check nearby integers and feasible-domain endpoints. This remains a toy optimum, not a deployment guarantee.
 At $`\mu=2.5`$, the continuous stationary point of this scenario is $`k\approx9.301`$. Check nearby integers and feasible-domain endpoints. This is below the $`20`$–$`100`$ anchor bracket and is an extrapolation, not a validated optimal retrieval depth.
 At $`\mu=2`$, the continuous stationary point of this scenario is $`k\approx2.711`$. Check nearby integers and feasible-domain endpoints. This is below the $`20`$–$`100`$ anchor bracket and is an extrapolation, not a validated optimal retrieval depth.

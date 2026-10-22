@@ -21,7 +21,7 @@ This route serves search-relevance and applied-science preparation. It follows t
 | 6 | [21\_learned\_sparse\_and\_multi\_vector\_retrieval](part-06-retrieval-ranking/21_learned_sparse_and_multi_vector_retrieval.md) | SPLADE, ColBERT, and reciprocal rank fusion |
 | 7 | [22\_reranking](part-06-retrieval-ranking/22_reranking.md) | Cross-encoders and rerank depth |
 | 8 | [24\_query\_reformulation](part-07-query-control/24_query_reformulation.md) | Query reformulation and HyDE |
-| 9 | [32\_evaluating\_retrieval](part-10-evaluation/32_evaluating_retrieval.md) | MRR, nDCG and $`\operatorname{Recall}@k`$ with declared references and aggregation |
+| 9 | [32\_evaluating\_retrieval](part-10-evaluation/32_evaluating_retrieval.md) | MRR, nDCG and $`\mathop{\mathrm{Recall}}\nolimits@k`$ with declared references and aggregation |
 | 10 | [41\_end\_to\_end\_design\_drills](part-12-systems-design/41_end_to_end_design_drills.md) — Section $`41.4`$ | Multi-hop question-answering drill |
 
 

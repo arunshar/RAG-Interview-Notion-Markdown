@@ -5,7 +5,7 @@ This page is a smoke-test fixture for the book’s GitHub previews. The examples
 ## Writing equations
 
 - Keep inline equations inside GitHub’s dollar-and-backtick delimiters.
-- Put a blank line before and after each display equation’s opening and closing delimiter block.
+- Separate each display-equation block from the surrounding prose with blank lines.
 - Use supported named-operator notation and retain the appropriate limit behavior.
 - Prefer named vertical-bar delimiters inside tables so a bar cannot be mistaken for a Markdown column separator.
 
@@ -53,6 +53,10 @@ An operator with display limits:
 $$
 \mathop{\mathrm{arg\,max}}\limits_{d\in D}s(q,d)
 $$
+
+## Compatibility changes
+
+GitHub currently rejects `\operatorname`. The book uses `\mathop{\mathrm{…}}\nolimits` for the same upright operator labels and side-subscript behavior. Explicit limit placement is retained where requested. The equations are not replaced by images or external rendering services.
 
 ## Validation scope
 

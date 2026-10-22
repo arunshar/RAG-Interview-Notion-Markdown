@@ -186,9 +186,11 @@ Approximate study-era labels such as $`4\mathrm{k}`$ mean about four thousand to
 - The illustrative $`20`$-document list has two primacy, sixteen trough and two recency slots.
 - Take $`A_{\mathrm{primacy}}=0.70`$, $`A_{\mathrm{trough}}=0.50`$, $`A_{\mathrm{recency}}=0.65`$ and $`A_0=0.60`$.
 - Uniform gold placement gives:
+
 $$
 \bar A=\frac{2(0.70)+16(0.50)+2(0.65)}{20}=0.535=53.5\%.
 $$
+
 - The difference is $`0.535-0.60=-0.065`$, or $`-6.5`$ percentage points; the trough is ten points below $`A_0`$.
 - These are illustrative values, not reproduced paper measurements.
 - Separately, the chapter reports roughly $`56\%`$ closed-book accuracy for GPT-3.5-Turbo on an NQ-based set, with middle positions below that line and edge positions above it. Retain the model, prompt and benchmark scope when citing that comparison.
@@ -215,9 +217,11 @@ $$
 #### Stated cost and complexity
 - For fixed head width, dense self-attention’s query-key and attention-value products have leading prefill work $`\mathcal O(n^2d)`$. This is not the entire transformer: projections and feed-forward layers also have length-linear work.
 - In the leading quadratic proxy, increasing token length from about four thousand to sixteen thousand is a factor of four:
+
 $$
 \frac{W_{\mathrm{attn}}(16{,}000)}{W_{\mathrm{attn}}(4{,}000)}\approx\left(\frac{16{,}000}{4{,}000}\right)^2=16.
 $$
+
 - This is approximately sixteen times the quadratic attention arithmetic, not sixteen times every FLOP, latency, allocated memory or serving price. Causal pair counts and implementation details also affect exact constants.
 - For a simple total-work proxy $`W(n)=an+bn^2`$ with $`a,b\ge0`$ and nonzero work, $`W(4n)/W(n)`$ lies between $`4`$ and $`16`$. Fixed overhead changes that comparison again.
 - Sparse or windowed attention, efficient kernels, KV caching and prefill/decode reuse change operational costs. None alone proves a flatter position-wise accuracy curve.
@@ -254,9 +258,11 @@ $$
 - For an exact discrete example, take token length $`\ell`$ uniform on the integers $`500,\ldots,4{,}000`$: there are $`3{,}501`$ possible lengths.
 - Assume every example contains the fixed system-role prefix, so position $`0`$ is occupied in all examples.
 - Zero-based offset $`2{,}000`$ exists only when $`\ell\ge2{,}001`$:
+
 $$
 \Pr(\text{offset }2{,}000\text{ occupied})=\frac{2{,}000}{3{,}501}\approx0.571265353=57.1265353\%.
 $$
+
 - Its occupancy is about $`42.873465`$ percentage points below position $`0`$. The continuous-length approximation instead gives $`4/7\approx57.142857\%`$ and a $`42.857143`$-point gap. Neither is a measurement of semantic consistency or gradient importance.
 - Separately, stipulate distance weights $`w(j)\propto1/j`$ for $`j=1,\ldots,2{,}048`$. Define $`H_n=\sum_{j=1}^n1/j`$.
 - The asymptotic expansion is $`H_n=\ln n+\gamma+1/(2n)+\mathcal O(n^{-2})`$, with $`\gamma\approx0.577215665`$; $`H_n=\ln n+\gamma`$ is not an exact equality.
@@ -278,7 +284,7 @@ $$
 - These are method- and task-specific results, not a theorem that every hierarchy, running summary or prompt instruction is ineffective.
 #### Outside-in reordering
 - Let $`d_1,\ldots,d_n`$ be ranked candidates. Descending order places $`d_1`$ first and $`d_n`$ last.
-- Define the outside-in variant used here by $`\operatorname{pos}(d_{2j-1})=j`$ and $`\operatorname{pos}(d_{2j})=n-j+1`$, for valid ranks. It puts rank one at the start and rank two at the end.
+- Define the outside-in variant used here by $`\mathop{\mathrm{pos}}\nolimits(d_{2j-1})=j`$ and $`\mathop{\mathrm{pos}}\nolimits(d_{2j})=n-j+1`$, for valid ranks. It puts rank one at the start and rank two at the end.
 - For ten items the final rank order is $`(1,3,5,7,9,10,8,6,4,2)`$.
 - LongContextReorder is the chapter’s implementation example, but orientation and surrounding prompt assembly must be checked for the actual library version. The explicitly defined permutation above governs this chapter’s calculations.
 - Filling both ends is a heuristic extension of start placement, not a proof of optimal assignment.
@@ -299,13 +305,17 @@ $$
 - The first four halve, but the remaining tail is uniform, not a continuing geometric distribution. All twenty probabilities sum to one.
 - At depth twenty in descending order, primacy has mass $`0.75`$, recency ranks nineteen and twenty have mass $`2/256=0.0078125`$, and the trough has mass $`0.2421875`$.
 - Do not discard the recency tail and then reuse the uniform-tail assumption at depth six.
+
 $$
 \bar A_{\mathrm{desc},20}=0.75(0.70)+0.2421875(0.50)+0.0078125(0.65)=0.651171875\approx65.117188\%.
 $$
+
 - Outside-in placement at depth twenty instead gives primacy mass $`0.625`$, recency mass $`0.3125`$, and trough mass $`0.0625`$:
+
 $$
 \bar A_{\mathrm{out},20}=0.625(0.70)+0.3125(0.65)+0.0625(0.50)=0.671875=67.1875\%.
 $$
+
 - The outside-in gain over descending order is $`100(0.671875-0.651171875)=2.0703125`$ percentage points, not $`2.2`$ under this complete distribution.
 - Descending rank placement exceeds the separate uniform-placement scenario by $`100(0.651171875-0.535)=11.6171875`$ points. This is a modeled comparison, not a measured reranker lift on matched production queries.
 - Both depth-twenty policies exceed the illustrative $`A_0=0.60`$.
@@ -321,6 +331,7 @@ $$
 - Gold-excluded accuracy is a separate condition: distractors remain, so $`A_{\mathrm{miss}}`$ is not automatically equal to the empty-context $`A_0`$.
 - The following expectation assumes one gold item, disjoint exhaustive zones, and stationary accuracies conditional on each zone. Multiple necessary documents and content interactions require a richer model.
 #### Expected-accuracy rule
+
 $$
 \begin{aligned}
 \bar A(k)&=P_p(k)A_{\mathrm{primacy}}+P_t(k)A_{\mathrm{trough}}\\
@@ -328,10 +339,13 @@ $$
 P_p(k)+P_t(k)+P_r(k)+P_m(k)&=1.
 \end{aligned}
 $$
+
 For a fixed descending list, increasing depth from $`k`$ to $`k+1`$ after both edge zones are full moves rank $`k-w_r+1`$ from recency to the trough, while the new rank $`k+1`$ enters recency, not the trough. Therefore
+
 $$
 \bar A(k+1)-\bar A(k)=\pi_{k+1}(A_{\mathrm{recency}}-A_{\mathrm{miss}})-\pi_{k-w_r+1}(A_{\mathrm{recency}}-A_{\mathrm{trough}}),\quad k\ge w_p+w_r.
 $$
+
 If gold-rank probabilities are nonincreasing, accuracies are stationary, and $`A_{\mathrm{primacy}}\ge A_{\mathrm{recency}}>A_{\mathrm{miss}}>A_{\mathrm{trough}}`$, this increment is nonpositive. Before the edges fill, adding a positive-probability candidate improves the model expectation under the overlap convention. Thus $`w_p+w_r`$ is an optimum for this descending policy, possibly tied when relevant probabilities vanish. The running example has its maximum at $`k=4`$.
 The accuracy ordering alone is insufficient: probabilities $`(0.30,0.30,0.01,0.19,0.20)`$ give $`\bar A(4)=0.6700`$ and $`\bar A(5)=0.6785`$ with the same zone accuracies. Outside-in is a different policy; with two slots per edge and $`k\ge4`$, its top four retain their edge assignments and each new low rank enters the trough. Its marginal change is then $`\pi_{k+1}(A_{\mathrm{trough}}-A_{\mathrm{miss}})`$. Do not conflate these mechanisms or their small-depth results.
 #### Practical score-cliff rule
@@ -348,15 +362,20 @@ The accuracy ordering alone is insufficient: probabilities $`(0.30,0.30,0.01,0.1
 - Measure $`A_{\mathrm{miss}}`$ separately from $`A_0`$. A different abstention policy, query population or distractor set changes the comparison.
 #### Worked arithmetic
 - Use the full uniform-tail rank law from section $`30.5`$ and retain descending order in these three calculations. At $`k=2`$, the first two ranks are primacy and all lower ranks are excluded:
+
 $$
 \bar A_{\mathrm{desc}}(2)=0.75(0.70)+0.25(0.60)=0.675=67.5\%.
 $$
+
 - At $`k = 4`$, ranks 1 and 2 occupy primacy while ranks 3 and 4 occupy recency:
+
 $$
 \bar A_{\mathrm{desc}}(4)=0.75(0.70)+0.1875(0.65)+0.0625(0.60)=0.684375=68.4375\%.
 $$
+
 - At $`k=6`$, ranks three and four occupy the trough. Ranks five and six each have gold probability $`1/256=0.00390625`$, not a rounded tail value inserted before calculation.
 - The remaining fourteen tail ranks have excluded mass $`14/256=0.0546875`$:
+
 $$
 \begin{aligned}
 \bar A_{\mathrm{desc}}(6)&=0.75(0.70)+0.1875(0.50)\\
@@ -364,6 +383,7 @@ $$
 &=0.656640625\approx65.664063\%.
 \end{aligned}
 $$
+
 - Enumerating depths one through twenty gives the descending-policy maximum at $`k=4`$, ahead of $`k=2`$, $`k=6`$ and $`k=20`$ for this scenario.
 - Combining outside-in with $`k=4`$ instead gives $`0.625(0.70)+0.3125(0.65)+0.0625(0.60)=0.678125`$, or $`67.8125\%`$. It is not the descending $`68.4375\%`$ result; the edge accuracies are asymmetric.
 - The outside-in curve also peaks at four for these particular probabilities. Neither numerical result is a deployment-independent rule.
@@ -378,19 +398,25 @@ RoPE rotates paired query and key coordinates. Writing its relative rotation as 
 Frequency-aggregated analyses can motivate a distance-decay envelope under their assumptions, but an arbitrary content-dependent dot product need not decay monotonically. In two dimensions, $`q=k=(1,0)^{\mathsf T}`$ gives $`q^{\mathsf T}R_\varphi k=\cos\varphi`$, which oscillates and returns to one after a full turn. A relative-distance argument alone also does not establish a preference for both the absolute start and absolute end of every prompt. Treat RoPE as one potential contributor, not a proof of the entire U or a content-independent penalty at every middle key.
 #### MS-PoE
 MS-PoE assigns different RoPE position-index scaling ratios by head. Its actual position-awareness score uses the most recent query’s attention vector during prefill, not a derivative or a repeated fixed-content perturbation test. For a normalized vector $`a`$ over $`L`$ allowed positions, the paper’s threshold score is
+
 $$
 S_h=\frac1L\sum_{j=1}^{L}\mathbf1\!\left[a_j\ge\alpha\frac1L\sum_{u=1}^{L}a_u\right],\qquad\alpha=3\text{ in the reported experiments}.
 $$
+
 The paper assigns larger compression ratios to heads with smaller scores. Heads with larger scores receive less compression, not stronger compression and not necessarily no change. Its default sorted ratios range from $`1.2`$ to $`1.8`$; assignments are determined at prefill and held during the subsequent decoding stage. They are not a universal one-time calibration for all future requests. The method requires a compatible RoPE model and serving hooks, no fine-tuning or added learned parameters, but score computation and integration still need benchmarking.[\[1\]](https://arxiv.org/html/2403.04797)
 #### Attention calibration
 Hsieh et al. (2024) estimate a document-level reference attention pattern using dummy content at the same position. Under their approximate additive model, a calibrated relevance score is
+
 $$
-\widehat r_k=\operatorname{Attn}(d_k,k)-\operatorname{Attn}(d_{\mathrm{dum}},k).
+\widehat r_k=\mathop{\mathrm{Attn}}\nolimits(d_k,k)-\mathop{\mathrm{Attn}}\nolimits(d_{\mathrm{dum}},k).
 $$
+
 They then redistribute token attention within documents, rather than simply subtracting an average positional term from every raw query-key logit. If $`a_{ki}`$ is original token attention, $`A_k=\sum_i a_{ki}>0`$, and $`C=\sum_k A_k`$ is the document portion of attention mass, the redistribution can be written
+
 $$
 \alpha_k=\frac{\exp(\widehat r_k/t)}{\sum_j\exp(\widehat r_j/t)},\qquad a'_{ki}=C\frac{\alpha_k}{A_k}a_{ki},\qquad t>0.
 $$
+
 Hence $`\sum_i a'_{ki}=C\alpha_k`$ and total document attention stays $`C`$. Masked or zero-mass cases need an explicit implementation policy. The reference subtraction relies on the approximate relevance/bias model; residual interactions and estimation errors need not cancel. The raw-logit arithmetic below is a separate pedagogical toy, not a reproduction of this algorithm.[\[2\]](https://arxiv.org/html/2406.16008)
 #### Failure without it
 - A relevant middle chunk can receive less combined attention than distractors at the edges, but mass alone is not final-answer accuracy or a sufficient causal explanation.
@@ -404,6 +430,7 @@ Hence $`\sum_i a'_{ki}=C\alpha_k`$ and total document attention stays $`C`$. Mas
 - Validate mass normalization, masks, stability, latency and held-out task accuracy; an attention diagram is not a correctness guarantee.
 #### Worked arithmetic
 For a separate three-key toy, place two edge distractors and one middle gold chunk at nominal slots $`1`$, $`11`$ and $`20`$. The other seventeen slots are masked or have negligible attention; this is not a complete twenty-key softmax. Assume additive raw logits $`z=c+b`$, with content logits $`(1,3,1)`$ and exactly known position terms $`(1.5,0,1.5)`$.
+
 $$
 \begin{aligned}
 z&=(2.5,3,2.5),\\
@@ -414,6 +441,7 @@ Z_{\mathrm{toy\ calibrated}}&=2e+e^3\approx25.522100580,\\
 a_{\mathrm{gold,toy\ calibrated}}&=\frac{e^3}{2e+e^3}\approx0.786986042.
 \end{aligned}
 $$
+
 The gold attention share increases by about $`33.512328`$ percentage points, from $`45.186276\%`$ to $`78.698604\%`$; this is not a measured answer-accuracy gain. The raw distractors share about $`54.813724\%`$. Keep the exponentials unrounded in the normalization: the calibrated sum is about $`25.5221`$, not $`25.53`$ obtained from summing rounded terms. With an estimated bias $`\widehat b`$, the remaining logits are $`c+(b-\widehat b)`$, so exact content recovery requires the additive model and correct bias. Hsieh’s document-attention algorithm above is distinct.
 ### 30.8 Training and architecture fixes
 #### IN2 training
@@ -425,17 +453,23 @@ The gold attention share increases by about $`33.512328`$ percentage points, fro
 - The chapter reports differential attention using two learned query-key projection groups over the same allowed positions.
 - Distinct learned projections do not make their resulting maps statistically independent.
 - Let $`d_h`$ be the query-key width of each group, and $`\mathcal M`$ a common causal or task mask, with at least one allowed finite key per row. Define row-wise maps:
+
 $$
-A_1=\operatorname{softmax}_{\mathrm{row}}\!\left(\frac{Q_1K_1^{\mathsf T}}{\sqrt{d_h}}+\mathcal M\right).
+A_1=\mathop{\mathrm{softmax}}\nolimits_{\mathrm{row}}\!\left(\frac{Q_1K_1^{\mathsf T}}{\sqrt{d_h}}+\mathcal M\right).
 $$
+
+
 $$
-A_2=\operatorname{softmax}_{\mathrm{row}}\!\left(\frac{Q_2K_2^{\mathsf T}}{\sqrt{d_h}}+\mathcal M\right).
+A_2=\mathop{\mathrm{softmax}}\nolimits_{\mathrm{row}}\!\left(\frac{Q_2K_2^{\mathsf T}}{\sqrt{d_h}}+\mathcal M\right).
 $$
+
 The core aggregation is $`BV`$ with $`B=A_1-\lambda A_2`$ and learned scalar $`\lambda`$ in this simplified presentation. Although each $`A_i`$ is row-stochastic, $`B`$ may have negative entries and satisfies $`B\mathbf1=(1-\lambda)\mathbf1`$; it is not generally a probability distribution.
 If $`A_1=P+S_1`$ and $`A_2=P+S_2`$, then
+
 $$
 B=(1-\lambda)P+S_1-\lambda S_2.
 $$
+
 The identical common component $`P`$ cancels exactly at $`\lambda=1`$, not for arbitrary learned scale. Different positional components leave a residual even then, and useful content can also cancel. The full architecture includes normalization and output operations omitted here. Adopting it is not a drop-in configuration change for a standard checkpoint; conversion, adaptation and additional training may be possible, but must be designed and tested. The source’s unresolved cross-reference `sec-04` appears to point to section $`30.4`$; it is not an additional mathematical result.
 #### Different intervention layers, not a guaranteed quality ordering
 - IN2 changes training examples and their evidence-location distribution.
@@ -453,9 +487,11 @@ The identical common component $`P`$ cancels exactly at $`\lambda=1`$, not for a
 - This is not the number of all possible contiguous starts, which is $`32{,}000-120+1=31{,}881`$, and is not a reconstruction of the exact IN2 sampling protocol. Instructions, other text and segment boundaries can reduce the usable region.
 - One uniformly selected grid slot has probability $`1/266\approx0.37593985\%`$ of being the designated evidence slot.
 - For two distinct full slots sampled without replacement, the number of unordered pairs is:
+
 $$
 \binom{266}{2}=\frac{266\times265}{2}=35{,}245.
 $$
+
 - Labeled ordered distinct placements instead number $`266\times265=70{,}490`$. Two independent ordered draws with replacement give $`266^2=70{,}756`$, including collisions. These are different experiments.
 - Under two distinct uniformly selected slots, a particular slot is selected with probability $`2/266\approx0.75187970\%`$, not $`1/266`$.
 - These two-full-slot counts do not apply unchanged if one $`120`$-token segment is split into shorter pieces.

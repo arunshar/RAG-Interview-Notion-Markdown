@@ -76,7 +76,7 @@ The common failures now look concrete. Do not merely recite the kitchen line. Do
 | Prefill tokens | All input tokens processed before generation | Include instructions, query, evidence, labels and delimiters; caching changes billed/physical work |
 | Attention dilution | The spread of model attention across more context | Extra retrieved items can make useful evidence harder to use |
 | Lost-in-the-middle U-curve | Quality versus evidence position under a specified context | Not a universal U-shaped curve versus evidence count or context length |
-| $`\operatorname{P}@3`$ | Fraction of the first three results judged relevant | Not calibrated answer correctness or an abstention probability |
+| $`\mathop{\mathrm{P}}\nolimits@3`$ | Fraction of the first three results judged relevant | Not calibrated answer correctness or an abstention probability |
 | Abstention threshold | The confidence boundary below which the system should decline to answer | It appears in the condition for preferring a second retrieval pass |
 | Second retrieval pass | Another search step after an initial result | It can be a better use of budget than enlarging k |
 | QPS | Incoming requests per second | Interacts with corpus size, per-query work, bandwidth, memory and concurrency |
@@ -98,7 +98,7 @@ The common failures now look concrete. Do not merely recite the kitchen line. Do
 | Derivation | Rebuilding an answer from its reasoning or arithmetic | It lets the candidate adapt when a constraint changes |
 | Metric | A numeric measure of system behavior | It needs a denominator and evaluation definition |
 | Denominator | The set of cases counted under a reported rate | Without it, a recall value cannot be interpreted |
-| $`\operatorname{Recall}@k`$ | Recall at a declared result depth | Specify task judgments or exact neighbors, eligibility, aggregation and zero-relevant policy |
+| $`\mathop{\mathrm{Recall}}\nolimits@k`$ | Recall at a declared result depth | Specify task judgments or exact neighbors, eligibility, aggregation and zero-relevant policy |
 | Judgment set | The examples used to decide what retrieval results are relevant | It supplies the denominator behind a recall claim |
 | Relevance grading | The rule used to label degrees of relevance | A metric cannot be interpreted without it |
 | Faithfulness | Agreement between an answer and its retrieved document | An answer can be faithful to a document that is wrong |
@@ -151,7 +151,7 @@ The vector-plus-base-link subtotal is $`b_{\mathrm{sub}}=(4d+8M)\,\mathrm B=3{,}
 **Why it matters:** This retrieval-specific signal is the one the source leans on hardest. RAG folklore assumes retrieval helps, more context is better, citations imply grounding, and semantic chunking beats fixed-size chunking. The source says each assumption is measurably false in identifiable conditions.
 **What fails without it:** The answer repeats optimistic defaults. It does not identify the conditions that reverse the recommendation. A candidate who knows those conditions can give an answer nobody else in the loop gave.
 ### The Answer Skeleton
-The schematic $`y=\operatorname{GEN}_\theta(x,\operatorname{RET}(x,D))`$ connects query $`x`$, datastore $`D`$, retrieval and generation. When, where, what, how and present organize useful design questions. They are not a theorem enumerating all independent free parameters: eligibility, ingestion, training, decoding, security, randomness, budgets and implementation choices are also hidden by this abstraction.[\[1\]](../part-01-landscape/03_a_repeatable_framework_for_any_rag_design_question.md)
+The schematic $`y=\mathop{\mathrm{GEN}}\nolimits_\theta(x,\mathop{\mathrm{RET}}\nolimits(x,D))`$ connects query $`x`$, datastore $`D`$, retrieval and generation. When, where, what, how and present organize useful design questions. They are not a theorem enumerating all independent free parameters: eligibility, ingestion, training, decoding, security, randomness, budgets and implementation choices are also hidden by this abstraction.[\[1\]](../part-01-landscape/03_a_repeatable_framework_for_any_rag_design_question.md)
 Use the five decisions in order. Say the order aloud.
 #### 1. When
 **What it is:** State the retrieval gate $`g(x)`$ and its evidence policy. It decides whether request $`x`$ triggers retrieval; apparent model confidence alone does not establish truth or permit bypassing required sources.
@@ -189,7 +189,7 @@ The source illustrates different answer shapes with the top-$`k`$ question. The 
 | --- | --- |
 | Core | Name candidate inclusion, actual input-token cost and answer-use risks separately. In a nested list, larger $`k`$ preserves existing candidates, but generated-answer quality need not increase. |
 | Senior | With twenty full $`512`$-token chunks, evidence contributes $`20\times512=10{,}240`$ tokens. This excludes instructions, query, source labels and delimiters. Measure prefill and placement; the positional U-curve is not a universal quality-versus-$`k`$ law. |
-| Staff | Separate reranker depth $`k^{\prime}`$ and evidence count $`k`$. Do not compare $`\operatorname{P}@3`$ with an answer-abstention threshold. Use calibrated answer correctness and support requirements with decision costs; buy another pass only if its marginal value exceeds its cost. |
+| Staff | Separate reranker depth $`k^{\prime}`$ and evidence count $`k`$. Do not compare $`\mathop{\mathrm{P}}\nolimits@3`$ with an answer-abstention threshold. Use calibrated answer correctness and support requirements with decision costs; buy another pass only if its marginal value exceeds its cost. |
 
 
 **Why the distinction matters:** Separate objectives, quantify a constraint and name evidence that would reverse the decision. Extra length is not a substitute for those tests.
@@ -238,7 +238,7 @@ At roughly $`2\,\mathrm{h/day}`$ over $`28`$ study days, the four-week plan budg
 **Practice:** On each of those last three days, use the remaining $`45\,\mathrm{min}`$ for one mock, covering Sections $`41.1`$, $`41.3`$ and $`41.6`$. These overlap the reading week rather than adding three days. Week 4 then has $`11.75\,\mathrm h`$ of chapter work plus $`2.25\,\mathrm h`$ of mocks, totaling $`14\,\mathrm h`$.
 **Targets:** Compare each attempt against the chapter. Record which constraints appeared late and which numbers could not be derived. Those two lists become the remaining study plan.
 #### Three Months
-**What to do:** Read linearly at up to three numbered subsections per day while building an owned test system. The source contents list $`247`$ main-chapter subsections, requiring $`\lceil247/3\rceil=83`$ reading days at that rate. A declared $`90`$-day planning horizon leaves seven other days; three calendar months need not be exactly ninety days. Write relevance judgments and measure $`\operatorname{Recall}@k`$ with explicit eligibility, reference set, aggregation and zero-relevant policy.
+**What to do:** Read linearly at up to three numbered subsections per day while building an owned test system. The source contents list $`247`$ main-chapter subsections, requiring $`\lceil247/3\rceil=83`$ reading days at that rate. A declared $`90`$-day planning horizon leaves seven other days; three calendar months need not be exactly ninety days. Write relevance judgments and measure $`\mathop{\mathrm{Recall}}\nolimits@k`$ with explicit eligibility, reference set, aggregation and zero-relevant policy.
 Break only an isolated, authorized test copy: remove one third of its indexed material, shuffle context order, and insert one synthetic adversarial document. Keep real sensitive data out, preserve a recoverable baseline, and never poison or destructively test a production/shared datastore. Check which tests detect each intervention and its side effects.
 **Why this plan exists:** Candidates who have watched their own system fail answer debugging questions differently from candidates who have only read about failure.
 **What fails without it:** Passive knowledge does not supply observed failure behavior or tested evaluation.
@@ -263,7 +263,7 @@ Use Appendix B when you want to test retention. Its questions are held apart fro
 **Failure:** Automatically increasing final evidence count $`k`$ or the context window to fix any recall problem confuses candidate inclusion with answer use.
 **Why it fails:** More candidates in a nested set can improve answer inclusion without improving generated answers. Lost-in-the-middle results concern position under specified models and tasks; longer windows need not fix them, but no universal U-shaped quality-versus-$`k`$ law follows.[\[4\]](../part-09-context-assembly/30_lost_in_the_middle.md)
 #### Quoting a metric without its denominator
-**Failure:** Saying $`\operatorname{Recall}@k=0.9`$ without defining $`k`$, judged relevance versus exact-neighbor reference, eligible corpus, query aggregation, grading and the policy for no relevant items. Approximate-neighbor recall and task relevance recall are not interchangeable.[\[10\]](../part-10-evaluation/32_evaluating_retrieval.md)
+**Failure:** Saying $`\mathop{\mathrm{Recall}}\nolimits@k=0.9`$ without defining $`k`$, judged relevance versus exact-neighbor reference, eligible corpus, query aggregation, grading and the policy for no relevant items. Approximate-neighbor recall and task relevance recall are not interchangeable.[\[10\]](../part-10-evaluation/32_evaluating_retrieval.md)
 **Why it fails:** The number cannot be interpreted. Chapter 32 derives the metrics so the candidate can state their denominators precisely.
 #### Confusing faithfulness with factuality
 **Failure:** The candidate treats agreement with retrieved text as proof that the answer is true.
@@ -298,7 +298,7 @@ In the cited study, roughly $`10\%`$ of otherwise-correct closed-book answers we
 ### 3. What should follow any number you state?
 State the source or derivation, symbol definitions, units, scope and omitted terms. When a constraint changes, recompute and check feasibility. Recall of a number and ability to derive it are different skills.
 ### 4. How should you answer “How do you choose top-k?”
-Separate candidate depth $`k^{\prime}`$ and evidence count $`k`$. Retrieval precision such as $`\operatorname{P}@3`$ measures document relevance, not calibrated probability that the answer is correct. Do not compare it directly with an answer-abstention threshold. Test coverage/support and calibrated answer correctness against decision costs; a second pass is justified only when its expected marginal value exceeds its cost.[\[12\]](../part-03-prompting/11_abstention_and_calibration.md)[\[3\]](../part-06-retrieval-ranking/22_reranking.md)[\[13\]](../part-07-query-control/25_routing_and_adaptive_retrieval.md)
+Separate candidate depth $`k^{\prime}`$ and evidence count $`k`$. Retrieval precision such as $`\mathop{\mathrm{P}}\nolimits@3`$ measures document relevance, not calibrated probability that the answer is correct. Do not compare it directly with an answer-abstention threshold. Test coverage/support and calibrated answer correctness against decision costs; a second pass is justified only when its expected marginal value exceeds its cost.[\[12\]](../part-03-prompting/11_abstention_and_calibration.md)[\[3\]](../part-06-retrieval-ranking/22_reranking.md)[\[13\]](../part-07-query-control/25_routing_and_adaptive_retrieval.md)
 ### 5. Why do citations not prove grounding?
 A post-hoc citation can be attached without showing that the cited source shaped the answer. Faithfulness to retrieved text, factual correctness, citation presence, and actual grounding must remain separate claims.
 ## Key numbers
@@ -329,7 +329,7 @@ A post-hoc citation can be attached without showing that the cited source shaped
 | $`k^{\prime}`$ to $`k`$ | Candidate versus evidence depth | Different objectives; actual context tokens are separate |
 | Larger $`k`$ | Top-depth trade-off | Nested-set inclusion can improve without improved generated answers |
 | $`20\times512=10{,}240`$ tokens | Evidence-only contribution | Not the entire prompt or a measured prefill duration |
-| $`\operatorname{P}@3`$ | Document relevance metric | Not directly comparable with an answer-abstention threshold |
+| $`\mathop{\mathrm{P}}\nolimits@3`$ | Document relevance metric | Not directly comparable with an answer-abstention threshold |
 | Two distinct depths | Reranking versus generation | Tune coverage, answer support, calibrated correctness and work |
 | More versus useful context | Assembly trade-off | Extra evidence can help or distract; measure position and token budget |
 | $`45\,\mathrm{min}`$ | Illustrative exact pacing plan | The earlier independent ranges span thirty-five through forty-eight minutes |
@@ -356,7 +356,7 @@ A post-hoc citation can be attached without showing that the cited source shaped
 | Double $`d`$, halve latency, or scale $`N_v`$ by $`50`$ | Practice perturbations | Re-derive scope, cost and feasibility |
 | $`90\,\mathrm s`$, then five minutes | Spoken practice targets | Not validated competence thresholds |
 | Seven listed possible stages | Component-list example | Not every design contains all seven |
-| $`\operatorname{Recall}@k=0.9`$ | Incomplete metric claim | Needs depth, reference, eligibility, aggregation and zero-relevant policy |
+| $`\mathop{\mathrm{Recall}}\nolimits@k=0.9`$ | Incomplete metric claim | Needs depth, reference, eligibility, aggregation and zero-relevant policy |
 
 
 [00-START-HERE](../00-START-HERE.md) · [01-READING-ROUTES](../01-READING-ROUTES.md) · [00\_04\_how\_to\_use\_this\_book](00_04_how_to_use_this_book.md) · [00\_06\_for\_practicing\_engineers](00_06_for_practicing_engineers.md)
