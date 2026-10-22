@@ -5,6 +5,7 @@ import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 from validate_math import fenced_ranges, scan_math, validate_text
+from build_import import notion_markdown
 
 
 class MathValidationTests(unittest.TestCase):
@@ -68,6 +69,43 @@ class MathValidationTests(unittest.TestCase):
     def test_counts(self):
         _, stats = validate_text("Inline $`x`$.\n\n$$\ny\n$$\n")
         self.assertEqual({"inline": 1, "display": 1}, stats)
+
+    def test_protected_math_fence(self):
+        text = "Before.\n\n```math\nx_{<t}^* + \\{1\\}\n```\n\nAfter.\n"
+        self.check_valid(text)
+        spans, _ = scan_math(text)
+        self.assertEqual(1, len(spans))
+        self.assertEqual("fence", spans[0].syntax)
+        self.assertEqual(r"x_{<t}^* + \{1\}", spans[0].tex(text))
+
+    def test_math_fence_still_checks_tex(self):
+        errors, _ = validate_text("```math\n\\operatorname{RET}(q,D)\n```\n")
+        self.assertTrue(any("GitHub rejects" in e for e in errors))
+
+    def test_unclosed_math_fence_rejected(self):
+        errors, _ = validate_text("```math\nx_1=2\n")
+        self.assertTrue(any("Unclosed math fence" in e for e in errors))
+
+    def test_markdown_sensitive_dollar_display_rejected(self):
+        for tex in [r"x_{<t}", r"x^*", r"\{x\}", "x\n+ y", "x\n=\ny", "[S](x)"]:
+            with self.subTest(tex=tex):
+                errors, _ = validate_text("$$\n" + tex + "\n$$\n")
+                self.assertTrue(any("protected math fence" in e for e in errors))
+
+    def test_notion_import_preserves_tex_and_code(self):
+        text = ("Inline $`x`$.\n\n```math\n"
+                "\\begin{aligned}a&=b\\\\c&=d\\end{aligned}\n"
+                "```\n\n```python\nprint('unchanged')\n```\n")
+        native = notion_markdown(text)
+        self.assertNotIn("```math", native)
+        self.assertIn("$$\n", native)
+        self.assertIn("```python\nprint('unchanged')\n```", native)
+        self.assertEqual([s.tex(text) for s in scan_math(text)[0]],
+                         [s.tex(native) for s in scan_math(native)[0]])
+
+    def test_notion_import_is_idempotent(self):
+        text = "```math\nx+y=2\n```\n"
+        self.assertEqual(notion_markdown(text), notion_markdown(notion_markdown(text)))
 
 
 if __name__ == "__main__":

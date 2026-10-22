@@ -141,11 +141,11 @@ Storage uses $`1\,\mathrm{GB}=10^9\,\mathrm B`$ and fp32 payload $`4\,\mathrm{B/
 #### Conjunction shrinks geometrically
 For a representative document, assume the $`n`$ query-term presence events are independent with probabilities $`n_i/N`$. Linearity of expectation then gives the count formula below. It does not require document-to-document independence, but corpus marginals alone do not justify the within-document product.
 
-$$
+```math
 \mathbb E[\lvert A_{\wedge}\rvert]
 =N\prod_{i=1}^{n}\frac{n_i}{N}
 =\frac{\prod_{i=1}^{n}n_i}{N^{n-1}}.
-$$
+```
 
 - Interpretation: under this model each additional conjunct multiplies the expected count by $`n_i/N`$. Correlated terms require joint or conditional occurrence probabilities instead.
 - Limitation: fewer matches do not establish higher precision or correct user intent. OR expands membership but supplies no relevance ranking by itself.
@@ -158,14 +158,14 @@ $$
 #### Extended Boolean retrieval softens the operator
 For $`n\ge1`$, equal query weights, normalized document-term weights $`w_i(d)\in[0,1]`$ and $`1\le p<\infty`$, define the following graded operators. They are scores, not authorization checks.
 
-$$
+```math
 S_{\mathrm{OR},p}(d)=\left(\frac1n\sum_{i=1}^{n}w_i(d)^p\right)^{1/p}.
-$$
+```
 
 
-$$
+```math
 S_{\mathrm{AND},p}(d)=1-\left(\frac1n\sum_{i=1}^{n}(1-w_i(d))^p\right)^{1/p}.
-$$
+```
 
 - Soft AND measures normalized distance from the all-present corner; soft OR measures normalized distance from the origin. Both lie in $`[0,1]`$.
 - Exponent $`p`$ controls the trade-off between coverage and strong partial matches. Finite-$`p`$ soft AND can be positive when a term is missing, so it is not a strict conjunction.
@@ -173,9 +173,9 @@ $$
 #### The endpoints explain the model
 At $`p=1`$, the two equal-weight operators are exactly the same arithmetic mean:
 
-$$
+```math
 S_{\mathrm{AND},1}(d)=1-\frac1n\sum_{i=1}^{n}(1-w_i(d))=\frac1n\sum_{i=1}^{n}w_i(d)=S_{\mathrm{OR},1}(d).
-$$
+```
 
 At $`p=1`$, these operators no longer distinguish AND from OR. This is valid as a named soft coordination score, but not as a promise of hard AND. As $`p\to\infty`$, $`S_{\mathrm{AND},p}\to\min_i w_i`$ and $`S_{\mathrm{OR},p}\to\max_i w_i`$. On binary weights, those endpoints recover Boolean membership; on graded weights they are fuzzy min/max scores.
 #### The compliance query makes the cliff concrete
@@ -186,14 +186,14 @@ At $`p=1`$, these operators no longer distinguish AND from OR. This is valid as 
 #### The worked soft score exposes the exchange rate
 Let document A have $`(0.9,0.8,0.6,0)`$ and B have $`(0.5,0.5,0.5,0.5)`$. At $`p=2`$:
 
-$$
+```math
 S_{\mathrm{AND},2}(A)=1-\sqrt{\frac{0.01+0.04+0.16+1}{4}}=1-\sqrt{0.3025}=0.45.
-$$
+```
 
 
-$$
+```math
 S_{\mathrm{AND},2}(B)=0.5.
-$$
+```
 
 A scores $`0.575`$ at $`p=1`$, $`0.45`$ at $`p=2`$, and tends to $`0`$ as $`p\to\infty`$. B scores $`0.5`$ for every $`p\ge1`$, since all its term weights and complements are equal. This is a change in ranking preference, not a change in the documents.
 #### Soft scoring costs more postings work
@@ -215,9 +215,9 @@ A scores $`0.575`$ at $`p=1`$, $`0.45`$ at $`p=2`$, and tends to $`0`$ as $`p\to
 #### Vector space scoring creates an order
 Salton, Wong and Yang (1975) are the source's attribution for the vocabulary-space model. For nonzero query and document vectors, cosine similarity is:
 
-$$
+```math
 \mathop{\mathrm{sim}}\nolimits(q,d)=\frac{q^{\mathsf T}d}{\lVert q\rVert_2\lVert d\rVert_2}.
-$$
+```
 
 - A score orders candidates up to ties; it is not automatically a total order. Add a deterministic tie policy if one is required.
 - Cosine lies in $`[-1,1]`$ for general real vectors, and in $`[0,1]`$ for the nonnegative TF-IDF vectors here. Zero vectors need an explicit fallback.
@@ -227,25 +227,25 @@ The classical weight used here is $`I_t=I_{\mathrm{TF}}(t)=\ln(N/n_t)`$ for $`1\
 #### Failure one is linear repetition
 Holding IDF fixed, the derivative of a linear-TF document coordinate is constant. Under this chapter's IDF-weighted clinical query, the corresponding unnormalized dot-product derivative has another IDF factor:
 
-$$
+```math
 \frac{\partial(f_{t,d}I_t)}{\partial f_{t,d}}=I_t,
 \qquad
 \frac{\partial(q^{\mathsf T}d)}{\partial f_{t,d}}=I_t^2
 \quad(t\in Q(q)).
-$$
+```
 
 For integer counts these derivatives correspond to constant coordinate or dot-product increments. They do not describe the derivative of normalized cosine, whose denominator also changes. Repetition can distort a lexical relevance proxy, but the existence and severity of a rank reversal depend on the other coordinates and the chosen normalization.
 #### Failure two confuses scope with verbosity
 For fixed linear-TF weights and $`\alpha>0`$, $`\mathop{\mathrm{sim}}\nolimits(q,\alpha d)=\mathop{\mathrm{sim}}\nolimits(q,d)`$. This is invariance to rescaling the whole vector, not to repeating only one query term, and raw-text duplication under log TF is not generally a pure rescaling. To isolate breadth, let $`d=\sum_{i=1}^m c_i`$ with mutually orthogonal, equal nonzero norms and $`q^{\mathsf T}c_i=0`$ for $`i>1`$. Then:
 
-$$
+```math
 \lVert d\rVert_2=\sqrt{\sum_{i=1}^m\lVert c_i\rVert_2^2}=\sqrt m\,\lVert c_1\rVert_2.
-$$
+```
 
 
-$$
+```math
 \mathop{\mathrm{sim}}\nolimits(q,d)=\frac{\mathop{\mathrm{sim}}\nolimits(q,c_1)}{\sqrt m}.
-$$
+```
 
 For $`m=10`$, the factor is $`1/\sqrt{10}\approx0.316227766`$, a relative decrease of approximately $`68.3772\%`$. Overlapping, unequal-norm or additionally query-relevant sections change it. Ordinary cosine has no explicit tunable breadth parameter, but it is still bounded; neither this example nor vector-rescaling invariance proves that arbitrary keyword stuffing is free.
 #### Log damping helps but never caps repetition
@@ -279,7 +279,7 @@ At $`k_1=1.2`$, $`b=0.75`$, relative length $`\ell=10`$ and $`f=1`$, BM25's TF f
 #### BM25 separates rarity from within-document evidence
 The source identifies BM25 with the Okapi Best Match family. The unboosted, distinct-query-term baseline used here is:
 
-$$
+```math
 \begin{aligned}
 I_{\mathrm B}(t)
 &=\ln\!\left(1+\frac{N-n_t+0.5}{n_t+0.5}\right)
@@ -290,7 +290,7 @@ F(f,\ell_d)&=\frac{f(k_1+1)}{f+K_d},\\
 \mathop{\mathrm{BM25}}\nolimits(q,d)
 &=\sum_{t\in Q(q)}I_{\mathrm B}(t)F(f_{t,d},\ell_d).
 \end{aligned}
-$$
+```
 
 Rarity and within-document evidence are separate factors. Take $`F(0,\ell)=0`$, $`k_1>0`$, $`b\in[0,1]`$ and $`\ell>0`$. The count $`n_t`$ is a document frequency, not a term occurrence total. Query boosts, repeated-query-term weights, field mixtures and engine-specific norm encodings require their own formulas and bounds.
 #### $`k_1`$ gives a limiting repetition budget at average length
@@ -300,7 +300,7 @@ At $`k_1=1.2`$ and $`\ell=1`$, $`F=2.2f/(f+1.2)`$. For $`f\in\{1,\,2,\,5,\,10,\,
 #### The two-Poisson argument gives the curve meaning
 The source cites Robertson and Walker (1994) for the two-Poisson motivation. Do not equate a saturating probability with a saturating log odds: the log likelihood ratio between two individual Poisson distributions is linear in the count. A simple mixture illustrates how a finite relevance-evidence limit can arise. Suppose, at fixed length,
 
-$$
+```math
 \begin{aligned}
 P(f\mid R=r)
 &=a_r\mathop{\mathrm{Pois}}\nolimits(f;\mu_E)
@@ -311,7 +311,7 @@ P(f\mid R=r)
 \ln\frac{P(f\mid R=1)}{P(f\mid R=0)}
 &=\ln\frac{a_1}{a_0}.
 \end{aligned}
-$$
+```
 
 The high-rate component dominates both mixtures at large $`f`$, producing that finite limit under these particular assumptions. BM25 uses a convenient rational TF shape rather than exactly computing this mixture. The derivation does not make BM25 a calibrated posterior, and changing the mixture assumptions can remove the finite limit.
 #### Log damping loses because it remains purchasable
@@ -319,26 +319,26 @@ With natural logs, $`g(f)=1+\ln f`$ gives approximately $`1`$, $`1.693147`$, $`2
 #### $`b`$ interpolates length adjustment
 Let $`\ell_d=L_d/\overline L`$. BM25 places the length adjustment inside the TF denominator:
 
-$$
+```math
 K_d=k_1(1-b+b\ell_d).
-$$
+```
 
 
-$$
+```math
 b=0\quad\Longrightarrow\quad K_d=k_1.
-$$
+```
 
 
-$$
+```math
 b=1\quad\Longrightarrow\quad K_d=k_1\ell_d.
-$$
+```
 
 For fixed $`f>0`$, compare against average length:
 
-$$
+```math
 \frac{F(f,\ell)}{F(f,1)}
 =\frac{f+k_1}{f+k_1(1-b+b\ell)}.
-$$
+```
 
 For $`\ell>1`$ this ratio is at least $`1/\ell`$: the penalty is no stronger than direct division by length. For $`0<\ell<1`$ the ratio is at most $`1/\ell`$: the short-document bonus is no larger than direct division. At $`\ell=1`$ both equal $`1`$. Thus softer means less penalty for long documents and less bonus for short ones, not that BM25 lies below a division curve everywhere. The scorer still cannot identify scope versus verbosity from length alone.
 #### The twice-average example shows the soft discount
@@ -354,7 +354,7 @@ Raw zero-feedback RSJ $`w_t^{(0)}=\ln((N-n_t+0.5)/(n_t+0.5))`$ is negative for $
 #### BM25 creates a near-tie, not a candidate-pool guarantee
 At $`k_1=1.2`$, $`b=0.75`$, $`K_A=0.66`$ and $`K_B=9.3`$. In query-term order kubernetes, pod, eviction,
 
-$$
+```math
 \begin{aligned}
 \mathop{\mathrm{BM25}}\nolimits(q,A)
 &\approx1.214361+1.837256+8.763970
@@ -363,7 +363,7 @@ $$
 &\approx1.135684+2.328126+8.495685
 \approx11.959496.
 \end{aligned}
-$$
+```
 
 Totals use unrounded contributions. B's relative lead is approximately $`1.217953\%`$ of A's score, not a probability margin. The pair is close compared with the other two scoring rules, but both reach a reranker only if the rest of the ranking and candidate cutoff permit it.
 #### Sweeping $`b`$ isolates length sensitivity
@@ -387,58 +387,58 @@ With $`k_1=1.2`$ fixed, at $`b=0`$ the scores are approximately $`9.587634`$ and
 #### The Probability Ranking Principle starts the derivation
 The source cites Robertson (1977) for PRP. Under fixed selection costs and additive expected utility, ranking by marginal relevance probability is optimal for the corresponding objective. For decreasing nonnegative position weights $`v_j`$, $`\mathbb E[U(\pi)]=\sum_j v_j\Pr(R_{\pi_j}=1\mid d_{\pi_j},q)`$ is maximized by sorting those probabilities. Linearity of expectation does not require independent relevance events across documents. Odds are a convenient strictly increasing transform for probabilities in $`(0,1)`$; handle endpoints by limits and ties explicitly.
 
-$$
+```math
 O(R\mid d,q)=\frac{\Pr(R=1\mid d,q)}{\Pr(R=0\mid d,q)}.
-$$
+```
 
 
-$$
+```math
 O(R\mid d,q)=\frac{\Pr(R=1\mid q)}{\Pr(R=0\mid q)}\frac{\Pr(d\mid R=1,q)}{\Pr(d\mid R=0,q)}.
-$$
+```
 
 A RAG context often has non-additive value: a second copy of the same fact may add little even if each chunk is relevant. That breaks the additive objective, not necessarily independence of relevance labels. Diversification, MMR or explicit set selection addresses a different utility. Query-level prior odds in this model are constant across documents and can be dropped for within-query ranking; document-specific priors or features cannot simply be canceled.
 #### Binary independence makes document likelihood estimable
 Represent a document by $`x\in\{0,1\}^{V}`$. Assume its term incidences are independent conditional on $`(R,q)`$, and let $`p_t=\Pr(x_t=1\mid R=1,q)`$ and $`u_t=\Pr(x_t=1\mid R=0,q)`$, with $`0<p_t,u_t<1`$. Then:
 
-$$
+```math
 \frac{\Pr(x\mid R=1,q)}{\Pr(x\mid R=0,q)}=\prod_{t:x_t=1}\frac{p_t}{u_t}\prod_{t:x_t=0}\frac{1-p_t}{1-u_t}.
-$$
+```
 
 Binary incidence discards counts; conditional term independence discards dependencies beyond what the relevance class explains. The model uses per-term parameters instead of a general joint distribution, but assumes rather than proves that they suffice for relevance. Phrase or interaction information requires additional features or a different model.
 #### Off-query terms collapse into a constant
 For the unexpanded query-term BIM, additionally assume $`p_t=u_t`$ for all $`t\notin Q(q)`$. Expanding the remaining likelihood factors gives:
 
-$$
+```math
 \frac{\Pr(x\mid R=1,q)}{\Pr(x\mid R=0,q)}=\prod_{t\in Q(q)\cap T(d)}\frac{p_t(1-u_t)}{u_t(1-p_t)}\prod_{t\in Q(q)}\frac{1-p_t}{1-u_t}.
-$$
+```
 
 The last product is document-independent for a fixed query and model, leaving a sum over matched query terms after logarithms. This unexpanded BIM cannot reward a non-query term. That is not a limitation of every sparse method: query expansion, phrase features, relevance models and learned sparse representations can introduce additional coordinates.
 #### The RSJ weight is a log odds ratio
 Take natural logs and drop only the document-independent factor:
 
-$$
+```math
 \mathop{\mathrm{RSV}}\nolimits(q,d)=\sum_{t\in Q(q)\cap T(d)}w_t.
-$$
+```
 
 
-$$
+```math
 w_t=\ln\frac{p_t(1-u_t)}{u_t(1-p_t)}.
-$$
+```
 
 Each weight compares term-presence odds in relevant and non-relevant documents. A zero or unit probability makes some odds undefined or infinite; smoothed finite estimates avoid that numerical failure, not all estimation bias. One two-by-two table per term gives the following estimator.
 #### The contingency table yields the full estimator
 In a fully specified binary-labeled population of $`N`$ documents, let $`S`$ be relevant, $`n_t`$ contain the term and $`s_t`$ satisfy both. Cells are $`a=s_t`$, $`b_{\mathrm{cell}}=S-s_t`$, $`c=n_t-s_t`$ and $`d_{\mathrm{cell}}=N-S-n_t+s_t`$. Feasibility requires $`\max(0,S+n_t-N)\le s_t\le\min(S,n_t)`$. If only some positives are judged and the remaining corpus is unjudged, treating all other documents as non-relevant is an additional proxy assumption, not a verified relevance partition. The worked example makes that proxy explicit. Adding $`0.5`$ to every cell gives:
 
-$$
+```math
 w_t=\ln\frac{(s_t+0.5)(N-S-n_t+s_t+0.5)}{(S-s_t+0.5)(n_t-s_t+0.5)}.
-$$
+```
 
 #### Zero feedback gives raw RSJ IDF, not the guarded form
 Algebraically set $`S=s_t=0`$ in this smoothed estimator. The relevant-row pseudocounts are both $`0.5`$ and cancel:
 
-$$
+```math
 w_t^{(0)}=\ln\frac{N-n_t+0.5}{n_t+0.5}.
-$$
+```
 
 The half-count choice and the zero-feedback probability model are assumptions, not a theorem of maximal ignorance with no tuning choices. This limit relates a classic IDF to a term-evidence model. Guarded BM25 instead uses $`I_{\mathrm B}(t)=\ln(1+\exp(w_t^{(0)}))`$, so its exact formula requires that further design choice.
 #### Small relevance sets can increase variance
@@ -467,21 +467,21 @@ At $`n_t=600{,}000`$ and $`N=10^6`$, raw RSJ gives $`\ln(400{,}000.5/600{,}000.5
 #### Sparse rarity grows as document frequency falls
 For fixed $`N`$, the guarded IDF decreases monotonically with document frequency:
 
-$$
+```math
 I_{\mathrm B}(t)=\ln\!\left(1+\frac{N-n_t+0.5}{n_t+0.5}\right)=\ln\frac{N+1}{n_t+0.5}.
-$$
+```
 
 At $`N=2\times10^6`$, frequency $`400{,}000`$ gives $`I_{\mathrm B}\approx1.609437162`$ and frequency $`12`$ gives $`I_{\mathrm B}\approx11.982929594`$, a ratio approximately $`7.445416`$. The approximations $`\ln5`$ and $`\ln160{,}000`$ are close but not exact with half-counts. Rarity alone does not guarantee a rare-match document beats every competing multi-term document. At fixed $`N`$, this IDF is bounded: $`I_{\mathrm B}(0)=\ln(2(N+1))`$, and the largest value for a term that actually matches a document is at $`n_t=1`$.
 #### Mean-pooling coefficient is not directional ownership
 Use a hypothetical mean-pooled bi-encoder, not a claim that DPR universally mean-pools. Let contextual token states be $`h_i\in\mathbb R^{d_{\mathrm{emb}}}`$ and identifier positions be $`J`$, with $`\lvert J\rvert=m`$ out of $`L`$ positions:
 
-$$
+```math
 \overline h=\frac1L\sum_{i=1}^{L}h_i,
 \qquad
 \left\lVert\frac1L\sum_{i\in J}h_i\right\rVert_2
 \le\frac{mH}{L}
 \quad\text{if }\lVert h_i\rVert_2\le H.
-$$
+```
 
 For $`m=10`$ and $`L=180`$, those positions have total averaging coefficient $`m/L=1/18\approx5.5556\%`$. That is not a bound on their share of direction, cosine score, semantics or causal importance. If all other states are zero, those positions can determine the entire pooled direction; cancellation can also make their net contribution zero. Contextual states outside the identifier can themselves encode it. Tokenization, pooling method, normalization and training all matter. The worked dimension is $`d_{\mathrm{emb}}=768`$. There is no explicit document-frequency multiplier in this simple averaging rule, but an encoder can learn rarity or exact-match features. This formula predicts neither rank $`12`$ nor rank $`340`$.
 #### Tail supervision and encoder adaptation are workload-dependent
@@ -514,7 +514,7 @@ The source cites Thakur et al. (2021) and BEIR's eighteen datasets as evidence t
 ## Diagrams
 ### Figure 18.1
 
-$$
+```math
 \begin{array}{lr}
 \text{Conjunction stage}&\mathbb E[\text{matches}]\\
 \text{customer}&1{,}500{,}000\\
@@ -523,10 +523,10 @@ $$
 \text{plus gdpr}&0.0576\\
 \text{OR of all four}&1{,}642{,}283.5264
 \end{array}
-$$
+```
 
 
-$$
+```math
 \begin{aligned}
 A&=(1,0.1),&B&=(0.5,0.5),\\
 S_{\mathrm{AND},1}(A)&=0.55,&
@@ -535,12 +535,12 @@ S_{\mathrm{AND},2}(A)&=1-\frac{0.9}{\sqrt2}\approx0.363603897,\\
 \lim_{p\to\infty}S_{\mathrm{AND},p}(A)&=0.1,\\
 p_{\mathrm{tie}}&=\frac{\ln2}{\ln1.8}\approx1.179249585.
 \end{aligned}
-$$
+```
 
 Figure $`18.1`$: Panel A gives expected counts under independent term presence, not actual fractional counts or a deterministic zero. With the additional IID-document model, the final empty-result probability is approximately $`94.4027\%`$. Panel B compares a different, two-term pair from the four-term prose example. Its score-$`0.5`$ contour satisfies $`(1-w_1)^p+(1-w_2)^p=2^{1-p}`$ for $`w_i\in[0,1]`$. A wins at $`p=1`$, loses at $`p=2`$ and ties at the stated exact exponent. The exponent changes a soft ranking rule, not a mandatory filter.
 ### Figure 18.2
 
-$$
+```math
 \begin{aligned}
 g_{\mathrm{linear}}(f)&=f,&
 g_{\log}(f)&=1+\ln f\quad(f\ge1),\\
@@ -551,20 +551,20 @@ F_{\mathrm{BM25}}(f,1)&=\frac{2.2f}{f+1.2}<2.2,\\
 \quad\text{under the section assumptions},\\
 \frac1{\sqrt{10}}&\approx0.316227766.
 \end{aligned}
-$$
+```
 
 Figure $`18.2`$: The first two functions are unnormalized TF weights, not cosine scores. BM25's displayed factor holds average relative length fixed. Positive vector rescaling cancels from cosine. The breadth identity instead requires orthogonal equal-norm sections, only one contributing to the query, and nonzero vectors. Nonnegative TF-IDF cosine always remains in $`[0,1]`$; the square-root identity is not a universal penalty for any document with several topics.
 ### Figure 18.3
 
-$$
+```math
 \begin{array}{c|ccccc}
 f&1&2&5&10&20\\
 F(f,1)&1&1.375&1.774194&1.964286&2.075472
 \end{array}
-$$
+```
 
 
-$$
+```math
 \begin{aligned}
 F_b(\ell)&=\frac{2.2}{1+1.2(1-b+b\ell)}
 \quad(f=1),\\
@@ -574,7 +574,7 @@ F_1(2)&\approx0.647058824,\\
 \frac1{2}&=0.5,&
 F_{0.75}(10)&\approx0.213592233.
 \end{aligned}
-$$
+```
 
 Figure $`18.3`$: At average length the TF factor has finite-count range $`[1,2.2)`$ for $`f\ge1`$, and later occurrences approach an additional budget $`1.2`$. Panel B varies relative length at a fixed count. Relative to direct division, BM25 gives no greater penalty for long documents and no greater bonus for short ones; all curves meet at $`\ell=1`$. It does not replace two unbounded TF-IDF cosine behaviors: cosine was already bounded.
 ### Figure 18.4
@@ -587,9 +587,9 @@ Figure $`18.3`$: At average length the TF factor has finite-count range $`[1,2.2
 | Non-relevant, $`N-S`$ | $`c=n_t-s_t`$ | $`d_{\mathrm{cell}}=N-S-n_t+s_t`$ |
 
 
-$$
+```math
 w_t=\ln\frac{(a+0.5)(d_{\mathrm{cell}}+0.5)}{(b_{\mathrm{cell}}+0.5)(c+0.5)}.
-$$
+```
 
 The estimator is the log ratio of the smoothed diagonal products. Cell labels $`b_{\mathrm{cell}}`$ and $`d_{\mathrm{cell}}`$ are local counts. At $`S=s_t=0`$, the two relevant-row half-counts cancel, yielding $`w_t^{(0)}=\ln((N-n_t+0.5)/(n_t+0.5))`$. That is the raw, potentially negative IDF; the guarded positive form requires a further transformation. A complete relevance partition and an unjudged-as-negative proxy are different data assumptions.
 #### Panel B: what each assumption buys and costs

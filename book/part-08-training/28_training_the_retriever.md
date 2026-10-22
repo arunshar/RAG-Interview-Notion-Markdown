@@ -98,9 +98,9 @@ Memory and traffic ledgers declare what is stored and read. FiD costs distinguis
 #### What
 Expose both parameter sets.
 
-$$
+```math
 (c_1,\ldots,c_k)=\mathop{\mathrm{RET}}\nolimits_{\phi}(x,D),\qquad y\sim p_\theta(\,\cdot\mid x,c_1,\ldots,c_k).
-$$
+```
 
 The datastore contains $`N`$ chunks and the retriever returns $`k`$; an approximate index need not explicitly score every chunk per query. Freeze/train decisions apply separately to retrieval and generation. Run a verified gold-context intervention and production evidence/reader ablations on representative held-out questions, including failures and successes.
 - An oracle-context gain suggests that changed evidence or context helped. Investigate retrieval coverage, context formatting and distracting text; it is not unique causal attribution to the retriever.
@@ -118,21 +118,21 @@ Generator tuning is not automatically wasted on retrieval misses: it can change 
 #### Cost and complexity
 The first arithmetic ledger uses a $`110\times10^6`$-parameter retriever and an $`8\times10^9`$-parameter generator:
 
-$$
+```math
 P_r=1.1\times10^8,\qquad P_g=8\times10^9,\qquad P_g/P_r\approx72.727273.
-$$
+```
 
 For ten million length-$`256`$ document chunks, at the stipulated $`F`$, the re-encode component is
 
-$$
+```math
 t_{\mathrm{encode}}\approx\frac{2(1.1\times10^8)(256)(10^7)}{3.4\times10^{14}}\,\mathrm s\approx1{,}656.470588\,\mathrm s\approx27.607843\,\mathrm{min}.
-$$
+```
 
 A separate basic contrastive-step proxy with $`9{,}216`$ total trainable encoder-token positions gives
 
-$$
+```math
 t_{\mathrm{step}}\approx\frac{6(1.1\times10^8)(9{,}216)}{3.4\times10^{14}}\,\mathrm s\approx17.889882\,\mathrm{ms}.
-$$
+```
 
 One re-encode is $`92{,}592.592593`$ of these basic steps in FLOPs. The generator scenario has $`50{,}000`$ pairs, five passages and $`1{,}344`$ total processed token positions per example, with three epochs. Treat that length as the entire charged prompt/target layout; if it excludes targets, charge them separately. These are separate workloads, not matched evidence that training one tower is a fixed fraction of training the other.
 - Generator arithmetic is $`2.635294`$ hours per epoch and $`7.905882`$ over three epochs.
@@ -146,29 +146,29 @@ One re-encode is $`92{,}592.592593`$ of these basic steps in FLOPs. The generato
 #### What
 Let each encoded query-passage view have total length $`n`$, width $`d`$ and $`l`$ layers; $`n`$ includes the repeated question/template. For the ideal comparison, concatenate all $`k`$ such views into length $`kn`$. This repeats the query too. A real concatenation with the query only once has length $`Q+kC`$, versus $`k`$ views of length $`Q+C`$, and need not have the exact ratio below.
 
-$$
+```math
 W_{\mathrm{attention,concat/layer}}\approx4(kn)^2d.
-$$
+```
 
 FiD encodes each query-passage view separately with shared encoder parameters, then stacks its token states along the sequence axis:
 
-$$
+```math
 H_i\in\mathbb R^{n\times d},\qquad H=\begin{bmatrix}H_1\\ \vdots\\ H_k\end{bmatrix}\in\mathbb R^{kn\times d}.
-$$
+```
 
 The decoder cross-attends to those states at every decoding step, not only once for the whole answer. The encoder attention component is
 
-$$
+```math
 W_{\mathrm{attention,FiD/layer}}\approx4kn^2d.
-$$
+```
 
 The ratio is exactly $`k`$ for this ideal attention-only abstraction, not for total transformer work, training memory or measured latency. FiD-Light retains $`z`$ trained encoder states per passage for decoder access, giving $`m=kz`$; the bidirectional encoder still reads all $`n`$ input positions. Quality at a chosen $`z`$ must be validated, not assumed unchanged.
 #### Why
 FiD moves direct cross-passage combination to the decoder, while independent encoders remove cross-passage self-attention edges. Cross-attention per decoded token grows linearly in visible states at fixed width. FiD-Light reduces that component after compatible training.
 
-$$
+```math
 M_{\mathrm{crossKV}}=2b\,m d l,\qquad m=kn\ \text{for FiD},\qquad m=kz\ \text{for FiD-Light}.
-$$
+```
 
 Here $`b`$ is bytes per cached scalar and the factor two counts keys and values; head/key dimensions are assumed to sum to $`d`$. This is one-example cross-attention KV storage across decoder layers. Static encoder K/V projections are computed once and cached. A one-read-per-token HBM model streams this cache per decode step, but batching and on-chip reuse can change physical traffic. Decoder self-attention KV, activations and framework allocations are separate.
 #### Failure without it
@@ -188,9 +188,9 @@ For FiD-Light with $`z=8`$, keeping encoder work unchanged:
 - Static cross-KV preparation falls to $`0.03221225472`$ TFLOP, or $`0.094742\,\mathrm{ms}`$; preparation plus encoding is $`19.043127\,\mathrm{ms}`$ versus FiD’s $`21.980127\,\mathrm{ms}`$.
 - Weight-plus-cross-cache stream becomes $`0.801898496\,\mathrm{GB}`$ and $`0.239373\,\mathrm{ms/token}`$. This decode-stream ratio is approximately $`2.216084`$, not thirty-two.
 
-	$$
+```math
 	\begin{aligned}t_{\mathrm{FiD,proxy}}(L)&\approx(21.980126750+0.530469903L)\,\mathrm{ms},\\t_{\mathrm{Light,proxy}}(L)&\approx(19.043127055+0.239372685L)\,\mathrm{ms}.\end{aligned}
-	$$
+```
 
 - At $`L=3`$ output tokens, the partial proxies are $`23.571536\,\mathrm{ms}`$ and $`19.761245\,\mathrm{ms}`$, a $`16.164798\%`$ reduction. Three words need not tokenize to three tokens. Earlier four-percent labels omitted the changed cross-KV preparation and used a different weight stream.
 - At $`L=256`$, the proxies are $`157.780422\,\mathrm{ms}`$ and $`80.322535\,\mathrm{ms}`$, a ratio of approximately $`1.964336`$. None proves the same speedup or unchanged quality in production.
@@ -202,21 +202,21 @@ For FiD-Light with $`z=8`$, keeping encoder work unchanged:
 #### What
 For a declared candidate pool of $`M`$ documents, the retriever forms scores and a hard mask; $`M=N`$ only if all corpus candidates are considered. The document encoder is fixed in the score below; sharing trainable parameters creates an additional document-side derivative.
 
-$$
+```math
 s_i=E_\eta(q)^\mathsf T E(d_i),\qquad z\in\{0,1\}^{M},\qquad\sum_{i=1}^{M}z_i=k.
-$$
+```
 
 The generator loss is:
 
-$$
+```math
 \mathcal L=-\log p_\theta\!\left(y\mid q,\{d_i:z_i=1\}\right).
-$$
+```
 
 A formal mask-interface chain would be
 
-$$
+```math
 \nabla_\eta\mathcal L=\frac{\partial\mathcal L}{\partial z}\frac{\partial z}{\partial s}\frac{\partial s}{\partial\eta}.
-$$
+```
 
 For hard selected identities, the middle Jacobian is zero away from rank boundaries and the selection map is nondifferentiable at relevant crossings. Raw tokenization/text lookup also does not supply a differentiable mask input automatically. This blocks this particular ordinary gradient path, not all possible retriever learning. Scores passed into a differentiable reader or a separate retrieval loss can create another path.
 1. Define a differentiable finite-support marginal likelihood, with candidate support held fixed locally.
@@ -224,51 +224,51 @@ For hard selected identities, the middle Jacobian is zero away from rank boundar
 3. Define a continuous relaxation or explicit straight-through surrogate at a compatible representation interface.
 A single latent-document sequence model on a fixed candidate set $`\mathcal C`$ is
 
-$$
+```math
 p(y\mid q)=\sum_{i\in\mathcal C}\pi_\eta(i\mid q)\,p_\theta(y\mid q,d_i),\qquad\sum_{i\in\mathcal C}\pi_\eta(i\mid q)=1.
-$$
+```
 
 This is exact for the declared finite-support model, not necessarily the full-corpus objective. RAG-Sequence’s sequence mixture and REPLUG’s product of per-token mixtures are not interchangeable. For stochastic action $`Z`$ with reward independent of $`\eta`$ except through the sampled action, an action-independent baseline $`b(q)`$ gives
 
-$$
+```math
 \nabla_\eta\mathbb E[R(Z)]=\mathbb E\!\left[(R(Z)-b(q))\nabla_\eta\log\pi_\eta(Z\mid q)\right].
-$$
+```
 
 With suitable support/regularity this score-function estimator is unbiased and may use one sampled reader rollout. It can have high variance; exact reward evaluation and baseline costs are not free. If the reward directly depends on $`\eta`$, include its derivative too. For one categorical choice with unit-temperature logits,
 
-$$
+```math
 \frac{\partial\log\pi_\eta(Z\mid q)}{\partial s_i}=\mathbb1[i=Z]-\pi_i.
-$$
+```
 
 A non-unit score temperature contributes its inverse to this derivative. Draw independent standard Gumbel noises:
 
-$$
+```math
 U_i\overset{\mathrm{iid}}\sim\mathop{\mathrm{Uniform}}\nolimits(0,1),\qquad G_i=-\ln(-\ln U_i).
-$$
+```
 
 Its cumulative distribution is:
 
-$$
+```math
 F_G(g)=\exp(-e^{-g}).
-$$
+```
 
 The maximum of shifted Gumbels remains Gumbel.
 
-$$
+```math
 \Pr\!\left(\max_j(s_j+G_j)\le t\right)=\exp\!\left(-e^{-t}\sum_j e^{s_j}\right).
-$$
+```
 
 The maximum-CDF identity identifies a shifted Gumbel. The categorical argmax law additionally follows by integrating the winning candidate’s density against the other candidates’ CDFs:
 
-$$
+```math
 \Pr\!\left(\mathop{\mathrm{arg\,max}}_j(s_j+G_j)=i\right)=\frac{e^{s_i}}{\sum_j e^{s_j}}.
-$$
+```
 
 The categorical continuous relaxation, also called Concrete/Gumbel-Softmax, and its Jacobian are
 
-$$
+```math
 \tilde z_i=\frac{\exp((s_i+G_i)/\tau)}{\sum_j\exp((s_j+G_j)/\tau)},\qquad\frac{\partial\tilde z_i}{\partial s_j}=\frac1\tau\tilde z_i(\delta_{ij}-\tilde z_j),\quad\tau>0.
-$$
+```
 
 Gumbel-top-$`k`$ gives the ordered Plackett–Luce sample without replacement from the exponentiated scores; it is not $`k`$ independent categorical draws. A categorical softmax sums to one, whereas a $`k`$-hot mask sums to $`k`$, so top-$`k`$ needs a compatible soft-top-$`k`$ or iterative surrogate rather than blindly reusing the single-choice Jacobian. A straight-through mask uses $`z_{\mathrm{ST}}=\mathop{\mathrm{stopgrad}}\nolimits(z_{\mathrm{hard}}-\tilde z)+\tilde z`$. It is hard forward and surrogate-soft backward only if the reader/representation provides a differentiable path through that mask; arbitrary raw strings do not. The noisy hard forward choice is also not the same as deterministic serving top-$`k`$.
 #### Why
@@ -278,27 +278,27 @@ A hard top-one identity is locally unchanged until a rank crossing; a loss throu
 #### Cost and complexity
 The five-logit example is:
 
-$$
+```math
 s=(2,1.5,0.5,0,-1),\qquad\mathop{\mathrm{softmax}}\nolimits(s)\approx(0.496331,0.301040,0.110746,0.067171,0.024711).
-$$
+```
 
 The Gumbel draw uses:
 
-$$
+```math
 \begin{aligned}u&=(0.42,0.91,0.77,0.15,0.63),\\g&\approx(0.142139,2.361161,1.341838,-0.640337,0.772114),\\s+g&\approx(2.142139,3.861161,1.841838,-0.640337,-0.227886).\end{aligned}
-$$
+```
 
 The unrounded draw selects passage two, with noisy top two ordered as $`(2,1)`$. At $`\tau=1`$, the relaxed weights are
 
-$$
+```math
 \tilde z\approx(0.133779,0.746361,0.099076,0.008279,0.012505).
-$$
+```
 
 Compare the same Jacobian entry, not different coordinates: $`J_{22}\approx0.189306291`$ at $`\tau=1`$ and $`J_{22}\approx3.59271515\times10^{-7}`$ at $`\tau=0.1`$, a draw-specific ratio of about $`526{,}917`$. At the lower temperature, the first weight is $`3.42281522\times10^{-8}`$ and $`J_{11}\approx3.42281511\times10^{-7}`$. A diagonal entry is bounded by $`1/(4\tau)`$, reaching $`2.5`$ at a two-way half/half tie in the limiting no-other-mass case. The ratio of that bound to this draw’s $`J_{22}`$ is about $`6.958526\times10^6`$. These are not estimates of typical training gradients or their variance. For two independent standard Gumbels, their difference is Logistic, so a ninety-percent pairwise win probability requires
 
-$$
+```math
 \Delta=\ln(0.9/0.1)=\ln9\approx2.197224577.
-$$
+```
 
 The current score margin $`0.5`$ gives pairwise win probability $`0.622459331`$, requiring an additional $`1.697224577`$ logits for this two-candidate ninety-percent comparison. It does not imply ninety-percent top-one probability among all five. In a separate workload comparison, let $`k=8`$, passage length $`200`$, query length $`50`$ and target length $`30`$.
 - Eight single-passage likelihood branches process $`2{,}000`$ prompt and $`240`$ target positions, total $`2{,}240`$.
@@ -309,20 +309,20 @@ The source’s small-$`k`$ marginalization and large-$`k`$ straight-through pref
 #### What
 In the frozen-retriever inference variant, retrieve $`D^{\prime}`$ once from the original request $`x`$ and assign cosine scores. LM-supervised retriever training is a separate variant. Do not silently re-retrieve from each generated prefix while claiming fixed weights.
 
-$$
+```math
 s(d,x)=\cos(E(d),E(x)).
-$$
+```
 
 
-$$
+```math
 \lambda(d,x)=\frac{\exp(s(d,x)/\tau)}{\sum_{d^{\prime}\in D^{\prime}}\exp(s(d^{\prime},x)/\tau)},\qquad\tau>0.
-$$
+```
 
 At each generation step, each passage-conditioned branch uses the same selected output prefix. Mix normalized next-token distributions:
 
-$$
+```math
 p(y_t\mid x,y_{<t})=\sum_{d\in D^{\prime}}\lambda(d,x)\,p_{\mathrm{LM}}(y_t\mid d\circ x,y_{<t}).
-$$
+```
 
 Select or sample one token from that mixture, append that same token to every branch, and repeat. Greedy argmax is one decoding policy, not a required part of the probabilistic model.
 #### Why
@@ -346,39 +346,39 @@ The chapter reports $`6.3\%`$ improvement in GPT-3 175B language modeling and $`
 #### What
 For fixed query $`x`$, verified gold answer $`y`$ and a frozen teacher, score each retrieved passage with its target-sequence log likelihood. Mask prompt loss and state whether the likelihood is summed or length-normalized:
 
-$$
+```math
 u_i=\log P_{\mathrm{LM}}(y\mid d_i\oplus x).
-$$
+```
 
 Normalize utility over the retrieved set with LM temperature $`\beta`$.
 
-$$
+```math
 Q_i=\frac{\exp(u_i/\beta)}{\sum_{j=1}^{k}\exp(u_j/\beta)},\qquad\beta>0.
-$$
+```
 
 Normalize retriever scores on the same support with temperature $`\gamma`$.
 
-$$
+```math
 P_i=\frac{\exp(s_i/\gamma)}{\sum_{j=1}^{k}\exp(s_j/\gamma)},\qquad a_i=s_i/\gamma,\quad\gamma>0.
-$$
+```
 
 For the explicitly analyzed reverse-teacher-direction variant, hold the candidate set and teacher probabilities fixed locally and minimize
 
-$$
+```math
 \mathcal L=\mathop{\mathrm{KL}}\nolimits(P\Vert Q)=\sum_iP_i\ln(P_i/Q_i).
-$$
+```
 
 Let:
 
-$$
+```math
 \ell_i=\ln(P_i/Q_i),\qquad P_i,Q_i>0.
-$$
+```
 
 Then:
 
-$$
+```math
 \frac{\partial\mathcal L}{\partial a_j}=P_j(\ell_j-\mathcal L),\qquad\frac{\partial\mathcal L}{\partial s_j}=\frac1\gamma P_j(\ell_j-\mathcal L).
-$$
+```
 
 These coordinate gradients sum to zero because adding a common logit offset changes no softmax probability. A negative logit gradient is a descent direction in independent logit coordinates, not automatically the actual change in probabilities, cosine scores or shared encoder parameters. Reversing KL to $`\mathop{\mathrm{KL}}\nolimits(Q\Vert P)`$ gives a different logit gradient $`P_j-Q_j`$. State the chosen implementation rather than attributing one direction to every LM-supervised method.
 #### Why
@@ -388,33 +388,33 @@ Finite-support normalization defines a conditional candidate objective; it does 
 #### Cost and complexity
 The worked example uses $`k = 4`$, $`\gamma = 0.1`$, and cosine scores:
 
-$$
+```math
 s=(0.82,0.79,0.71,0.68),\quad\gamma=0.1,\quad a=(8.2,7.9,7.1,6.8),\quad P\approx(0.430981,0.319279,0.143461,0.106279).
-$$
+```
 
 The frozen generator returns:
 
-$$
+```math
 u=(-2.30,-1.20,-0.92,-3.00)\ \text{nats}.
-$$
+```
 
 At $`\beta = 1`$:
 
-$$
+```math
 Q\approx(0.117985,0.354447,0.468979,0.058590),\qquad\mathcal L\approx0.418337916\ \text{nats}.
-$$
+```
 
 At $`\beta=1`$, the negative gradients with respect to scaled logits $`a`$, before a learning-rate multiplier, are
 
-$$
+```math
 -\nabla_a\mathcal L\approx(-0.378043529,0.166928789,0.229944050,-0.018829310).
-$$
+```
 
 They sum to zero before rounding. Gradients with respect to raw cosine scores $`s`$ are ten times these values because $`\gamma=0.1`$. Passage one receives the largest demotion because its current mass is too high relative to the teacher; passage four, not passage one, has the lowest teacher likelihood. Passage three receives the largest promotion at this operating point. At $`\beta=0.5`$,
 
-$$
+```math
 Q\approx(0.038356,0.346165,0.606021,0.009459).
-$$
+```
 
 The divergence becomes $`1.067193117`$ nats, $`2.551031`$ times the prior value. The magnitude of passage four’s negative logit gradient becomes $`0.143684237`$, a factor of $`7.630882`$. Lowering $`\beta`$ changes the teacher distribution and optimization target, not simply the learning-rate scale. The source’s initial $`\beta=1`$ is a heuristic. For matched arithmetic, take batch $`64`$, $`k=20`$, query length $`32`$, passage length $`256`$ and target length $`32`$. There are $`1{,}280`$ teacher passes, each processing $`320`$ positions, total $`409{,}600`$. The bi-encoder processes each query once and each passage once: $`64(32+20\times256)=329{,}728`$ positions.
 - A frozen seven-billion-parameter teacher has proxy work $`2(7\times10^9)(409{,}600)=5.7344\times10^{15}\,\mathrm{FLOP}`$.
@@ -425,38 +425,38 @@ The source names LM-supervised REPLUG and RA-DIT as applications; their precise 
 #### What
 A dense retriever scores:
 
-$$
+```math
 s(q,p)=E_Q(q;\phi_t)^\mathsf T E_P(p;\phi_t).
-$$
+```
 
 An index records the document-encoder snapshot that produced its vectors. If document-side representations change, comparing current queries with old vectors can misalign scores and change candidates. Query-only updates do not inherently create obsolete document vectors, although their calibration and retrieval quality can still change. Let $`C_r`$ be full re-encode work, $`C_s`$ training work per step and $`\rho`$ builder arithmetic throughput divided by trainer throughput. Measure actual build/step times when the two workloads sustain different utilization.
 
-$$
+```math
 C_r=2P L_d N.
-$$
+```
 
 
-$$
+```math
 C_s\approx6P B(L_q+kL_d).
-$$
+```
 
 Use $`P=110\times10^6`$, $`N=10^7`$, $`B=64`$, $`k=20`$, document length $`L_d=256`$ and query length $`L_q=32`$. Both trained towers are charged. Ignoring query encoding gives the old document-only step $`2.162688\times10^{14}\,\mathrm{FLOP}`$; including it gives
 
-$$
+```math
 C_r=5.632\times10^{17}\,\mathrm{FLOP},\qquad C_s=2.1762048\times10^{14}\,\mathrm{FLOP},\qquad C_r/C_s\approx2{,}587.991718.
-$$
+```
 
 For one serial builder with one snapshot every $`K`$ trainer steps, steady-state capacity requires integer $`K`$ at least the build duration in step-time equivalents:
 
-$$
+```math
 K\ge K_{\min}=\left\lceil\frac{C_r}{\rho C_s}\right\rceil,\qquad\text{or measured }K\ge\left\lceil T_{\mathrm{build}}/T_{\mathrm{step}}\right\rceil.
-$$
+```
 
 Ignoring endpoint and non-encoding costs, inline refresh every $`K`$ steps has arithmetic-work multiplier
 
-$$
+```math
 1+\frac{C_r}{KC_s}.
-$$
+```
 
 Inline refresh pauses the trainer, encodes the current snapshot and resumes with zero snapshot age; age then rises to about $`K`$ training updates, not $`2K`$. In steady-state asynchronous service, a snapshot published after $`D`$ trainer-step times has age in approximately $`[D,D+K)`$ before the next publication. The special delayed-publication schedule $`D=K`$ gives $`[K,2K)`$. That band is not a universal property of asynchronous refresh. Build queues, publication delays and variable trainer rate can increase age; startup needs a real initial index, not a fictitious negative-step checkpoint.
 #### Why
@@ -476,21 +476,21 @@ Assume eight accelerators at the source-reported peak $`312`$ TFLOP/s each and s
 - If publication is deliberately one interval after snapshot, age rises from $`2{,}588`$ to just below $`5{,}176`$ steps, a conservative maximum near $`20.704\%`$ of the run. An actual builder duration $`D\ne K`$ gives a different age band.
 Ten million width-$`768`$ fp16 vectors have $`15.36\,\mathrm{GB}`$ raw payload. Flat exact search avoids HNSW graph construction, not encoder refresh or stored-vector staleness. A materialized fp32 score matrix for sixty-four queries adds $`2.56\,\mathrm{GB}`$; tiled search/top-$`k`$ can avoid retaining the full matrix, with other workspace and identifiers still additional.
 
-$$
+```math
 W_{\mathrm{flat\ search}}\approx64(2dN)=9.8304\times10^{11}\,\mathrm{FLOP}.
-$$
+```
 
 This is approximately $`0.451722\%`$ of the declared encoder-step FLOPs, not a wall-time fraction; vector reads and selection cost matter. Adding the matched frozen seven-billion teacher from Section $`28.5`$ gives total $`C_s=5.95202048\times10^{15}\,\mathrm{FLOP}`$, hence
 
-$$
+```math
 C_r/C_s\approx94.623330.
-$$
+```
 
 A 500-step inline cadence then costs:
 
-$$
+```math
 1+\frac{94.623330\ldots}{500}\approx1.189247.
-$$
+```
 
 Teacher scoring makes refresh about $`27.350461`$ times smaller relative to the enlarged step denominator; it does not make one refresh intrinsically cheaper. A probe that re-encodes $`100{,}000`$ sampled chunks and evaluates $`1{,}000`$ questions has the following encoding component; searches, reference comparisons and any reader scoring cost extra.
 - Probe encoding is $`5.632\times10^{15}\,\mathrm{FLOP}`$, about $`25.879917`$ bare steps or one percent of a $`2{,}588`$-step interval before other work.
@@ -501,15 +501,15 @@ Under these bare-step constants, a five-hundred-step asynchronous interval requi
 #### What
 Define the analyzed REALM-like objective on a retrieved candidate set $`\mathcal Z_k`$, held fixed for local differentiation. This is a truncated finite-support model, not an exact summation over every corpus block. Let the reader target be the masked token or declared masked span:
 
-$$
+```math
 \begin{aligned}\tilde p(y\mid x)&=\sum_{z\in\mathcal Z_k}a_z\pi_z,\qquad a_z=p_\theta(y\mid z,x),\\\pi_z&=\frac{\exp f_\phi(x,z)}{\sum_{z^{\prime}\in\mathcal Z_k}\exp f_\phi(x,z^{\prime})},\\f_\phi(x,z)&=\mathop{\mathrm{Emb}}\nolimits_{q,\phi}(x)^\mathsf T\mathop{\mathrm{Emb}}\nolimits_{d,\phi}(z).\end{aligned}
-$$
+```
 
 Holding reader likelihoods fixed for this score derivative, with positive marginal,
 
-$$
+```math
 \frac{\partial\ln\tilde p(y\mid x)}{\partial f_\phi(x,z)}=\pi_z\left(\frac{a_z}{\tilde p(y\mid x)}-1\right)=\pi(z\mid x,y)-\pi_z.
-$$
+```
 
 A positive-prior candidate has positive log-likelihood score coefficient exactly when its reader likelihood exceeds the candidate marginal. Coefficients sum to zero across this support, but actual shared-parameter updates need not be independent score-coordinate increments. The reader also trains through its own derivative. A full untruncated model and a score-dependent changing top-$`k`$ require additional approximation/selection analysis.
 #### Why

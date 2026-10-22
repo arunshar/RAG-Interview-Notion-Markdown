@@ -141,18 +141,18 @@ Sharding partitions a logical system; federation coordinates independently gover
 #### Worked memory example
 The stipulated silos hold $`200\times10^6`$ United States support chunks, $`50\times10^6`$ European clinical chunks, $`10\times10^6`$ privileged legal chunks and $`10^6`$ public chunks. Hence $`n_v=261\times10^6`$. At $`d=768`$ fp32 values, the raw vector payload is
 
-$$
+```math
 B_{\mathrm{vec}}=n_vd(4\,\mathrm B)=801{,}792{,}000{,}000\,\mathrm B=801.792\,\mathrm{GB}.
-$$
+```
 
 Under the common HNSW allocation convention, $`m_H=16`$ permits $`2m_H=32`$ neighbor slots at layer zero. Four-byte local identifiers budget $`128\,\mathrm{B/vector}`$; do not halve that per-node allocation because the graph is described as bidirectional. The scoped layer-zero link payload is $`33.408\,\mathrm{GB}`$, and
 
-$$
+```math
 \begin{aligned}
 \frac{128}{768\times4}&=\frac1{24}\approx4.166667\%,\\
 B_{\mathrm{vec+base}}&=801.792+33.408=835.2\,\mathrm{GB}.
 \end{aligned}
-$$
+```
 
 This is not an all-in index-size guarantee or a refutation of every larger deployment multiplier. With the illustrative standard level law $`\Pr(\ell\ge j)=m_H^{-j}`$ and $`m_H`$ upper-layer slots, the expected upper-layer link allocation is another $`4m_H/(m_H-1)\approx4.266667\,\mathrm{B/vector}`$, or $`1.1136\,\mathrm{GB}`$ here. Vectors plus these expected links total $`836.3136\,\mathrm{GB}`$. Level headers, allocation capacity, labels/maps, metadata, source text, fragmentation and search/build workspace remain omitted.
 If all declared payload could be packed without headroom into $`128\,\mathrm{GB}`$ usable-memory machines, the combined vector-plus-base model needs $`\lceil835.2/128\rceil=7`$ machines for one copy, or fourteen for two separately provisioned copies. Reserving twenty percent of that capacity gives $`\lceil835.2/(0.8\times128)\rceil=9`$ for one copy instead. These are capacity lower budgets, not an availability design.
@@ -173,9 +173,9 @@ The chapter-reported comparison uses about $`6.8\times10^6`$ English Wikipedia a
 Each source returns at most $`K`$ candidates, so the pre-deduplication caps are $`N_sK`$ for broadcast and $`M_qK`$ for selected retrieval. Equality requires full lists; heterogeneous $`K_i`$ use $`\sum_{i\in S}K_i`$. For wait-for-all parallel requests, a simplified service model is $`T_{\mathrm{route}}+\max_{i\in S}T_i+T_{\mathrm{merge}}`$, not the sum of endpoint latencies. With exact search, one common metric and a consistent total tie order, local top-$`K`$ results suffice to recover the global top-$`K`$. ANN misses or heterogeneous score spaces remove that exactness statement; none establishes semantic relevance.
 For a fixed query and selected set, let $`E_i`$ mean source $`i`$ misses its allocated deadline. Under conditional independence,
 
-$$
+```math
 \Pr\!\left(\bigcup_{i\in S}E_i\mid q,S\right)=1-\prod_{i\in S}(1-p_i(q)).
-$$
+```
 
 If all conditional miss probabilities equal $`p=0.05`$ and the selected size is fixed, this becomes $`1-(1-p)^{M_q}`$. It gives $`1-0.95^8\approx0.336579569`$ for eight sources, $`1-0.95^{20}\approx0.641514078`$ for twenty, and $`1-0.95^3=0.142625`$ for three. The event is at least one source deadline miss, not automatically a failed answer or a measured end-to-end percentile. Without independence, the union is bounded only by $`\max_i p_i\le\Pr(\bigcup_iE_i)\le\min(1,\sum_i p_i)`$ for the stated marginals. A changing $`M_q`$ needs an expectation over selected sets and their conditional distributions; inserting its mean into the fixed-size formula is generally wrong.
 Unnecessary calls can consume money and introduce distractors, but fewer candidates need not improve answer quality. Classical CORI-style collection selection uses lexical collection statistics and has low serving cost without a supervised neural router. Vocabulary mismatch and stale statistics can hurt it; embedding-based routing is another empirical trade-off, not a universal replacement.
@@ -202,9 +202,9 @@ RAGRoute v1 uses five feature groups: query embedding, source centroid, query-ce
 An offline label-building round broadcasts each training query to all $`N_s`$ sources, merges the retrieved candidates and selects a global top-$`\kappa`$ under the chosen common retrieval rule. The paper uses the configured retrieval depth for this merged top set. Define $`y_i(q)=1`$ if source $`i`$ contributes any item and zero otherwise. These labels measure contribution to that embedding-based oracle, not complete human relevance, all necessary evidence or legal authorization. Changing sources, retrieval depth or metric can change the labels, so “one offline broadcast” means one dataset-building phase, not a lifetime no-refresh guarantee. RAGRoute trains with class-weighted BCE-with-logits.[\[1\]](https://arxiv.org/html/2502.19280v1)
 A sigmoid score is not automatically a calibrated source-usefulness probability, especially after class weighting. For a positive class weight $`w>0`$ and true silver-label probability $`\eta`$, the unconstrained population optimum of weighted BCE is
 
-$$
+```math
 a^*=\frac{w\eta}{1+(w-1)\eta},\qquad \eta=\frac{a^*}{w-(w-1)a^*}.
-$$
+```
 
 Model error and shift still require held-out calibration; this inverse is an idealized identity, not a calibration guarantee. Scores for different sources need not sum to one. A “seventy-percent legal, thirty-percent finance” illustration is not a measured mixture or a limitation that hand rules cannot represent. Large-model routing can be more expensive, but its latency depends on the actual model, input, hardware and cache rather than a universal hundreds-of-milliseconds constant.[\[1\]](https://arxiv.org/html/2502.19280v1)
 #### Worked RAGRoute example
@@ -212,9 +212,9 @@ The insurer example remains $`N_s=8`$, $`K=40`$. The paper's MIRAGE experiment i
 For MMLU, the paper reports source calls $`13{,}890\to3{,}126`$, a reduction of approximately $`77.494600\%`$ (reported as $`77.5\%`$), and communication $`73.3\to17.42\,\mathrm{MB}`$, approximately $`76.234652\%`$ less. MMLU answer accuracy is $`43.59\%\to43.29\%`$, a $`-0.30`$ percentage-point change. MIRAGE top-32 Table 2 reports $`72.22\%\to72.24\%`$ ($`+0.02`$ points); its top-10 row reports $`72.21\%\to72.00\%`$ ($`-0.21`$ points). Across MIRAGE top-32 question banks, call reductions range from $`28.93\%`$ to $`69.5\%`$, not uniformly $`77.5\%`$. The table's across-bank standard deviations are not a paired equivalence test or proof of zero quality loss.[\[1\]](https://arxiv.org/html/2502.19280v1)
 In the ten-source MMLU call ledger, the implied mean selected count is
 
-$$
+```math
 \overline M_q=\frac{3{,}126}{13{,}890/10}\approx2.250540.
-$$
+```
 
 Applying the rounded $`77.5\%`$ reduction to an assumed eight-source system would instead give $`8(1-0.775)=1.8`$ sources on average, but that is a hypothetical transfer, not the reported experiment. Likewise $`320(1-0.762)=76.16`$ is only a fixed-bytes-per-candidate counterfactual; measured communication includes its actual payloads and protocol. It is not an independent inference of a $`1.9`$-source fan-out, and mean fan-out need not be an integer.[\[1\]](https://arxiv.org/html/2502.19280v1)
 For a toy $`d=768`$ embedding with the paper's five features, assume both vectors are concatenated with three scalars, so the pair input width is $`2d+3=1{,}539`$. The paper-shaped network is $`1{,}539\to256\to128\to1`$. It has $`426{,}880`$ linear weights, $`385`$ linear biases and $`768`$ affine LayerNorm parameters, totaling $`428{,}033`$ learned scalars (about $`1.712132\,\mathrm{MB}`$ at fp32). Eight pairs cost approximately $`2(426{,}880)(8)=6{,}830{,}080`$ linear-layer FLOPs, excluding feature construction, normalization and activations. These counts are not CPU latency.
@@ -274,9 +274,9 @@ Take $`Q=10\times10^6`$ served queries per day, exactly $`s=3`$ live grounding f
 Grounding generates $`Qs=30\times10^6`$ source-site requests per day. Only under the extra assumption that every one is uncached does it consume $`10e`$ each, or $`300\times10^6e`$ per day. Counting a live HTTP fetch is not enough to establish that assumption.
 The one-click model adds $`Qp_c=10^6`$ requests per day, for a total $`Q(s+p_c)=31\times10^6`$ and $`3.1`$ requests per served query. With core-cache-miss probabilities $`h_g`$ for grounding and $`h_c`$ for clicks, and the stipulated two-cost energy model,
 
-$$
+```math
 \frac{\mathbb E[E_{\mathrm{query}}]}e=s[1+(r_E-1)h_g]+p_c[1+(r_E-1)h_c].
-$$
+```
 
 Setting $`h_g=h_c=1`$ gives $`31e`$ per served query and $`310\times10^6e`$ per day. If grounding misses but clicks hit the source cache, it is $`30.1e`$; if all source requests hit, $`3.1e`$. These are scenario energies, not observations. Energy per satisfied query requires an additional satisfaction denominator and cannot simply be named $`31e`$.
 For the per-source click model the same counts become $`33\times10^6`$ source-site requests per day and, only in the all-uncached sensitivity case, $`33e`$ per served query. A fair cached-search comparison must include its own refresh and user-click requests; “zero query-time fetches by the retrieval service” does not mean zero user traffic to the site. With a permitted local grounding cache hit fraction $`h_L`$, the one-click RAG count becomes $`Q[s(1-h_L)+p_c]+F`$ per period, where $`F`$ is refresh traffic. For $`h_L=0.95`$ this is $`2.5\times10^6+F`$ daily requests, not zero; cache placement/freshness and the energy of the caching system also matter.

@@ -107,9 +107,9 @@ PageRank below explicitly handles dangling mass. Modularity below uses an unweig
 #### What
 Let $`V`$ be entity nodes, $`\mathcal R`$ relation labels and $`E`$ typed directed edges. A simple triple set omits qualifiers unless they are stored separately.
 
-$$
+```math
 G=(V,\mathcal R,E),\qquad E\subseteq V\times\mathcal R\times V.
-$$
+```
 
 Use three workload/economic questions as a starting build gate, not a theorem that a graph is justified only for multi-hop QA:
 1. Do explicit joins, paths, constraints or source-linked relations improve the task beyond a simpler baseline?
@@ -127,9 +127,9 @@ An undifferentiated related-to edge can reduce semantic selectivity, but co-occu
 For $`10^6`$ chunks at $`300`$ tokens each, embedding processes $`3\times10^8`$ tokens. At a stipulated $`\$0.02`$ per million tokens, the token-only bill is $`\$6`$, excluding indexing and all operating overhead.
 A separate hypothetical graph extractor processes $`450`$ input and $`100`$ output tokens/chunk, billed at $`\$3`$ and $`\$15`$ per million tokens respectively:
 
-$$
+```math
 C_{\mathrm{extract}}=10^6\!\left(450\frac{\$3}{10^6}+100\frac{\$15}{10^6}\right)=\$1{,}350+\$1{,}500=\$2{,}850.
-$$
+```
 
 The extraction/embedding token-bill ratio is $`2{,}850/6=475`$. If $`5\%`$ of chunks change monthly and unchanged chunks can safely be reused, $`50{,}000`$ changes cost $`\$0.30`$ to re-embed or $`\$142.50`$ to re-extract under the same token assumptions. Resolution, profile recomputation, indexing, deletion and downstream summaries may have a wider update footprint.
 #### Decisions, ablation, and claim limit
@@ -148,15 +148,15 @@ Explicit citations, foreign keys and validated SMILES can often be parsed withou
 Extraction and resolution determine available paths. Duplicate entities can split a path, while an incorrect merge can create false joins. Retain source versions, confidence/validation status and time/permission qualifiers so a structurally valid path can be checked for the intended claim.
 For $`|V|=150{,}000`$ and $`|E|=500{,}000`$, a binary directed adjacency matrix with one bit per ordered pair, including diagonal cells, has:
 
-$$
+```math
 |V|^2=22{,}500{,}000{,}000\,\mathrm{bits}=2{,}812{,}500{,}000\,\mathrm B=2.8125\,\mathrm{GB}.
-$$
+```
 
 For a different information scope, storing each typed triple as three four-byte IDs gives the payload:
 
-$$
+```math
 500{,}000\times3\times4\,\mathrm B=6{,}000{,}000\,\mathrm B=6\,\mathrm{MB}.
-$$
+```
 
 The payload ratio is exactly $`2{,}812.5/6=468.75`$. The one-bit matrix stores only existence of some connection, not relation identity or multiple types; a relation-specific matrix needs additional storage. The triple payload omits node labels, attributes, adjacency indexes, qualifiers, provenance and replicas. It is a sparsity illustration, not a complete equivalent-feature memory comparison. Practical sparse topology uses on the order of $`|V|+|E|`$ identifiers, with representation-specific overhead.
 #### Failure without it
@@ -165,9 +165,9 @@ Exhaustive comparison of $`n`$ entity records takes $`n(n-1)/2`$ unordered pairs
 #### Cost and complexity
 For a separate price scenario, use $`50{,}000`$ chunks of $`400`$ source tokens plus $`180`$ prompt tokens. Six triples at a stipulated total of $`14`$ serialized tokens each yield $`84`$ output tokens, including all output syntax only by assumption. At $`\$0.15`$ per million input and $`\$0.60`$ per million output:
 
-$$
+```math
 C_{\mathrm{chunk}}=580\frac{\$0.15}{10^6}+84\frac{\$0.60}{10^6}=\$0.0001374.
-$$
+```
 
 One pass costs $`50{,}000(\$0.0001374)=\$6.87`$. A second gleaning pass costs the same only if its billed input and output are identical; under that explicit toy, total is $`\$13.74`$. Real follow-up prompts may include prior extraction, extra checks and different output lengths. Gleaning need not always improve recall or preserve precision.
 Six triples/chunk give $`300{,}000`$ raw triples and $`600{,}000`$ head/tail occurrences counted with multiplicity, not automatically $`300{,}000`$ entity mentions. If they resolve to $`150{,}000`$ unique entities, the occurrence-to-entity ratio is $`4{:}1`$. A separately measured $`300{,}000`$ mention-record count would have a $`2{:}1`$ ratio, but is not implied by the triple count. Embedding a $`400`$-token chunk at $`\$0.02`$ per million costs $`\$0.000008`$: single-pass extraction is $`17.175`$ times that, two equal passes $`34.35`$ times.
@@ -180,9 +180,9 @@ Incremental extraction plus scheduled resolution/community maintenance is one de
 #### What
 A query processor proposes grounded query variables and constraints using the question, schema, entity candidates and graph-access policy. A schema is a vocabulary/type system, not the full instantiated graph.
 
-$$
+```math
 \widehat{\mathcal Q}=\Omega(q,\mathcal S,\mathcal A),
-$$
+```
 
 where $`\mathcal S`$ is the schema and $`\mathcal A`$ the permitted entity/context information. Recognition, relation-intent extraction, query construction, decomposition and expansion are five useful functions; their order, combination and necessity vary by task.
 Recognition/extraction can be open-ended or schema-constrained. Entity linking, allowed relation labels, direction, argument types and access restrictions can help early stages as well as decomposition/expansion. Do not claim that only the last three functions ever consult the graph.
@@ -220,15 +220,15 @@ A three- or four-hop cap is a workload/resource heuristic, not proof that longer
 Under a roughly regular, nonoverlapping $`b`$-ary tree, deepest frontiers scale as $`b^h`$; complete visited levels sum $`1+b+\cdots+b^h`$. Balanced two-ended tree work is on the order of $`b^{\lceil h/2\rceil}+b^{\lfloor h/2\rfloor}`$. This is not an exact count for arbitrary average degree. Finite BFS with visited-state tracking costs $`O(|V_{\mathrm{seen}}|+|E_{\mathrm{examined}}|)`$; enumerating many walks may cost more than finding reachability.
 For a no-overlap toy with $`b=12`$ and depth three, the single-source final frontier and all visited levels are:
 
-$$
+```math
 12^3=1{,}728,\qquad1+12+12^2+12^3=1{,}885.
-$$
+```
 
 Expanding both sides to depth two gives final-frontier counts and total visits, counting each side’s root:
 
-$$
+```math
 2(12^2)=288,\qquad2(1+12+12^2)=314.
-$$
+```
 
 The original $`288/1{,}728=1/6`$ compares only final frontiers, an $`83.333333\%`$ reduction, not the total touched-node count. The complete-level proxy gives $`314/1{,}885`$ and about $`83.342175\%`$ fewer visits. For an odd length-three path, depths one and two are sufficient in the ideal compatible-state case: $`(1+12)+(1+12+12^2)=170`$ visits, about $`90.981432\%`$ fewer. Overlap, early stopping, degree asymmetry, reverse access and constraints change actual work.
 The chapter uses KG-GPT as an example of decomposing relation questions and matching labels with an LLM. A proxy of $`h+2`$ calls assumes one call per hop plus two fixed calls; it is not an architecture-independent lower bound. Linking, batching, schema size, retries and the implementation can change both calls and latency.
@@ -252,10 +252,10 @@ Ungrounded free-form repair is risky, but grounded retry, relinking, clarificati
 #### Cost and complexity
 Distinguish an unpruned tree with $`w`$ children per expanded node from a search that retains only $`w`$ paths globally. In the first toy, one model call at every internal node over $`h`$ expansion levels gives:
 
-$$
+```math
 C_{\mathrm{tree,expand}}=\sum_{j=0}^{h-1}w^j=
 \begin{cases}(w^h-1)/(w-1),&w\ne1,\\h,&w=1.\end{cases}
-$$
+```
 
 At $`w=3`$, the unpruned toy has $`4`$ expansion calls at two hops or $`40`$ at four hops, then one final answer call: $`5`$ and $`41`$. They are not published ToG fixed-beam call counts. A simpler fixed-beam toy with one initial expansion and at most $`w`$ expansions per later level instead has at most $`1+w(h-1)+1`$ total calls, giving $`5`$ and $`11`$. ToG v6 actually includes two pruning stages and per-depth evaluation; its stated upper bound is $`2wh+h+1`$, giving $`15`$ and $`29`$ for these widths/depths. Early stopping and batching change realized calls and sequential rounds.[\[2\]](https://arxiv.org/html/2307.07697v6)
 RoG has a planning-generation stage, graph search and answer generation. A single batched top-$`K`$ planning request plus one answer request can be counted as two model requests; beam decoding still produces multiple sequences and consumes tokens/compute. Grounding is not an LLM call, but is not free and can grow with depth/branching. Long retrieved paths, truncation or multiple reasoning requests can break a fixed two-request implementation.[\[1\]](https://arxiv.org/html/2310.01061v2)
@@ -270,26 +270,26 @@ RoG relation planning omits some entity-neighborhood context. GNN or other retri
 GNN-RAG trains a query-conditioned graph retriever offline, then encodes each new question and runs graph inference online. It retrieves candidate answers and paths for an LLM; it does not move all query-to-graph computation offline.[\[3\]](https://arxiv.org/html/2405.20139v1)
 The paper encodes question and relation text with a shared language encoder and learned pooling. Different encoders, including its SBERT and relation-matching variants, retrieve complementary paths. A schematic of these features is:[\[3\]](https://arxiv.org/html/2405.20139v1)
 
-$$
+```math
 \mathbf q^{(k)}=\gamma_k(\mathop{\mathrm{LM}}\nolimits(q)),\qquad\mathbf r=\gamma_c(\mathop{\mathrm{LM}}\nolimits(\mathop{\mathrm{label}}\nolimits(r))).
-$$
+```
 
 A representative question-relation match in the paper is a neural function of the elementwise product, not a universally required softmax over all relation labels:
 
-$$
+```math
 \omega_k(q,r)=\phi(\mathbf q^{(k)}\odot\mathbf r).
-$$
+```
 
 For a compatible local GNN, aggregate messages over permitted incident edges, with direction handled by the chosen relation representation. One schematic incoming-edge form is:
 
-$$
+```math
 \mathbf m_v^{(\ell)}=\sum_{(u,r,v)\in E_q}\omega(q,r)\,\mathbf M_{uv}^{(\ell)}.
-$$
+```
 
 
-$$
+```math
 \mathbf h_v^{(\ell+1)}=\psi_\ell(\mathbf h_v^{(\ell)},\mathbf m_v^{(\ell)}).
-$$
+```
 
 Here $`E_q`$ is the candidate subgraph and $`\mathbf M`$ and $`\psi`$ are architecture-specific message/update functions. After $`L`$ updates, the model scores candidate answers and extracts connecting shortest paths to linked question entities. A softmax can normalize candidate scores; normalization is not empirical probability calibration. Multiple seed indicators equal to one would be a mask, not a sum-to-one probability distribution.[\[3\]](https://arxiv.org/html/2405.20139v1)
 #### Why
@@ -301,17 +301,17 @@ Over-smoothing is one possible deep-GNN failure, alongside over-squashing, overs
 #### Cost and complexity
 For a constructed candidate graph with $`500`$ nodes, $`2{,}000`$ directed edges (mean out-degree four), width $`d=768`$ and one scalar-weighted message per edge, count only the multiply-and-accumulate aggregation work:
 
-$$
+```math
 Ed=1{,}536{,}000\ \mathrm{MAC/layer},\qquad2Ed=3{,}072{,}000\ \mathrm{FLOP/layer}.
-$$
+```
 
 Three layers give $`4.608\times10^6`$ MACs, conventionally $`9.216\times10^6`$ FLOPs, not $`9.2`$ million multiply-adds. This excludes relation matching, multihead/relation transforms, nonlinear updates, encoder work and memory traffic. Just one $`768\times768`$ dense node transform for $`500`$ nodes costs $`294{,}912{,}000`$ MACs per layer. Kernel overhead might matter, but cannot be declared dominant from edge arithmetic alone.
 The separate symbolic latency toy stipulates nine serial short calls at $`700\,\mathrm{ms}`$ each, hence $`6.3\,\mathrm s`$. “Three beam expansions across three hops” is a chosen nine-call cap, not the exact ToG implementation or a necessary sequential schedule; independent calls may be parallelized.
 The learned timing toy stipulates $`50\,\mathrm{ms}`$ question encoding plus $`5\,\mathrm{ms}`$ graph inference, total $`55\,\mathrm{ms}`$. It omits candidate subgraph retrieval, path extraction, transport and answer generation. These are hypothetical timings, not measured latency proved by the FLOP count.
 
-$$
+```math
 \frac{6{,}300\,\mathrm{ms}}{55\,\mathrm{ms}}\approx114.545455.
-$$
+```
 
 This is a constructed retrieval-latency ratio under different stipulated routes. It is not automatically an end-to-end speedup or throughput ratio; concurrency, hardware occupancy, batching and the remaining pipeline change both. Count one graph batch over its actual nodes/edges, not an unpriced separate model invocation per answer candidate.
 #### Decisions, ablation, and claim limit
@@ -329,11 +329,11 @@ An organizer can prune, rerank, augment context and serialize or project evidenc
 Semantic relevance, graph structure, linguistic distance and learned dynamic masks are different pruning signals. The cited QA-GNN/PipeNet/JointLK-style examples motivate these categories, not a universal five-layer pipeline or guaranteed precision. Collapsing duplicate assertions does not mean collapsing all edges with the same relation type; that would erase legitimate distinct facts.
 Let $`v_i>0`$ be teleport probabilities summing to one, $`0\le\alpha<1`$ the link-following probability and $`d_j^{\mathrm{out}}`$ the out-degree. With dangling nodes redistributed according to $`v`$, a PageRank iteration is:
 
-$$
+```math
 \pi_i^{(t+1)}=(1-\alpha)v_i+\alpha\left[
 \sum_{j:\,(j,i)\in E,\ d_j^{\mathrm{out}}>0}\frac{\pi_j^{(t)}}{d_j^{\mathrm{out}}}
 +v_i\sum_{j:\,d_j^{\mathrm{out}}=0}\pi_j^{(t)}\right].
-$$
+```
 
 Uniform $`v_i=1/N`$ and the conventional example $`\alpha=0.85`$ give a reusable structural score. Positive teleportation prevents closed components from permanently trapping mass under these assumptions; dangling redistribution is the explicit second sum, not something the teleport term alone fixes. Personalized $`v`$ can be query-dependent. Connectivity prominence is not answer relevance or source truth.
 #### Why
@@ -345,22 +345,22 @@ Large traversals can exceed context or bury evidence. A token-only decoder needs
 #### Cost and complexity
 For one illustrative iteration with uniform teleport over $`N=100`$, two inbound non-dangling neighbors at $`0.30`$ and $`0.50`$, out-degrees four and two, and zero dangling mass:
 
-$$
+```math
 \pi_i^{(t+1)}=\frac{0.15}{100}+0.85\!\left(\frac{0.30}{4}+\frac{0.50}{2}\right)=0.27775\approx0.278.
-$$
+```
 
 A distinct no-overlap branching tree with $`b=20`$ produces the following non-root edge/node occurrences through three hops:
 
-$$
+```math
 20+20^2+20^3=20+400+8{,}000=8{,}420.
-$$
+```
 
 At a stipulated seven serialized tokens per triple occurrence, that is $`58{,}940`$ tokens before the question, instructions, identifiers, output or syntax overhead. It is approximately $`7.194824`$ times an $`8{,}192`$-token window and $`1.798706`$ times a $`32{,}768`$-token window: it exceeds both, not merely leaves little room in the latter. Duplicate paths, finite graph overlap and filtering alter actual unique triples.
 If pruning retains $`50`$ triples and adds five $`20`$-token node summaries, the evidence-only toy is:
 
-$$
+```math
 T_{\mathrm{evidence}}=50(7)+5(20)=450\ \mathrm{tokens}.
-$$
+```
 
 The $`450`$-token graph example and a separately stipulated $`2{,}000`$-token text funnel are different evidence budgets, not a quality-matched performance comparison. Account for instructions, source references and output headroom, and measure whether compression kept every load-bearing fact.
 #### Decisions, ablation, and claim limit
@@ -384,15 +384,15 @@ Unpruned evidence can overflow context. Soft vectors alone do not expose a liter
 #### Cost and complexity
 Under a stipulated $`15`$ total serialized tokens per selected triple, $`40`$ triples require:
 
-$$
+```math
 T_{\mathrm{verbal}}=40(15)=600\ \mathrm{tokens}.
-$$
+```
 
 Two hundred triples require $`3{,}000`$ evidence tokens. Compare with a separately chosen fixed interface of $`k=32`$ soft-prompt positions, not a measured GNP configuration:
 
-$$
+```math
 600/32=18.75,\qquad3{,}000/32=93.75.
-$$
+```
 
 These are evidence-position ratios, not equal-quality compression guarantees or full compute/latency savings. A fixed $`k`$ retains the same interface length, but larger graphs still cost more to retrieve/encode and can lose relevant information in pooling. The checked GNP paper pools to a graph-level embedding; no mandatory $`32`$-vector Q-Former connection follows.[\[4\]](https://arxiv.org/html/2309.15427v2)
 Five text chunks at $`250`$ tokens give $`1{,}250`$ evidence tokens, while the forty-triple toy gives $`600`$. Their source content and support coverage differ; neither is inherently larger at all graph sizes. Both must fit the full prompt plus output allowance and meet quality at matched task conditions.
@@ -407,9 +407,9 @@ The checked GraphRAG global-query pipeline extracts entities/relationships and e
 Leiden has local moving, partition refinement and aggregation phases. Omitting refinement makes the description resemble Louvain and loses the reason for Leiden’s improved connectivity guarantees. It can optimize modularity or a Constant Potts Model objective with specified resolution; it does not guarantee a global optimum. A community hierarchy is not the same construction as HNSW’s sampled search layers.[\[6\]](https://arxiv.org/html/1810.08473v3)
 For the following toy, project to an unweighted undirected graph with no self-loops, adjacency $`A`$, degrees $`k_i`$, $`m>0`$ edges and resolution one. Standard modularity is:
 
-$$
+```math
 Q_{\mathrm{mod}}=\frac1{2m}\sum_{i,j}\left(A_{ij}-\frac{k_i k_j}{2m}\right)\mathbb1[c_i=c_j].
-$$
+```
 
 LightRAG builds graph-derived entity/relation profiles and vector/key-value indexes, then uses low-level detail/entity-oriented and high-level thematic/relation-oriented query keys to retrieve graph information and associated source chunks. It avoids GraphRAG-style precomputed community reports in this design. That does not mean it has no descriptions, no graph context, no synthesis or zero indexing/merge cost.[\[7\]](https://arxiv.org/html/2410.05779v2)
 #### Why
@@ -422,9 +422,9 @@ Graph changes can affect communities beyond the edited chunk, so a batch reparti
 For undirected edges $`\{12,13,23,34\}`$, degrees are $`(2,2,3,1)`$ and $`2m=8`$. The partition $`\{1,2,3\}\mid\{4\}`$ has $`Q_{\mathrm{mod}}=-0.03125`$, while all four together give zero, a gain of $`0.03125`$ relative to that partition. But $`\{1,2\}\mid\{3,4\}`$ also gives zero. Exhaustive enumeration of all fifteen set partitions finds a tied maximum of zero. This toy neither uniquely selects the all-in-one partition nor proves that one added edge changed a previously unique optimum.
 Construct an illustrative $`10{,}000`$-chunk corpus with $`30{,}000`$ nodes and four community levels containing $`3{,}000`$, $`300`$, $`30`$ and $`3`$ reports. Assume one LLM request/report and the same $`10{,}000`$ extraction requests in both designs:
 
-$$
+```math
 C_{\mathrm{reports}}=3{,}000+300+30+3=3{,}333.
-$$
+```
 
 The restricted request-count toy is $`13{,}333`$ versus $`10{,}000`$, ratio $`1.3333`$, premium $`33.33\%`$. It assumes these four report levels, no extra root report, one extraction call/chunk and no other profiling/merge/gleaning requests. LightRAG has additional indexing/description work too. Different request lengths/prices and parallelism prevent this from being an equal-cost or measured construction comparison.
 If fifty new documents are explicitly assumed to be one chunk each, they contribute fifty base extraction requests under the same one-pass toy. Real documents can contain many chunks and update shared profiles. A batch policy that rebuilds all existing community reports would repeat $`3{,}333`$ report requests, before new reports; an incremental/cached policy can differ. This is a policy-dependent upper-work illustration, not an unavoidable per-update GraphRAG bill.

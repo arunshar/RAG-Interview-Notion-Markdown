@@ -22,6 +22,7 @@ class MathSpan:
     tex_start: int
     tex_end: int
     kind: str
+    syntax: str = "dollar"
 
     def tex(self, text: str) -> str:
         return text[self.tex_start:self.tex_end]
@@ -60,11 +61,33 @@ def fenced_ranges(text: str) -> list[tuple[int, int]]:
 
 
 def scan_math(text: str) -> tuple[list[MathSpan], list[tuple[int, str]]]:
-    """Find dollar-and-backtick inline math and standalone dollar display math."""
-    visible = mask_ranges(text, fenced_ranges(text))
+    """Find inline math, protected GitHub math fences, and dollar display math."""
+    fences = fenced_ranges(text)
+    visible = mask_ranges(text, fences)
     boundaries = list(DISPLAY_BOUNDARY.finditer(visible))
     spans = []
     errors = []
+    for start, end in fences:
+        lines = text[start:end].splitlines(keepends=True)
+        opening = FENCE_START.match(lines[0].rstrip("\r\n"))
+        if opening[2].strip() != "math":
+            continue
+        marker = opening[1]
+        if len(lines) < 2 or not re.fullmatch(
+                r" {0,3}" + re.escape(marker[0]) +
+                "{" + str(len(marker)) + r",}[ \t]*", lines[-1].rstrip("\r\n")):
+            errors.append((start, "Unclosed math fence."))
+            continue
+        closing_start = end - len(lines[-1])
+        closing_end = closing_start + len(lines[-1].rstrip("\r\n"))
+        tex_start = start + len(lines[0])
+        tex_end = closing_start
+        if tex_end > tex_start and text[tex_end - 1] == "\n":
+            tex_end -= 1
+        if tex_end > tex_start and text[tex_end - 1] == "\r":
+            tex_end -= 1
+        spans.append(MathSpan(start, closing_end, tex_start, tex_end,
+                              "display", "fence"))
     if len(boundaries) % 2:
         errors.append((boundaries[-1].start(), "Unpaired display-math delimiter."))
     for opening, closing in zip(boundaries[::2], boundaries[1::2]):
@@ -150,6 +173,11 @@ def validate_text(text: str) -> tuple[list[str], dict[str, int]]:
             # The first item is the remainder of the closing-delimiter line.
             if len(after) > 1 and after[1].strip():
                 problems.append((span.end, "Display math needs a blank line after it."))
+            if span.syntax == "dollar" and (
+                    re.search(r"[<*]|\\[{}]|\]\s*\(", tex) or
+                    re.search(r"(?m)^[ \t]*(?:[+=-](?:[ \t]|$)|#{1,6}[ \t])", tex)):
+                problems.append((span.start,
+                                 "Markdown-sensitive display math needs a protected math fence."))
     visible = mask_ranges(text, fenced_ranges(text) +
                           [(span.start, span.end) for span in spans])
     visible = re.sub(r"(`+).*?\1", lambda m: " " * len(m[0]), visible, flags=re.S)

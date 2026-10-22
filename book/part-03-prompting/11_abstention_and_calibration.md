@@ -138,13 +138,13 @@ Use natural logarithms and nats. Correctness, answerability, support and agreeme
 - **Cost or complexity:** The product owner must state $`c_w`$ and $`c_a`$ per route. The model supplies only $`p`$.
 Answering has expected value $`p-(1-p)c_w`$. Abstaining has value $`-c_a`$. Answer when:
 
-$$
+```math
 p - (1-p)c_w > -c_a
 \Longleftrightarrow
 p(1+c_w) > c_w-c_a
 \Longleftrightarrow
 p > \tau = \frac{c_w-c_a}{1+c_w}
-$$
+```
 
 At $`c_w = 2`$ and $`c_a = 0.5`$, $`\tau = \frac{1.5}{3} = 0.500`$. At $`c_w=200`$ with the same $`c_a`$, $`\tau=199.5/201\approx0.992537`$.
 If $`c_a > c_w`$, then $`\tau \lt 0`$. The cost-optimal policy never refuses because abstention costs more than a wrong answer.
@@ -152,9 +152,9 @@ Abstention happens after retrieval and generation. A retrieve-or-not reflection 
 #### Citations change cost, not confidence
 - **What:** For this illustrative cost model, let $`q`$ be the probability, conditional on a wrong answer, that verification catches it before the modeled harm. Let $`c_v`$ be the replacement cost on that caught-wrong branch. Correct-answer verification costs and residual harm are omitted; adding them changes the decision utility. The effective wrong-answer cost is:
 
-$$
+```math
 c_w' = (1-q)c_w + qc_v
-$$
+```
 
 - **Why:** A readable cited span lets the user detect residual support failures.
 - **Failure without it:** Citation presence alone does not carry correctness information. The cited FActScore result found citations on over $`30\%`$ of supported sentences and over $`30\%`$ of unsupported sentences.
@@ -167,9 +167,9 @@ At $`c_w = 20`$, $`q = 0.6`$, and $`c_v = 0.2`$, the effective cost is $`8.12`$.
 - **Cost or complexity:** Treat $`t=0.8,f=0.2`$ as an independent toy assumption, not an optimistic bound extracted from AttributionBench. Measure the ROC or risk-coverage curve and validate that the support event matches the product's correctness target.
 For the separate toy operating point $`a=0.81`$, $`t=0.8`$ and $`f=0.2`$, pass precision is:
 
-$$
+```math
 \mathop{\mathrm{Prec}}\nolimits_{\mathrm{pass}}=\frac{0.8(0.81)}{0.8(0.81)+0.2(0.19)}=\frac{0.648}{0.686}\approx0.944606.
-$$
+```
 
 That particular binary pass group does not meet $`\tau\approx0.992537`$. Equating its precision to the cost threshold gives $`c_w=(p+c_a)/(1-p)\approx26.0789`$ for bare answers, or an original wrong-answer cost of about $`64.8974`$ under the stated citation-cost transformation. These are intersections for this fixed operating point, not universal stakes limits or proof that no other threshold can work. Measure precision and coverage at alternative thresholds, improve evidence or escalate when no validated point meets the route requirement.
 A standing disclaimer on $`100\%`$ of answers is a constant rather than a correctness signal. Being constant, the disclaimer carries no discrimination information; whether it changes harm is a separate empirical and legal question. A refusal policy is informative only to the extent that its decisions actually correlate with correctness.
@@ -202,9 +202,9 @@ The opening audit found the answer verbatim in the top retrieved chunk for 31 of
 - **Cost or complexity:** It is nearly free as a pre-filter. It is not a calibrated answer-confidence score.
 The training loss is:
 
-$$
+```math
 L = -\log \frac{\exp(s(q,d^+)/T)}{\sum_j \exp(s(q,d_j)/T)}
-$$
+```
 
 Adding the same constant $`c`$ to all scores for one query multiplies numerator and denominator by $`\exp(c/T)`$. The loss does not change, so a global score level is unconstrained.
 A 2024 parental-leave question can retrieve a 2019 policy page at high similarity. The chunk is topical but can carry the wrong number.
@@ -220,11 +220,11 @@ A 2024 parental-leave question can retrieve a 2019 policy page at high similarit
 - **Cost or complexity:** It is cheap when token probabilities are exposed. It is unavailable from many closed APIs and is sensitive to format.
 The two mean changes are:
 
-$$
+```math
 \frac{12\ln(0.9/0.6)}{40} = 0.1216
 \qquad \text{versus} \qquad
 \frac{\ln(0.97/0.02)}{40} = 0.0970
-$$
+```
 
 The glue-token change is roughly four-fifths of the full content collapse. The cited FormatSpread result reports swings up to 76 accuracy points on LLaMA-2-13B from formatting.
 #### Mechanism 4: self-check
@@ -262,37 +262,37 @@ For a prevalence-matched $`t=0.8,f=0.2`$ toy gate at $`a=0.738`$, precision is $
 - **Cost or complexity:** First-stage presence probability is $`1-(1-q)^N`$; $`qN\gg1`$ makes presence likely in the rare-event approximation, not certain. Frequency increments of $`1/N`$ are not a hard extinction threshold.
 For $`q = 10^{-4}`$ and $`N = 5{,}000`$:
 
-$$
+```math
 \Pr(K_1=0)=(1-q)^N=(1-10^{-4})^{5{,}000}\approx0.606515\approx e^{-0.5}.
-$$
+```
 
 If, additionally, each surviving generation were reset to the same rare-event probability $`q`$, a constant-hazard toy calculation would give:
 
-$$
+```math
 \Pr(\text{survive three stages})=\left[1-(1-q)^N\right]^3\approx0.060924\quad\text{under constant conditional absence hazard}.
-$$
+```
 
 This roughly $`6.09\%`$ value is not the survival law of actual recursive empirical retraining: after survival the frequency is random, and later absence probabilities depend on it. In a pure empirical-resampling model, $`K_{t+1}\mid K_t\sim\mathop{\mathrm{Bin}}\nolimits(N,K_t/N)`$ and $`0`$ is absorbing. Generalization, smoothing, priors and external data can make absence non-absorbing. The first-generation absence probability illustrates rarity; it does not establish a hard deletion of all behaviors below $`1/N`$.
 #### Self-reflection as context-window resampling
 - **What:** Round $`t+1`$ samples from the question plus prior answers, not from the question alone.
 
-$$
+```math
 p(\cdot \mid q,a_1,\ldots,a_t)
 \quad \text{rather than} \quad
 p(\cdot \mid q)
-$$
+```
 
 - A prior answer may bias a later continuation; a constant $`\beta`$ log-odds increment is a toy assumption, not an inevitable law. Compare fixed alternatives with and without the prior turn to estimate a log-odds change; one answer’s log probability alone is not a log-odds difference. Each revision adds full inference work and latency.
 Take the constant-increment toy $`\beta=0.8`$ nats per round and initial $`p_{\mathrm{wrong}}=0.55`$, $`p_{\mathrm{right}}=0.45`$. Initial log odds are $`\ln(0.55/0.45)\approx0.200671`$. After eight rounds:
 
-$$
+```math
 \ell_8=\ln\frac{0.55}{0.45}+8(0.8)\approx6.60067070.
-$$
+```
 
 
-$$
+```math
 p_{\mathrm{wrong}}^{(8)}=\frac1{1+e^{-\ell_8}}\approx0.998642390.
-$$
+```
 
 The equivalent temperature is $`T = \frac{0.2007}{6.6007} = 0.030`$. Eight self-affirmations sharpen this one decision like a temperature drop from $`1.0`$ to $`0.03`$, with no new evidence.
 #### Stated odds and real odds diverge
@@ -314,19 +314,19 @@ The stated dependence scenario leaves conditional odds $`(738/262)(1.2)\approx3.
 Nine equal-length serial passes emit $`2{,}250`$ output tokens and take $`56.25\,\mathrm s`$ of decode at $`40`$ tokens per second. At $`1{,}000`$ queries per day and $`\$3.00`$ per million output tokens, output cost is $`\$6.75`$ daily. Above two passes at $`\$1.50`$ daily, the $`365`$-day increment is $`\$1{,}916.25`$ and serial decode latency is $`4.5`$ times higher. Zero accuracy gain is a scenario assumption; inputs and other overhead are excluded.
 For a separate idealized plurality example, suppose each of eight IID draws outputs the one correct answer with probability $`0.738`$, and each of four wrong values with probability $`0.262/4=0.0655`$. Break a tie uniformly among tied leaders. Then:
 
-$$
+```math
 C \sim \mathop{\mathrm{Bin}}\nolimits(8,0.738)
-$$
+```
 
 
-$$
+```math
 \begin{aligned}
 \mathbf N&\sim\mathop{\mathrm{Multinomial}}\nolimits\!\left(8;0.738,0.0655,0.0655,0.0655,0.0655\right),\\
 \Pr(\text{correct plurality})&=\sum_{\sum_i n_i=8}\Pr(\mathbf N=\mathbf n)
 \frac{\mathbf1[n_0=\max_i n_i]}{\sum_i\mathbf1[n_i=\max_j n_j]}
 \approx0.987701.
 \end{aligned}
-$$
+```
 
 The multinomial scenario gives $`98.7701\%`$ plurality accuracy, about $`24.9701`$ points over one draw. The event $`C\le2`$ has probability about $`0.005455`$, but its complement is not a sufficient condition for a correct plurality: three correct votes can lose to five identical wrong votes, and four can tie four. A strict correct majority alone guarantees success with probability approximately $`86.8914\%`$. Eight $`250`$-token outputs total $`2{,}000`$ output tokens and $`\$6.00`$ per $`1{,}000`$ queries at the stated price, excluding inputs. The ideal $`6.25\,\mathrm s`$ parallel decode time assumes full batch capacity and no per-sequence slowdown; it is not a measured latency. Real query-specific answer probabilities and wrong-answer concentration must be measured. The reported $`17.9`$-point forty-sample study gain is a different experiment, not a validation or fixed fraction of this toy result.
 When a checker judges evidence rather than a draft, clear prior answers and verdicts from its context. Log confidence by round and alert when it rises while labeled accuracy stays flat.
@@ -339,19 +339,19 @@ Do not fine-tune a successor on unverified outputs from its predecessor. The sta
 - **Cost or complexity:** Compute both $`\mathop{\mathrm{ECE}}\nolimits`$ and Area Under the Receiver Operating Characteristic curve ($`\mathop{\mathrm{AUROC}}\nolimits`$), or publish the full risk-coverage curve.
 For score buckets $`B_1`$ through $`B_M`$:
 
-$$
+```math
 \mathop{\mathrm{ECE}}\nolimits
 = \sum_{m=1}^{M}\frac{|B_m|}{n}
 \left|\mathop{\mathrm{acc}}\nolimits(B_m)-\mathop{\mathrm{conf}}\nolimits(B_m)\right|
-$$
+```
 
 For one correct and one wrong draw:
 
-$$
+```math
 \mathop{\mathrm{AUROC}}\nolimits
 = \Pr(s_{\mathrm{correct}}>s_{\mathrm{wrong}})
 + \frac{1}{2}\Pr(s_{\mathrm{correct}}=s_{\mathrm{wrong}})
-$$
+```
 
 Emit the constant score $`s = a`$, where $`a`$ is base accuracy. When $`a`$ is the observed accuracy on this same dataset, empirical $`\mathop{\mathrm{ECE}}\nolimits=0`$ in all nonempty bins and $`\mathop{\mathrm{AUROC}}\nolimits=0.5`$ if both classes occur. Population calibration requires $`a`$ to equal the true base rate; a fitted constant need not remain calibrated after distribution shift. The score is perfectly calibrated and useless for abstention.
 #### Why recalibration cannot create separation
@@ -366,7 +366,7 @@ The cited black-box elicitation study found different winners. Pairwise-ranking 
 - **Failure without it:** Reliability improvements can be mistaken for a better gating signal.
 - **Cost or complexity:** Fit calibration on held-out labeled data. Resolution must come from a better raw signal.
 
-$$
+```math
 \mathop{\mathrm{BS}}\nolimits
 =
 \underbrace{\sum_m \frac{|B_m|}{n}
@@ -376,7 +376,7 @@ $$
 \left(\mathop{\mathrm{acc}}\nolimits(B_m)-a\right)^2}_{\mathrm{RES}}
 +
 \underbrace{a(1-a)}_{\mathrm{UNC}}
-$$
+```
 
 The displayed finite-sample Brier decomposition is exact when each group has a constant issued forecast, as in the discrete-score example. Replacing varying individual forecasts by coarse-bin means changes the score and may require within-bin terms. Mapping each fixed group to its empirical accuracy makes its in-sample reliability zero. A one-to-one relabeling retains those groups and their resolution; merging groups can reduce resolution. Deterministic post-processing does not create information, but arbitrary numerical binning can change reported resolution. Evaluate calibration on separate data.
 #### Worked calibration comparison
@@ -386,11 +386,11 @@ The displayed finite-sample Brier decomposition is exact when each group has a c
 - **Cost or complexity:** The verbalized signal uses three levels. The agreement signal requires eight samples.
 Verbalized confidence has 300 queries at $`0.90`$ with 210 correct, 400 at $`0.95`$ with 300 correct, and 300 at $`1.00`$ with 228 correct. Bucket accuracies are $`0.700`$, $`0.750`$, and $`0.760`$.
 
-$$
+```math
 \mathop{\mathrm{ECE}}\nolimits
 = 0.3(0.200)+0.4(0.200)+0.3(0.240)
 = 0.212
-$$
+```
 
 Among $`738\times262=193{,}356`$ correct–wrong pairs, verbalized confidence has $`70{,}320`$ wins and $`65{,}316`$ ties: AUROC $`(70{,}320+65{,}316/2)/193{,}356\approx0.532582387`$.
 Eight-probe agreement is illustrated with bucket sizes $`350{,}200{,}180{,}150{,}120`$, scores $`1,7/8,6/8,5/8,3/8`$, and correct counts $`329{,}168{,}126,75,40`$. The last score is explicitly $`3/8`$, not an unspecified value at most $`4/8`$; this makes the reported errors reproducible. Then $`\mathop{\mathrm{ECE}}\nolimits=0.06075`$, $`\mathrm{REL}\approx0.00450708`$, $`\mathrm{RES}\approx0.04476933`$, and $`\mathop{\mathrm{AUROC}}\nolimits=153{,}888/193{,}356\approx0.795879`$. These are stipulated bucket data, not performance implied by eight IID samples.
@@ -424,19 +424,19 @@ The cited study reports that vanilla verbalized confidence is systematically ove
 - **Cost or complexity:** There are $`m+1`$ possible scores and $`m`$ probe calls in addition to the original answer generation. Including the served answer among the $`m`$ probes changes the binomial model and its variance.
 For $`k`$ distributed binomially:
 
-$$
+```math
 \mathop{\mathrm{Var}}\nolimits(\widehat{c})=\frac{c(1-c)}{m}
 \qquad
 \mathop{\mathrm{SE}}\nolimits(\widehat{c})=\sqrt{\frac{c(1-c)}{m}}
-$$
+```
 
 Adjacent levels are $`\frac{1}{m}`$ apart. Requiring one level gap to exceed one standard error gives:
 
-$$
+```math
 \frac{c(1-c)}{m} < \frac{1}{m^2}
 \Longleftrightarrow
 m < \frac{1}{c(1-c)}
-$$
+```
 
 For $`m=8`$, comparing nominal spacing with one population standard error gives $`c(1-c)<1/8`$, equivalently $`c<(1-\sqrt{1/2})/2\approx0.146447`$ or $`c>(1+\sqrt{1/2})/2\approx0.853553`$. This is a heuristic scale comparison in terms of unknown $`c`$, not a confidence guarantee that adjacent observed scores are distinguishable. In particular, observing eight agreements in eight probes gives a one-sided exact $`95\%`$ lower bound of only $`0.05^{1/8}\approx0.687656`$ on agreement probability, not $`0.929`$ on correctness.
 For a fixed interior $`c`$, spacing shrinks as $`1/m`$ while SE shrinks as $`1/\sqrt m`$, so sufficiently fine score levels become closer than one SE; at $`c=1/2`$ this occurs for $`m>4`$, with equality at $`m=4`$. Near endpoints the condition differs. More probes still improve estimation at a fixed meaningful precision. Use interval estimates and held-out correctness calibration rather than treating nominal granularity as statistical resolution.
@@ -451,31 +451,31 @@ For a fixed interior $`c`$, spacing shrinks as $`1/m`$ while SE shrinks as $`1/\
 - **Failure without pricing:** A team can add sampling without knowing what decision value it must recover.
 - **Cost or complexity:** One generation call costs:
 
-$$
+```math
 2400 \times 3 \times 10^{-6}
 + 150 \times 15 \times 10^{-6}
 = 0.0072 + 0.00225
 = \$0.00945
-$$
+```
 
 Vanilla verbalized confidence adds about 10 output tokens, or $`\$0.00015`$. Total cost is $`\$0.00960`$ per query and $`\$9.60`$ per day. It yields three levels.
 Self-probing adds a fresh call with $`2{,}550`$ input tokens and 10 output tokens:
 
-$$
+```math
 2550 \times 3 \times 10^{-6}
 + 10 \times 15 \times 10^{-6}
 = \$0.00780
-$$
+```
 
 Self-probing costs $`\$0.01725`$ per query and $`\$17.25`$ per $`1{,}000`$ queries: $`0.01725/0.00945\approx1.82540`$ times base generation, or $`1.796875`$ times verbalized-confidence cost. It adds a serial round trip and still emits three nominal confidence levels in this example.
 Eight new agreement probes plus the original answer require nine $`\$0.00945`$ generation calls: $`\$0.08505`$ per query or $`\$85.05`$ per $`1{,}000`$ queries. Conditional on an already fixed answer, probe latency adds a parallel fan-out round plus its tail; sufficient batch capacity and no slowdown are assumptions. If eight total calls including the served answer are reused instead, the earlier binomial model and score definition must be changed.
 This nine-call agreement design costs $`\$75.45`$ more per day than $`\$9.60`$ verbalized confidence. In the stipulated calibrated top-bucket scenario it admits $`350`$ answers at $`94.0\%`$ observed precision where calibrated verbalized scores admit none. These group estimates need held-out uncertainty accounting before a risk guarantee.
 
-$$
+```math
 350\left[0.94-0.06\times20-(-0.5)\right]
 =350\times0.24
 =84\ \text{units per day}
-$$
+```
 
 Under the stipulated $`84`$ utility-unit gain, break-even is $`\$75.45/84\approx\$0.898214`$ per unit, equivalent to about $`53.89`$ seconds at $`\$60`$ per hour. This monetization assumes utility units represent reader time and omits other costs.
 Numerically, $`\tau\approx0.928571`$ lies between $`7/8`$ and $`1`$, so a naive raw-agreement cutoff admits the top observed score. Its $`35\%`$ coverage and $`94\%`$ correctness are stipulated bucket facts, not a consequence of the score lying outside a one-SE band. Calibrate the raw score to correctness and validate the selected group.
@@ -490,11 +490,11 @@ At $`c_w=200`$ and $`c_a=0.5`$, the required probability is approximately $`0.99
 - **Cost or complexity:** FActScore extracts atomic facts, verifies them against a reliable source, and reports the supported fraction. Claim extraction and verification add model work.
 Two candidate summaries are:
 
-$$
+```math
 c = \Pr(S=1)
 \qquad \text{or} \qquad
 c = \mathbb{E}[S]
-$$
+```
 
 The first means every claim is supported with the stated probability. The second means that fraction of claims is supported on average.
 #### The cost model selects the functional
@@ -503,20 +503,20 @@ The first means every claim is supported with the stated probability. The second
 - **Failure without the right summary:** A compliance memo can look safe under average claim support while one bad claim still creates the full incident cost.
 - **Cost or complexity:** Product owners must classify each output route as proportional, all-or-nothing, or another explicitly modeled utility.
 
-$$
+```math
 \mathbb{E}[U_{\mathrm{prop}}] = \mathbb{E}[S](1+c_w)-c_w
-$$
+```
 
 
-$$
+```math
 \mathbb{E}[U_{\mathrm{all}}] = \Pr(S=1)(1+c_w)-c_w
-$$
+```
 
 Both produce the same numeric threshold:
 
-$$
+```math
 \tau=\frac{c_w-c_a}{1+c_w}=\frac{19.5}{21}=\frac{13}{14}\approx0.928571429.
-$$
+```
 
 The identical algebra is the trap. The statistic under the threshold differs.
 #### Length amplifies the difference
@@ -531,10 +531,10 @@ Claims sharing evidence can be dependent. Pairwise positive correlation alone do
 - **Failure with one scalar:** Choosing $`\Pr(S=1)`$ discards the mean. Choosing $`\mathbb{E}[S]`$ discards the full-support atom.
 - **Cost or complexity:** The cited black-box routes score the same answer in $`m`$ fresh sessions or sample $`m`$ alternative briefs and measure claim-level corroboration.
 
-$$
+```math
 \mathop{\mathrm{CRPS}}\nolimits(\widehat{F},s)
 =\int_0^1\left(\widehat{F}(t)-\mathbf{1}[s\le t]\right)^2\,\mathrm{d}t
-$$
+```
 
 For a Bernoulli forecast and a binary realized outcome $`s\in\{0,1\}`$, CRPS equals the Brier score. With fractional observed support $`s`$, that identity does not hold in general. It is strictly proper and carries a reliability, resolution, and uncertainty decomposition. Resolution still cannot be created by post-processing.
 Exact string matching fails for long briefs because samples rarely match word for word. Use similarity over atomic claims or named entities.
@@ -549,24 +549,24 @@ Exact string matching fails for long briefs because samples rarely match word fo
 - **Failure without functional alignment:** Mean support clears $`\tau`$ while nearly half the briefs contain at least one unsupported claim.
 - **Cost or complexity:** Gate on $`\mathbb{E}[S] = 0.950`$ under proportional costs. Net value relative to abstention is:
 
-$$
+```math
 350\left[0.95\times21-20-(-0.5)\right]
 =350\times0.45
 =157.5\ \text{units per day}
-$$
+```
 
 Under all-or-nothing costs, the gate should read $`0.95^{12}\approx0.540360`$. About 189 briefs are fully supported and 161 carry at least one unsupported claim. The correct policy under the stated costs is to refuse all 350. Shipping them yields:
 
-$$
+```math
 350\left[21(0.95^{12})-20+0.5\right]\approx-2{,}853.35\ \mathrm{utility\ units/day}.
-$$
+```
 
 Use the unrounded $`\tau=19.5/21`$: at $`n=12`$, required marginal support under independence is $`p\ge(19.5/21)^{1/12}\approx0.993843366`$. Among $`4{,}200`$ claims this is approximately $`25.8579`$ expected unsupported claims, versus $`210`$ at $`p=0.95`$, an approximately $`8.121`$-fold reduction. This marginal requirement depends on the independence model, not merely the mean support.
 A supported two-claim hedge has precision $`1.000`$ but recall $`\frac{2}{12} = 0.167`$. Its score is:
 
-$$
+```math
 F_{1,@K}=\frac{2\cdot1\cdot(2/12)}{1+2/12}=\frac27\approx0.285714.
-$$
+```
 
 As a check, $`0.94^{12} = 0.476`$ and $`0.94^{40} = 0.084`$. The source interprets the latter as a mostly correct 40-claim biography receiving binary failure about $`92\%`$ of the time.
 The recommended outputs are $`\mathbb{E}[S]`$ and $`\Pr(S\ge s_0)`$ for an explicit $`s_0`$. A single consumer may use one field, but its name should identify the functional, such as `expected_support` or `p_fully_supported`.

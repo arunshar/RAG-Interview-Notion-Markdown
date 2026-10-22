@@ -130,15 +130,15 @@ A cheap baseline embeds the live input and every candidate, then takes the neare
 #### Conditional entropy criterion
 For one observed $`m`$-token test input $`x`$ after candidate $`c`$, compute mean negative log likelihood. The source calls this a conditional-entropy (ConE) score; mathematically it is empirical cross-entropy or surprisal on that fixed input, not the full entropy of the model's conditional distribution.
 
-$$
+```math
 H_\theta(x \mid c) = -\frac{1}{m}\sum_{t=1}^{m}\log p_\theta(x_t \mid c, x_{<t})
-$$
+```
 
 Compare it with the empty-prefix value:
 
-$$
+```math
 \Delta(c) = H_\theta(x \mid c) - H_\theta(x \mid \varnothing)
-$$
+```
 
 Choose the candidate with minimum $`\Delta(c)`$. The empty-prefix term is constant across candidates and therefore does not change their ranking. A negative value means the candidate improves test-input likelihood under this scoring model; it does not prove improved answer accuracy, safety or multi-example compatibility. Serving zero-shot when no candidate improves the score is a policy heuristic to validate on held-out answers.
 #### Why a two-stage funnel exists

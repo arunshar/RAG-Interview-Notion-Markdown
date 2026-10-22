@@ -88,39 +88,39 @@ Symbols are local: $`r`$ denotes retrieval-success probability in RAFT but rank 
 The source’s motivating project compares reranking with fine-tuning a $`7`$-billion-parameter generator on $`20{,}000`$ question-answer pairs from the same PDFs. Each is assigned about one quarter of the GPU budget, with a two-quarter consequence for the wrong decision after two months of development. Those are planning anecdotes, not costs derived from the equations. Split training and evaluation by appropriate document, time or question families so source reuse does not hide leakage.
 SFT minimizes negative log-likelihood over labeled input-output pairs.
 
-$$
+```math
 \mathcal L_{\mathrm{SFT}}(\theta)=-\sum_{(x,y)\in\mathcal D}\sum_{t=1}^{|y|}\log p_\theta(y_t\mid y_{<t},x).
-$$
+```
 
 Here the supervised input is $`x`$ and loss is applied to target positions in $`y`$, not automatically to every prompt token. The trainable object may be all parameters or an adapter subset. A fixed-generator retrieval update changes the conditioning information while leaving $`\theta`$ unchanged:
 
-$$
+```math
 p_\theta(y\mid q,c_1,\ldots,c_k).
-$$
+```
 
 Formatting, tone, refusal and citation conventions can be shared behaviors, while dated facts often belong in a keyed index. This is a design heuristic, not a mathematical partition: facts can occur many times, SFT can learn factual knowledge, and behavior can be input-specific. The source’s rank-eight or rank-sixteen LoRA suggestion is an empirical starting point, not a sufficient-capacity theorem. A proprietary identifier or DSL can require both a shared output syntax and specific factual mappings; validate vocabulary, tokenizer and mapping correctness separately.
 #### Why
 Let $`H`$ mean that production context contains all evidence required by the evaluation’s definition of success. Define $`R=\Pr(H)`$, $`A_{\mathrm{hit}}=\Pr(\mathrm{correct}\mid H)`$ and $`A_{\mathrm{miss}}=\Pr(\mathrm{correct}\mid H^c)`$. The exact mixture is a law of total probability. Oracle-context accuracy $`A_{\mathrm{orc}}`$ is a separate intervention; it is a proxy for $`A_{\mathrm{hit}}`$ only if query cohorts, context format, distractors and reader behavior transfer.
 
-$$
+```math
 A_{\mathrm{rag}}=R A_{\mathrm{hit}}+(1-R)A_{\mathrm{miss}}.
-$$
+```
 
 Holding the other conditional rates fixed, the partial derivatives are
 
-$$
+```math
 \frac{\partial A_{\mathrm{rag}}}{\partial R}=A_{\mathrm{hit}}-A_{\mathrm{miss}}.
-$$
+```
 
 
-$$
+```math
 \frac{\partial A_{\mathrm{rag}}}{\partial A_{\mathrm{hit}}}=R.
-$$
+```
 
 
-$$
+```math
 \frac{\partial A_{\mathrm{rag}}}{\partial A_{\mathrm{miss}}}=1-R.
-$$
+```
 
 An intervention that changes retrieval usually changes which queries are hits and the context they receive, so it can also change both conditional accuracies. If they are differentiable functions of $`R`$, the total derivative adds $`R\,dA_{\mathrm{hit}}/dR+(1-R)\,dA_{\mathrm{miss}}/dR`$. Oracle failures show residual errors despite supplied evidence, not a pure or irreparable “behavior deficit.” A miss rate $`1-R`$ is a delivery deficit under the chosen evidence labels, not proof the answer is absent from model knowledge. Multi-document evidence coverage also need not equal marginal document Recall@k.
 #### Failure without it
@@ -128,36 +128,36 @@ Training on a changing corpus can create freshness, interference and provenance 
 #### Cost and complexity
 For a coarse full-fine-tuning arithmetic ledger, take $`N=7\times10^9`$ parameters and $`D=50\times10^6`$ processed training tokens:
 
-$$
+```math
 W_{\mathrm{train}}\approx6ND=2.1\times10^{18}\,\mathrm{FLOP}.
-$$
+```
 
 At $`F`$, this is $`6{,}176.470588\,\mathrm s\approx1.715686`$ arithmetic GPU-hours, excluding evaluation and release. Separately, embedding ten $`512`$-token chunks through a $`110\times10^6`$-parameter encoder gives the forward proxy
 
-$$
+```math
 W_{\mathrm{embed}}\approx2(10\times512)(110\times10^6)=1.1264\times10^{12}\,\mathrm{FLOP}.
-$$
+```
 
 At the same stipulated arithmetic rate, the embedding component is $`3.312941\,\mathrm{ms}`$. The FLOP ratio is approximately $`1.864347\times10^6`$, but its numerator is a fifty-million-token training job and denominator a ten-chunk incremental embedding update. They are not matched single-fact workloads. Small-encoder utilization, storage/index writes and serving propagation are omitted; this ratio is not a measured update-latency or per-fact cost advantage.
 Figure $`27.1`$ uses this same analytical ledger. The previous schematic labels of $`1.5`$ GPU-hours and $`2.8\,\mathrm{ms}`$ used inconsistent values and are not separate measured results.
 #### Worked example
 The diagnostic scenario has $`2{,}000`$ held-out questions, closed-book accuracy $`0.41`$, oracle-context probe accuracy $`0.82`$, distractor-probe accuracy $`0.31`$ and retrieval-success probability $`R=0.75`$. For the following calculation only, assume that the probes transfer to production conditional rates: $`A_{\mathrm{hit}}=0.82`$ and $`A_{\mathrm{miss}}=0.31`$. Without that assumption, the exact production mixture needs directly measured conditional rates.
 
-$$
+```math
 A_{\mathrm{rag}}=0.75(0.82)+0.25(0.31)=0.615+0.0775=0.6925=69.25\%.
-$$
+```
 
 Configuration one reranks a top-fifty lexical/dense fused candidate set and keeps five. If retrieval success increases to $`0.85`$ while both conditional accuracies remain fixed, the predicted gain is
 
-$$
+```math
 \Delta A=(0.82-0.31)(0.10)=0.051=5.1\text{ percentage points}.
-$$
+```
 
 That prediction is $`74.35\%`$, not $`74.4\%`$ before rounding. Configuration two instead holds $`R=0.75`$ and changes the stipulated conditional accuracies to $`0.88`$ and $`0.60`$:
 
-$$
+```math
 A_{\mathrm{rag}}=0.75(0.88)+0.25(0.60)=0.66+0.15=0.81=81\%.
-$$
+```
 
 The SFT-scenario gain is $`11.75`$ percentage points: $`4.5`$ from the hit slice and $`7.25`$ from the miss slice. The $`69.25\%`$ mixture prediction is $`0.25`$ points above the reported $`69\%`$ end-to-end result; numerical proximity alone does not validate probe transfer. For an IID $`2{,}000`$-question Bernoulli estimate near the prediction, a nominal normal-interval half-width is about $`2.02243`$ points, before other uncertainty. Closed-book $`41\%`$ minus distractor-probe $`31\%`$ is a ten-point net accuracy difference only for comparable cohorts. It is not the probability that retrieval flips a previously correct answer: that needs paired correct-to-wrong and wrong-to-correct counts. The source-reported Mallen et al. (2023) flip statistic requires its original denominator and task; do not identify it with this difference. A forty-point penalty can motivate a data/chunking audit but does not prove broken labels.
 Dropping retrieval leaves arithmetic accuracy headroom $`1-0.41=0.59`$, not an achievable gain guarantee. Refresh costs depend on the chosen training workload; use the $`1.715686`$ arithmetic-hour job and $`3.312941\,\mathrm{ms}`$ ten-chunk embedding proxy only within their stated, unmatched scopes.
@@ -169,9 +169,9 @@ At fixed conditional rates, the coefficient on improving $`A_{\mathrm{miss}}`$ i
 The source reports clean held-out accuracy rising from $`61\%`$ to $`86\%`$, followed by production complaints two weeks later. A one-in-five context miss rate motivates the subsequent $`r=0.80`$ scenario, but only a defined sufficient-evidence event makes that mixture precise.
 For this section, let $`r`$ be sufficient-evidence presence in the serving context, $`g`$ answer accuracy conditional on presence and $`b`$ answer accuracy conditional on absence. These are conditional probabilities on their respective query/context populations:
 
-$$
+```math
 A=rg+(1-r)b.
-$$
+```
 
 In the analyzed RAFT-style recipe, each item has question $`q`$, gold target $`a^\star`$, supporting document $`D^\star`$ and retriever-derived distractors. For fraction $`P`$, retain gold; otherwise remove it while keeping the answer target. To match a fixed serving depth $`k`$, use one gold plus $`k-1`$ distractors on the retained branch and $`k`$ distractors on the missing branch, replacing rather than merely dropping a slot. Verify that other distractors do not independently contain the answer: $`P`$ is a gold-retention fraction, and equals a context-sufficiency prior only under those construction checks. An always-gold dataset does not leave $`b`$ mathematically undefined; it leaves missing-context behavior unsupervised by that dataset.
 The source describes RAFT as study for an open-book exam. That analogy must not conceal the missing-evidence branch: its unchanged target still demands an answer, so it can train factual learning or memorization as well as context selection. It does not itself train abstention.
@@ -184,44 +184,44 @@ This is supervised sequence training and can use LoRA. Label quality, leakage ch
 #### Worked example
 Use serving $`k=5`$, $`r=0.80`$ and exactly one sufficient golden document on successful contexts. Successful contexts contain one gold plus four distractors; misses contain five distractors with no alternative support. Configuration one has $`P=1`$, stipulated $`g=0.86`$ and $`b=0.04`$:
 
-$$
+```math
 A_1=0.80(0.86)+0.20(0.04)=0.696.
-$$
+```
 
 Configuration two uses $`P=0.60`$ and stipulated conditional rates $`g=0.83`$, $`b=0.33`$:
 
-$$
+```math
 A_2=0.80(0.83)+0.20(0.33)=0.730.
-$$
+```
 
 It sacrifices three points on the hit slice for twenty-nine points on the miss slice. Configuration three, with $`P=0`$, $`g=0.44`$ and $`b=0.41`$, gives $`A_3=0.434`$; no equality of its two conditional rates is implied. Configuration two gains $`3.4`$ absolute points over one, or approximately $`4.885057\%`$ relative. Its two contributions are
 
-$$
+```math
 (1-r)\Delta b=0.20(0.33-0.04)=0.058.
-$$
+```
 
 The hit-slice contribution is
 
-$$
+```math
 r\Delta g=0.80(0.83-0.86)=-0.024.
-$$
+```
 
 They sum to $`0.034`$. Holding configuration one’s conditional rates fixed, the retrieval-success rate needed to reach $`0.730`$ solves
 
-$$
+```math
 0.86r+0.04(1-r)=0.730.
-$$
+```
 
 
-$$
+```math
 r=\frac{0.730-0.04}{0.86-0.04}\approx0.841463415.
-$$
+```
 
 Recall must increase by about $`4.146341`$ percentage points from $`80\%`$, under the frozen-rate assumption. At $`r=0.65`$, configurations one and two score $`0.573`$ and $`0.655`$; the gap is $`8.2`$ points, or $`2.411765`$ times the original gap. Karpukhin et al. (2020) is reported to give DPR top-twenty retrieval accuracy of $`78.4\%`$ on Natural Questions. A different benchmark, index, evidence definition and depth cannot certify that top-five $`80\%`$ is optimistic or attainable on this deployment. At $`r=0.92`$, the two scenarios give $`0.7944`$ and $`0.7900`$. Their fixed-rate crossover solves
 
-$$
+```math
 0.04+0.82r=0.33+0.50r\quad\Longrightarrow\quad r=0.90625.
-$$
+```
 
 Above $`90.625\%`$ success, configuration one wins only if those four conditional rates stay fixed. At $`r=0.92`$ its advantage is $`0.44`$ accuracy points. Whether that is statistically distinguishable needs the held-out size, paired discordance, confidence level and test design; it cannot be declared “within split noise” from the point estimates alone.
 #### Decisions and claim limits
@@ -233,14 +233,14 @@ The reported example asks which album contains Pink Floyd’s “Time”: gold i
 #### Why
 The chapter reports Cuconasu et al. (2024) finding different effects for related answerless and random off-topic documents in their setting. These are not universal signs of harm. For a separate idealized majority-vote example, let five document votes independently be corrupt with probability $`f=0.2`$, and let $`X`$ count corrupt votes:
 
-$$
+```math
 \Pr(X\ge3)=\sum_{j=3}^{5}\binom5j(0.2)^j(0.8)^{5-j}.
-$$
+```
 
 
-$$
+```math
 \Pr(X\ge3)=0.0512+0.0064+0.00032=0.05792=5.792\%.
-$$
+```
 
 The reduction ratio is $`0.2/0.05792\approx3.453039`$. Calling this answer-error reduction additionally requires equally relevant votes and a reader that follows the correct majority. Independent document corruption alone does not guarantee model answer accuracy, especially for multi-hop evidence. If all five reproduce the same corrupted source, the majority can be wrong with probability $`0.2`$, not $`0.05792`$.
 #### Failure without it
@@ -248,61 +248,61 @@ An answer-level sequence loss can learn to select among documents through attent
 #### Cost and complexity
 Audit $`200`$ live queries at top five for $`1{,}000`$ query-document pairs. That is not a guaranteed afternoon of labeling: expert time, adjudication and within-query dependence matter. Five four-token defect tags add twenty output tokens. For an $`8`$-billion-parameter fp16 model with $`16\,\mathrm{GB}`$ of weights and $`3.35\,\mathrm{TB/s}`$ bandwidth, the full-weight-stream component is
 
-$$
+```math
 \tau_{8\mathrm B}=\frac{16\times10^9}{3.35\times10^{12}}\,\mathrm s\approx4.776119\,\mathrm{ms/token}.
-$$
+```
 
 Twenty tag tokens cost $`95.522388\,\mathrm{ms}`$ and a forty-token answer $`191.044776\,\mathrm{ms}`$ in this component, so tags add fifty percent to output-token work. Adding thirty extracted-span tokens gives fifty extra tokens, costing $`238.805970\,\mathrm{ms}`$ beyond the answer, or $`125\%`$ extra output work. These are not full wall-clock costs. The corresponding weight-stream token rate is
 
-$$
+```math
 v_{\mathrm{stream}}=\frac{3.35\times10^{12}}{16\times10^9}=209.375\,\mathrm{tokens\,s^{-1}}.
-$$
+```
 
 A measured rate above this one-stream full-weight-read model invalidates at least one assumption, not necessarily fp16 precision. Aggregate batching, speculation or multi-token decoding, multiple devices, caching/reuse, actual model size and bandwidth can change the denominator. Conversely, attention, kernels and other traffic can make actual rate lower.
 #### Worked example
 The stipulated audit has $`240`$ helpful, $`610`$ noisy, $`120`$ irrelevant and $`30`$ counterfactual pairs. Exactly $`170`$ of $`200`$ queries are covered, giving $`240/170\approx1.411765`$ helpful documents per covered query if helpful pairs occur only there. Thirty distinct queries have one counterfactual each; twenty-five are covered. Groups A/B/C/D therefore contain $`145`$ covered-clean, $`25`$ covered-counterfactual, $`25`$ uncovered-clean and five uncovered-counterfactual queries. Assume correct-evidence reader success $`0.90`$, correct-evidence selection probability $`0.50`$ under a competing claim, noisy-context correctness $`0.05`$ and learned miss correctness $`0.20`$. The selection rate is not already final accuracy, which is why group B multiplies it by $`0.90`$. All response rates below are scenario assumptions, not measured causal effects of training.
 
-$$
+```math
 E_A=145(0.90)=130.5.
-$$
+```
 
 
-$$
+```math
 E_B=25(0.90)(0.50)=11.25.
-$$
+```
 
 
-$$
+```math
 E_C=25(0.05)=1.25.
-$$
+```
 
 
-$$
+```math
 E_D=0.
-$$
+```
 
 Answer-only SFT then gives $`143`$ expected correct responses, or $`71.5\%`$. With no abstention, the wrong-response rate is $`28.5\%`$; “confidently wrong” is not its synonym without a separate confidence/assurance criterion. Fractional counts are expectations. For configuration two, stipulate unchanged covered groups and miss accuracy $`0.20`$ in both uncovered groups, including a counterfactual miss:
 
-$$
+```math
 E_C=25(0.20)=5.
-$$
+```
 
 
-$$
+```math
 E_D=5(0.20)=1.
-$$
+```
 
 This RAFT-style scenario totals $`147.75`$ expected correct, or $`73.875\%`$, a $`2.375`$-point gain confined by assumption to uncovered queries. For configuration three, assume counterfactual detection recall $`0.60`$ with no false-discard harm in the listed groups; detection restores the supported reader path, while an undetected competitor still has correct-selection probability $`0.50`$:
 
-$$
+```math
 E_B=25(0.90)\bigl[0.60+0.40(0.50)\bigr]=18.
-$$
+```
 
 Also stipulate that utility extraction improves group A correctness from $`0.90`$ to $`0.94`$, while groups C and D remain at configuration two’s rates:
 
-$$
+```math
 E_A=145(0.94)=136.3.
-$$
+```
 
 Total expected correct is $`160.3`$, or $`80.15\%`$: $`6.275`$ points over the RAFT-style scenario. Of the $`12.55`$ net additional correct responses, $`6.75`$ come from group B and $`5.8`$ from A. Group B is $`12.5\%`$ of queries and supplies approximately $`53.784861\%`$ of this stipulated gain, not a measured fraction of all achievable headroom. The source reports RGB evaluation axes including noise robustness, negative rejection, information integration and counterfactual robustness, with weakness on the latter in evaluated systems; this does not independently validate the toy rates.
 #### Decisions and claim limits
@@ -312,50 +312,50 @@ Label the deployed defect mix and report pair- and query-level denominators sepa
 The opening reports $`71\%`$ exact match and $`84\%`$ self-consistency with a changed fourth-ranked passage ten minutes after an index refresh. Consistency needs a defined repetition protocol and denominator; it is neither correctness nor evidence invariance. Deterministic decoding removes one source of sampling variation, not changes to retrieval, prompts, kernels or model versions.
 For concatenated context, one supervised answer loss is
 
-$$
+```math
 \mathcal L_{\mathrm{concat}}=-\log p_\theta(y\mid c_1\oplus\cdots\oplus c_k\oplus x).
-$$
+```
 
 One supporting chunk may suffice to predict the target, but the other chunks are not necessarily gradient-inert: shared representations and attention can still receive gradients. The source associates split-context training with RA-DIT (Lin et al., 2023). The equation below defines the uniform per-context variant analyzed here, rather than asserting that every implementation uses identical weighting:
 
-$$
+```math
 \mathcal L_{\mathrm{split}}(\theta)=-\frac1k\sum_{i=1}^{k}\log p_\theta(y\mid c_i\oplus x).
-$$
+```
 
 This fixed target is appropriate only when $`y`$ should remain valid for every sampled view, with sufficient task conditioning. It asks for target predictability under context variation; it does not establish that context is irrelevant to every part of the response. For $`k\ge1`$ and positive target-sequence probabilities, define
 
-$$
+```math
 p_i=p_\theta(y\mid c_i\oplus x)>0.
-$$
+```
 
 
-$$
+```math
 \bar p=\frac1k\sum_{i=1}^{k}p_i.
-$$
+```
 
 Add and subtract the log of the arithmetic mean:
 
-$$
+```math
 \mathcal L_{\mathrm{split}}=-\log\bar p+\underbrace{\left(\log\bar p-\frac1k\sum_{i=1}^{k}\log p_i\right)}_{J\ \ge\ 0}.
-$$
+```
 
 Jensen’s inequality gives $`J\ge0`$, with equality exactly when all target probabilities $`p_i`$ are equal. It is not an equality condition for the entire output distributions: the remaining probability mass can vary, and even the most likely wrong answer can change. All $`p_i`$ can also be equally small, giving zero gap but poor accuracy. For population variance $`\sigma_p^2=k^{-1}\sum_i(p_i-\bar p)^2`$ and small relative deviations from a positive mean, a second-order expansion gives
 
-$$
+```math
 J\approx\frac{\sigma_p^2}{2\bar p^2}=\frac12\mathop{\mathrm{CV}}\nolimits^2,\qquad\mathop{\mathrm{CV}}\nolimits=\sigma_p/\bar p.
-$$
+```
 
 For target probabilities $`0.7`$ and $`0.5`$, $`\bar p=0.6`$ and $`\sigma_p=0.1`$. The exact gap is
 
-$$
+```math
 J=\ln0.6-\tfrac12(\ln0.7+\ln0.5)\approx0.0140854385.
-$$
+```
 
 The second-order approximation is close, but not equal:
 
-$$
+```math
 J_{\mathrm{quad}}=\tfrac12(0.1/0.6)^2\approx0.0138888889.
-$$
+```
 
 #### Why
 The loss thus decomposes into target probability under a uniform mixture and a target-specific spread term, not classification accuracy plus full response invariance. The loss diverges as one $`p_i\to0`$, and its derivative with respect to $`p_i`$ is $`-1/(kp_i)`$. That does not imply an unbounded or always-largest parameter gradient: for a Bernoulli target logit $`z_i`$, the derivative is $`(p_i-1)/k`$, which is bounded, and network Jacobians/shared gradients matter. Splitting can reduce attention work, but repeats the question, answer and fixed overhead; the reduction is not automatically a factor of $`k`$ at equal total compute.
@@ -364,55 +364,55 @@ REPLUG freezes the generator and trains or weights retrieval, potentially ensemb
 #### Cost and complexity
 Use $`10{,}000`$ questions, $`k=10`$, serving sufficient-evidence rate $`0.80`$ and exactly one individually supporting chunk on each successful query. To make repeated-question costs explicit, choose question/instruction length $`Q=32`$, chunk length $`C=224`$ and target length $`Y=12`$ tokens. Each split input has $`Q+C=256`$ tokens, but concatenating ten chunks with the question only once has $`Q+kC=2{,}272`$, not $`2{,}560`$. Concatenation therefore has $`22.72`$ million input plus $`0.12`$ million target positions; splitting has $`25.6`$ million input plus $`1.2`$ million target positions. Totals are $`22.84`$ versus $`26.8`$ million positions, a $`17.338004\%`$ increase under splitting. Extra repeated questions contribute $`2.88`$ million positions and extra repeated targets $`1.08`$ million. All counts exclude separators or other template tokens unless included in $`Q`$.
 
-$$
+```math
 N_{\mathrm{support}}=10{,}000(0.80)(1)=8{,}000.
-$$
+```
 
 There are $`100{,}000`$ split instances, so support fraction is $`0.08`$ and insufficient-context fraction $`0.92`$, versus a twenty-percent insufficient-query rate before splitting. For context-only full-square attention proxies, the concatenate count is
 
-$$
+```math
 (Q+kC)^2=2{,}272^2=5{,}161{,}984.
-$$
+```
 
 The corresponding split count is
 
-$$
+```math
 k(Q+C)^2=10(256)^2=655{,}360.
-$$
+```
 
 The context-square ratio is $`7.8765625`$, not ten for this actual layout. Including targets and counting causal query-key pairs gives $`2{,}284(2{,}285)/2=2{,}609{,}470`$ versus $`10(268)(269)/2=360{,}460`$, a ratio of approximately $`7.239278`$. These are attention-pair counts, not end-to-end FLOPs or measured speedups; the larger token volume adds linear-model work. The ideal equal-partition comparison $`2{,}560^2/[10(256)^2]=10`$ holds only when duplicated questions/targets are deliberately ignored or included equally. Fusion-in-Decoder similarly motivates passage-separated encoding, but its joint decoder can combine evidence; it is not statistically equivalent to forcing each isolated passage to predict the whole answer. To make support carry sixty percent of a globally weighted split loss, solve
 
-$$
+```math
 \frac{0.08w}{0.08w+0.92}=0.60.
-$$
+```
 
 
-$$
+```math
 0.032w=0.552.
-$$
+```
 
 
-$$
+```math
 w=17.25.
-$$
+```
 
 This is a loss weight, not additional observed support; the average raw weight is $`2.3`$. Normalize the weighted loss explicitly rather than accidentally changing the learning-rate scale. It restores a global weighted mix, not sixty-percent support for every query. Alternatively, retain all supporting instances and an average of $`n`$ non-supporting instances per original query:
 
-$$
+```math
 \frac{0.8}{0.8+n}=0.6\quad\Longrightarrow\quad n=\frac8{15}\approx0.533333333.
-$$
+```
 
 From $`9.2`$ available non-supporting instances per query on average, retain about $`5.797101\%`$ and discard $`94.202899\%`$. Implement fractional averages through sampling or a corpus-level quota; a single query cannot retain half an example, and some have no support to retain. For an analogous top-twenty rate of $`0.784`$ and exactly one supporting passage conditional on success:
 
-$$
+```math
 \frac{0.784}{20}=0.0392=3.92\%.
-$$
+```
 
 If instead exactly three passages individually support the answer on every successful query and none on misses, the fraction is
 
-$$
+```math
 \frac{3(0.784)}{20}=0.1176=11.76\%.
-$$
+```
 
 #### Decisions and claim limits
 Measure held-out closed-book accuracy $`b_0`$, unsupported-context accuracy, correctness under swaps and target-probability spread. $`b_0`$ is a diagnostic, not a hard upper bound on post-training $`b`$: supervision can change knowledge and generalization. Small Jensen gap alone is insufficient; compare full response/claim changes, correctness and support. Match the training context distribution and task conditioning to serving, and validate any reweighting or negative subsampling. Freezing the retriever can simplify diagnosis. Updating a document encoder requires re-encoding affected index representations; changing only a reranker or query encoder does not automatically require full document re-encoding. A fixed-target conditional loss is not mathematically restricted to prepended text: embedding- or adapter-conditioned generators can define analogous losses when their interfaces permit training. An opaque frozen API cannot directly fine-tune its generator through this objective.
@@ -422,50 +422,50 @@ If policy requires abstention on insufficient context, provide verified sufficie
 The opening $`7`$-billion-parameter bf16 base has a $`14\,\mathrm{GB}`$ weight payload, not a full training footprint. Allocating two fp32 Adam moment arrays adds $`56\,\mathrm{GB}`$; bf16 gradients add another $`14\,\mathrm{GB}`$. Lazy moment allocation can therefore expose the underestimate at the first optimizer step.
 For a declared implementation with two-byte weights, two-byte gradients and two four-byte Adam moments, trainable state per parameter is
 
-$$
+```math
 b_{\mathrm{train}}=2+2+4+4=12\,\mathrm{B/parameter}.
-$$
+```
 
 An additional fp32 master copy adds four bytes per parameter, raising the rule to $`16\,\mathrm{B/parameter}`$. Not every optimizer uses these dtypes or keeps a master copy. Under the twelve-byte rule,
 
-$$
+```math
 M_{\mathrm{state}}=(7\times10^9)(12)=84\times10^9\,\mathrm B=84\,\mathrm{GB}.
-$$
+```
 
 The $`14\,\mathrm{GB}`$ weights are one sixth of that state ledger, not necessarily of actual peak memory. LoRA freezes $`W\in\mathbb R^{d\times k}`$ and learns a factored residual:
 
-$$
+```math
 h=Wx+\frac\alpha r BAx,\qquad x\in\mathbb R^k,\quad h\in\mathbb R^d.
-$$
+```
 
 
-$$
+```math
 B\in\mathbb R^{d\times r}.
-$$
+```
 
 
-$$
+```math
 A\in\mathbb R^{r\times k}.
-$$
+```
 
 
-$$
+```math
 r\ll\min(d,k),\qquad\mathop{\mathrm{rank}}\nolimits(BA)\le r.
-$$
+```
 
 The factor parameter count is $`r(d+k)`$ rather than $`dk`$: an $`8\times6`$ matrix has forty-eight entries, while rank-one and rank-two factors have fourteen and twenty-eight trainable values. These are factor counts, not minimal intrinsic degrees of freedom; a generic rank-$`r`$ matrix has $`r(d+k-r)`$ degrees because the factorization is redundant. Eckart–Young describes best low-rank approximation to a given matrix in specified norms; it does not prove that the optimum fine-tuning update is low rank or that LoRA optimization finds its truncated SVD. The low-rank object is the update, not necessarily the base matrix. The source cites Aghajanyan et al. (2021) as empirical motivation for low-dimensional adaptation. With $`B=0`$ and nonzero randomly initialized $`A`$, the initial residual is zero; initially the task gradient through $`A`$ is zero, while $`B`$ can receive a gradient. Initializing both factors to zero would block that task gradient. QLoRA stores eligible frozen weights with four-bit NF4 codes: ideal code payload is $`0.5\,\mathrm{B/parameter}`$, or $`3.5\,\mathrm{GB}`$ at seven billion eligible weights, before scales, unquantized tensors and workspace. A reported approximate double-quantization saving of $`0.37`$ bits per parameter gives
 
-$$
+```math
 \Delta M\approx(65\times10^9)\frac{0.37}{8}\,\mathrm B=3.00625\,\mathrm{GB}.
-$$
+```
 
 Paged optimizers can migrate state between device and host memory during pressure spikes. They do not delete state or guarantee that a job fits: host capacity, paging latency, activation peaks and framework allocations remain relevant.
 #### Why
 LoRA removes trainable-base gradients, moments and any master copy while retaining a frozen base. QLoRA then reduces eligible frozen-weight code payload by four relative to two-byte storage; metadata and unquantized tensors mean total memory does not shrink by exactly four. A conventional inserted adapter adds serial modules. LoRA instead adds a residual branch with two low-rank multiplies that can be merged into a dense base when precision and serving policy permit:
 
-$$
+```math
 W_{\mathrm{merged}}=W+\frac\alpha r BA.
-$$
+```
 
 Prefix tuning consumes additional prefix positions, a trade-off to evaluate rather than categorically reject for RAG. NF4 is a code/storage format: kernels dequantize into a chosen higher-precision compute representation, often bf16. It does not make the dense matrix multiply four-bit arithmetic or guarantee fewer FLOPs, though memory traffic, throughput and overhead can change. Merging into a quantized base may require dequantization and requantization, so it is not necessarily numerically identical to an unmerged higher-precision residual. The source’s LLM.int8() discussion concerns mixed-precision outlier handling in studied models, not a universal sharp failure threshold at $`6.7`$ billion parameters. Generator training precision, serving precision and retrieval-vector quantization are separate decisions.
 #### Failure without it
@@ -473,65 +473,65 @@ The unsharded full-tuning state ledger is already $`84\,\mathrm{GB}`$ before act
 #### Cost and complexity
 The sizing scenario uses Llama-2-like block shapes: thirty-two layers, hidden width $`4{,}096`$, MLP width $`11{,}008`$, sequence length $`4{,}096`$, batch one, gradient checkpointing and FlashAttention. Use $`N=7\times10^9`$ as the coarse base-size denominator rather than claiming the rounded count is the exact architecture total. Saving one bf16 block input per layer gives the following activation component; recomputation, internal tensors, logits, gradients, workspaces and allocator peaks are additional:
 
-$$
+```math
 M_{\mathrm{block\ inputs}}=32(4{,}096)(4{,}096)(2)\,\mathrm B=1.073741824\,\mathrm{GB}=1\,\mathrm{GiB}.
-$$
+```
 
 Full tuning’s listed state plus block-input subtotal is $`85.073741824\,\mathrm{GB}`$ without a master copy and $`113.073741824\,\mathrm{GB}`$ with one. These components need not all be live simultaneously, so their sum is not a rigorous peak bound. The first exceeds an eighty-decimal-gigabyte budget but is below $`80\,\mathrm{GiB}=85.899345920\,\mathrm{GB}`$ by $`0.825604096\,\mathrm{GB}`$; that narrow nominal margin does not establish a fit once omitted allocations are considered. Check actual device capacity in bytes and profile peak live memory rather than inferring an out-of-memory result from the product label. The master-copy state alone exceeds either budget. Rank-sixteen LoRA on query and value projections of shape $`4{,}096\times4{,}096`$ adds per matrix
 
-$$
+```math
 16(4{,}096+4{,}096)=131{,}072\text{ trainable parameters}.
-$$
+```
 
 Two such matrices per layer across thirty-two layers give $`8{,}388{,}608`$ factor parameters, or $`0.119837\%`$ of the rounded seven-billion base. Under the same twelve-byte adapter-state rule:
 
-$$
+```math
 M_{\mathrm{adapter,state}}=(8{,}388{,}608)(12)\,\mathrm B=0.100663296\,\mathrm{GB}.
-$$
+```
 
 The frozen-base, adapter-state and block-input subtotal is
 
-$$
+```math
 M_{\mathrm{LoRA,listed}}=14+0.100663296+1.073741824=15.174405120\,\mathrm{GB}.
-$$
+```
 
 This subtotal leaves nominal room on a twenty-four-gigabyte device, but is not a peak-memory guarantee. Profile the actual sequence, batch, optimizer and kernels. The bf16 adapter weight artifact alone is
 
-$$
+```math
 M_{\mathrm{artifact}}=(8{,}388{,}608)(2)\,\mathrm B=16.777216\,\mathrm{MB}=16\,\mathrm{MiB}.
-$$
+```
 
 That is $`834.465027`$ times smaller than a fourteen-decimal-gigabyte base-weight artifact, excluding metadata and training state. The next configuration changes both storage and adapter capacity: rank sixty-four on the seven transformer-block matrices $`q,k,v,o`$, gate, up and down, not every linear tensor such as an output head. For the stated full-width key/value projections, its count per layer is
 
-$$
+```math
 4(64)(8{,}192)+3(64)(15{,}104)=4{,}997{,}120.
-$$
+```
 
 Across thirty-two layers this gives $`159{,}907{,}840`$ adapter parameters, or $`2.284398\%`$ of the rounded base and $`19.0625`$ times the rank-sixteen query/value setup. Grouped-query architectures with narrower key/value projections need different shapes. Adapter state is $`1.918894080\,\mathrm{GB}`$; adding an ideal $`3.5\,\mathrm{GB}`$ NF4 code payload and the same block-input component gives
 
-$$
+```math
 M_{\mathrm{QLoRA,all64,listed}}=3.5+1.918894080+1.073741824=6.492635904\,\mathrm{GB}.
-$$
+```
 
 This subtotal excludes quantization scales, unquantized tensors, dequantization/optimizer workspaces and other peaks. At batch eight, the block-input component totals $`8.589934592\,\mathrm{GB}`$, an increase of $`7.516192768\,\mathrm{GB}`$ over batch one, not an additional $`8.6\,\mathrm{GB}`$. The listed all-linear QLoRA subtotal then becomes $`14.008828672\,\mathrm{GB}`$ before omitted terms; activations dominate its listed components. For an independent shape-count example with ninety-six layers, width $`12{,}288`$ and rank four on query/value:
 
-$$
+```math
 N_{\mathrm{adapter}}=96(2)(4)(24{,}576)=18{,}874{,}368.
-$$
+```
 
 At two bytes per factor this is $`37.748736\,\mathrm{MB}=36\,\mathrm{MiB}`$. Against the source-reported $`35`$ MB artifact, the arithmetic difference is $`7.853531\%`$ if that report uses decimal MB, or $`2.857143\%`$ if it means MiB. Units, exact configuration and artifact metadata must be reconciled before treating closeness as validation.
 #### Decisions and claim limits
 Budget frozen weights, trainable state, activations and peak workspace together. Ideal one-byte Adam moments change the no-master rule to $`2+2+1+1=6\,\mathrm{B/parameter}`$, or $`42\,\mathrm{GB}`$ at seven billion parameters; an fp32 master copy raises it to $`70\,\mathrm{GB}`$, before metadata and other memory. Actual eight-bit optimizers can use mixed state formats. Evaluate adapter coverage and rank on quality and resources: rank sixteen on all seven block matrices has $`39{,}976{,}960`$ factors versus $`67{,}108{,}864`$ for rank $`128`$ on query/value only. This is not a quality ordering theorem. Holding $`\alpha/r`$ fixed holds one forward multiplier fixed, not all rank-dependent initialization or optimization dynamics; tune learning rate and scaling too. Pin exact model and precision metadata. For forty customers, forty resident merged bf16 bases have a $`560\,\mathrm{GB}`$ weight payload, while unmerged query/value adapters have
 
-$$
+```math
 M_{40\ \mathrm{adapters}}=40(16.777216\,\mathrm{MB})=0.671088640\,\mathrm{GB}.
-$$
+```
 
 Add one shared fourteen-gigabyte base for a $`14.671088640\,\mathrm{GB}`$ weight payload, excluding caches, runtime and replicas. The per-adapted-matrix multiply-add ratio for the rank-sixteen square projection is
 
-$$
+```math
 \frac{r(d+k)}{dk}=\frac{16(8{,}192)}{4{,}096^2}=0.0078125=0.78125\%.
-$$
+```
 
 This is extra arithmetic for each touched matrix, not a whole-network latency penalty: kernel launches, routing, adapter batching and memory traffic can dominate. Merging a tenant with eighty percent of traffic onto a dedicated replica is a source heuristic; account for extra base replicas, precision effects, isolation and actual request distribution before deciding.
 ## Diagrams

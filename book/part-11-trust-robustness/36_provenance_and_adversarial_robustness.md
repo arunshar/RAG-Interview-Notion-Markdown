@@ -155,15 +155,15 @@ Log attribution, provenance-validation state and factual credibility separately.
 #### What it is
 C2PA represents provenance with manifests containing assertions, a claim and a claim signature. The claim references assertion hashes, including a format-specific hard binding to the asset; ingredient assertions can reference other manifests/assets. A manifest can describe multiple actions, so “three assertions” does not imply three signatures. A graph may have multiple ingredients, begin after capture, or omit inaccessible history. The following notation is schematic, not an implementation of the standard’s byte serialization or COSE signing rules.[\[2\]](https://spec.c2pa.org/specifications/specifications/2.0/specs/C2PA\_Specification.html)
 
-$$
+```math
 H_i=\mathop{\mathrm{SHA256}}\nolimits\!\left(\mathcal B_i(\mathrm{asset}_i)\right).
-$$
+```
 
 Here $`\mathcal B_i`$ denotes the asset portions covered under the chosen format’s hard-binding rules, including required exclusions. Hashing the entire file including its own embedded manifest would be self-referential and is not the general rule. Let $`C_i`$ denote the correctly constructed signed message/COSE structure carrying the claim; abstractly:
 
-$$
+```math
 \sigma_i=\mathop{\mathrm{Sign}}\nolimits_{\mathrm{sk}_i}(C_i),\qquad\mathop{\mathrm{Verify}}\nolimits_{\mathrm{pk}_i}(C_i,\sigma_i)=1.
-$$
+```
 
 A signature check authenticates the signed structure under its public key, assuming secure algorithms, correct implementation and uncompromised keys. Separately validate asset hard bindings, assertion references, applicable certificate path/trust anchors, credential policy and relevant timestamps/status evidence. A public key alone does not establish a real-world identity or truthful assertion. The browser/TLS analogy is about certificate-path trust, not identical formats, guarantees or runtime.
 - Check the asset portions and assertion references required by the relevant binding/format.
@@ -189,9 +189,9 @@ Neither missing metadata nor an unusual edit count proves forgery. A professiona
 Stipulate $`N=200`$ candidate images partitioned into $`120`$ accepted, $`50`$ with no discovered manifest, $`18`$ with hard-binding mismatches consistent with possible re-encoding, and $`12`$ requiring status/anomaly review. The counts sum to $`200`$; neither the eighteen nor the twelve are automatically proven fraudulent. For this ranking toy only, require $`u(d)\in[0,1]`$ after a declared normalization and use nonnegative $`p(d)\in[0,1]`$. A raw unbounded dot product or signed cosine score would not justify the following cap. If accepted documents have $`p=1`$ and $`u\ge u_{\mathrm{floor}}=0.3`$, then $`p_{\min}<0.3`$ keeps any unknown item’s weighted score strictly below any such accepted item. Choose $`p_{\min}=0.2`$. Excluding unknowns from an entire top-twenty list additionally requires at least twenty eligible accepted comparators or a hard exclusion rule.
 As a stipulated corroboration policy, assign $`p_{\mathrm{corr}}=2/3`$ when two of three independently assessed trusted sources support the relevant claim; that fraction is not a calibrated asset-authenticity probability. Let the twentieth accepted comparator have $`u=0.55`$. Use:
 
-$$
+```math
 u^{\prime}(d)=u(d)\,p(d),\qquad 0\le u(d),p(d)\le1.
-$$
+```
 
 An unknown item with $`u=0.95`$ gets $`0.19`$. A corroborated item with $`u=0.85`$ gets $`0.85(2/3)=17/30\approx0.566666667`$, above the stipulated $`0.55`$ comparator; do not compute with the rounded $`0.67`$ as if exact. This can displace that comparator, but final membership also depends on all other competing items. An explicitly excluded item gets zero; a tied zero score still needs a removal/tie policy if zero means “never serve.”
 For a deliberately serial, unshared network scenario, twenty status requests at $`30\,\mathrm{ms}`$ each total $`600\,\mathrm{ms}`$, three times the $`200\,\mathrm{ms}`$ budget. Certificate sharing, stapled evidence, caching and parallel requests change that ledger. A cached decision still has lookup/enforcement cost. Successful refresh at intervals no longer than twenty-four hours bounds cache staleness relative to available newly published status by roughly that interval, not the duration since an unreported compromise; outages, publication delays and policy must be handled explicitly. Do not cache mutable trust forever solely by asset hash.
@@ -207,27 +207,27 @@ Keyword and regular-expression filters can catch known strings but cannot be ass
 #### Cost, complexity, and decisions
 For a mathematical exposure toy, let each of $`k`$ IID passage draws contain an injection with probability $`p=0.0005=0.05\%`$. Treat $`p`$ as the selected-draw rate under this hypothetical mechanism, not an empirically known global-corpus rate. If exposure means at least one injected passage, then:
 
-$$
+```math
 E(k)=\Pr(\text{at least one injected draw})=1-(1-p)^k.
-$$
+```
 
 At $`k=10`$, under the same IID model:
 
-$$
+```math
 E(10)=1-0.9995^{10}\approx0.004988764987=0.498876499\%.
-$$
+```
 
 At $`k=50`$:
 
-$$
+```math
 E(50)=1-0.9995^{50}\approx0.024696185672=2.469618567\%.
-$$
+```
 
 For small $`kp`$, $`E(k)\approx kp`$; the union bound $`E(k)\le kp`$ also holds without independence if each selected position has marginal probability at most $`p`$. Corpus prevalence alone does not establish those marginals. Under the IID model, requiring $`E(k)<0.001`$ yields the strict inequality below because $`\ln(1-p)<0`$:
 
-$$
+```math
 k<\frac{\ln(0.999)}{\ln(0.9995)}\approx2.000500375,\qquad k\in\mathbb Z_{\ge0}.
-$$
+```
 
 Thus $`k\le2`$ in this toy: $`E(2)=0.099975\%<0.1\%`$, while $`E(3)\approx0.1499250125\%`$. Do not round the strict threshold to two before deciding integer feasibility. A targeted nearest-neighbor query can retrieve only attack passages even when their global fraction is $`0.05\%`$; correlated draws and finite-population sampling require their own models. The hidden-preprint investigation gives no representative rate from which a “five times smaller” corpus prevalence or conservative risk floor can be derived. Exposure also differs from attack execution/success.
 Treat retrieved content as lower-trust data, keep roles/delimiters explicit and use hierarchy-aware models where evaluated. Scan the actual contexts supplied to generation, including reranked/expanded text, but do not call a passed classifier proof of safety. Keep tool privileges, data authorization, output handling and human approval for consequential actions outside solely model-generated decisions. Select retrieval depth for measured recall, latency and attack risk rather than claiming $`k=50`$ is safe after a scan. Output checks can still help prevent an action or response, though they cannot undo disclosure of restricted input already sent to a model.
@@ -254,15 +254,15 @@ A keyword/embedding bank can become stale; its useful lifetime is workload-depen
 Consider a hypothetical guardrail that embeds a bank of $`J=50{,}000`$ attack patterns and compares each request with it. A match may choose a hardened prompt or an explicit review/block policy; temperature zero is not a safety guarantee or a promise of perfectly deterministic serving. The chapter’s unattributed $`71\%\to2\%`$ ASR pair is used here only as a stipulated scenario, not as a verified published benchmark or transferable production result.
 Let $`Q=50{,}000`$ requests per day and assume the request-level attack fraction is $`a=0.001`$. If the conditional per-attack success rates really are $`0.71`$ without and $`0.02`$ with the entire deployed defense—including missed detections—then expected successful attack requests are:
 
-$$
+```math
 \mathbb E[I_{\mathrm{base}}]=Qa\,s_{\mathrm{base}}=(50{,}000)(0.001)(0.71)=35.5\,\mathrm{day}^{-1}.
-$$
+```
 
 Under the same hypothetical workload and outcome definition:
 
-$$
+```math
 \mathbb E[I_{\mathrm{def}}]=Qa\,s_{\mathrm{def}}=(50{,}000)(0.001)(0.02)=1\,\mathrm{day}^{-1}.
-$$
+```
 
 The modeled difference is $`34.5`$ successful attack requests per day, a relative reduction $`34.5/35.5\approx97.183099\%`$, not a guarantee of exactly one incident each day. Distinct records, users, harms and multistep attack sessions need separate denominators. A $`2\%`$ success rate only on detected/matched prompts would not justify the full-defense calculation; include misses and the actual attack mix.
 Treat the proposed $`10`$–$`20\,\mathrm{ms}`$ embedding time plus a low-single-digit-millisecond ANN lookup as service assumptions to benchmark, not near-zero guaranteed latency for $`J`$ vectors. Include queueing, false-positive paths, context scans and any review. Route by severity and validated thresholds; hardening or blocking can both cost benign utility. Re-test affected model/prompt/retriever/scorer changes and stratify genuinely unrelated releases rather than using an unvalidated daily-versus-weekly schedule as a security rule. Admit new bank entries only after controlled review, and track attacks, misses, benign refusals, latency and adaptive residual risk.
@@ -271,9 +271,9 @@ Treat the proposed $`10`$–$`20\,\mathrm{ms}`$ embedding time plus a low-single
 A discrete adversarial input $`x_{\mathrm{adv}}`$ is a realizable token sequence; training can pair it with an appropriate refusal target $`y_{\mathrm{refuse}}`$ while preserving benign utility. Token identity itself cannot be changed by an infinitesimal gradient step, but gradients through a relaxed one-hot representation can shortlist replacements. In the stipulated GCG-style search configuration, suffix length $`L=20`$, shortlist size $`256`$, candidate batch $`B=512`$ and $`T=500`$ iterations give $`TB=256{,}000`$ candidate-sequence forward evaluations if every iteration evaluates the full batch. This does not include the iteration’s gradient calculation, filtering, early stopping or batched execution details; it is not necessarily $`256{,}000`$ sequential accelerator launches.
 For an illustrative continuous objective, let $`e=\mathop{\mathrm{Embed}}\nolimits(x)\in\mathbb R^{L\times d}`$ and choose a global Frobenius norm budget over declared editable positions. With $`\epsilon\ge0`$, one refusal-loss adversary is:
 
-$$
+```math
 \delta^\star\in\mathop{\mathrm{arg\,max}}_{\|\delta\|_F\le\epsilon}\mathcal L\!\left(f_\theta(e+\delta),y_{\mathrm{refuse}}\right).
-$$
+```
 
 An outer update minimizes a declared loss on the adversarial input, typically with benign utility terms. Approximate projected gradient ascent need not find the global maximizer. For a global ball, project a proposed $`z`$ as $`z\min(1,\epsilon/\|z\|_F)`$ when $`z\ne0`$, and leave zero unchanged. Ten or twenty inner gradient steps are example budgets, not universal optima; each typically involves forward/backward work and can be minibatched. Per-token normalized perturbations, global budgets, harmful-target objectives and preference losses are different conventions. Do not claim this pedagogical loss is literally every implementation of C-AdvUL, C-AdvIPO, CAT or MixAT.
 #### Why it exists
@@ -295,7 +295,7 @@ Not fine-tuning on a record avoids that training path; it does not prove no prio
 #### Cost, complexity, and decisions
 Stipulate a corpus of $`N=200{,}000`$ chunks with $`R=20{,}000`$ marked restricted. A candidate pool of $`M=50`$ has an expected five restricted items only under an appropriate base-rate sampling assumption; deterministic semantic ranking need not preserve that fraction. For a separate conditional toy, fix exactly $`K=5`$ restricted candidates in the pool and choose $`k=8`$ uniformly without replacement. Then $`X`$, the restricted count selected, is hypergeometric—not an actual deterministic top-eight risk model:
 
-$$
+```math
 \begin{aligned}
 \Pr(X=0\mid M=50,K=5,k=8)
 &=\frac{\binom{45}{8}}{\binom{50}{8}}
@@ -304,7 +304,7 @@ $$
 \Pr(X\ge1\mid M=50,K=5,k=8)
 &\approx0.598506674=59.850667371\%.
 \end{aligned}
-$$
+```
 
 The one-decimal risk is $`59.9\%`$ in that conditional random-draw toy. It is not a conservative floor for actual salary queries without a justified selection model. At $`k=1`$ the toy risk is $`5/50=10\%`$; at $`k=50`$ it is one. If eight items were sampled uniformly directly from the entire fixed corpus instead, the risk would be $`1-\binom{180{,}000}{8}/\binom{200{,}000}{8}\approx56.953949\%`$, a different model. Conditioning on exactly five among fifty is not equivalent to substituting an expected count into every selection process.
 If authenticated identity, ACL metadata and enforcement are correct, excluding all forbidden chunks before exposure makes the restricted-context selection probability zero by construction. That conditional invariant is not proof of zero system-wide privacy breaches. It does not cover side channels, stale labels, policy bugs, other tools, preexisting weights or downstream retention. A trusted post-ranking check before disclosure can also enforce it; pre-filtered ANN additionally needs workload-specific recall/latency testing rather than a guaranteed single-digit-millisecond surcharge.
@@ -388,10 +388,10 @@ flowchart TD
 Figure $`36.6`$: Inline scoring has a measured workload-dependent cost, not guaranteed near-zero latency. Review new patterns before admission, evaluate the full defended path and keep tool/data authorization separate. Defense errors can correlate; layering does not justify multiplying isolated ASRs.
 ### Figure 36.7
 
-$$
+```math
 \mathcal N_{\mathrm{Mix}}(x)=\bigcup_{x'\in\mathcal R(x)}
 \left\{\mathop{\mathrm{Embed}}\nolimits(x')+\delta:\|\delta\|_F\le\epsilon\right\}.
-$$
+```
 
 Figure $`36.7`$: Conceptual union of continuous neighborhoods centered on discrete inputs. Here $`\mathcal R(x)`$ contains the clean input and sampled attack variants embedded in a common padded/editable-position layout for the illustration; actual norm/masking conventions must match the implementation. MixAT uses continuous perturbations around sampled PAP attack seeds as well as its original-input mixture, not a mandatory fresh GCG search at every isolated anchor. A finite training run does not certify the whole union.[\[9\]](https://arxiv.org/html/2505.16947v1)
 ### Figure 36.8

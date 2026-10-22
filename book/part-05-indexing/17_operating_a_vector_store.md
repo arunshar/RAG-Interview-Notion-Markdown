@@ -189,20 +189,20 @@ A multiply-accumulate (MAC) counts as two nominal FLOPs here. Bandwidth and FLOP
 - Under that candidate-pool model, a planning width is $`\lceil\mathrm{ef}_0/(1-\phi_q)\rceil`$. Preserving an expectation does not guarantee recall, and $`\mathrm{efSearch}`$ is not a work cap.
 - Churn model: hold the live population $`N`$ fixed, replace $`Nc`$ vectors per day, append replacements, retain deleted nodes, and do not recycle slots. Then after $`t`$ days,
 
-$$
+```math
 \begin{aligned}
 N_{\mathrm{resident}}(t)&=N(1+ct),\\
 \phi(t)&=\frac{ct}{1+ct},&
 \frac{1}{1-\phi(t)}&=1+ct.
 \end{aligned}
-$$
+```
 
 - With representative deletion, the continuous width proxy is $`\mathrm{ef}_0(1+ct)`$. Stipulate clean work $`Q_0=64\times32=2{,}048`$ distance evaluations and the linear aging proxy $`Q(t)=Q_0(1+ct)`$. This is a work scenario, not a measured latency or recall law.
 #### Rebuild economics and hard ceilings
 - Model: rebuild work $`B`$ is constant, cleanup is instantaneous at cycle boundaries, $`\lambda`$ and $`c`$ are constant, and build/query evaluations have the same cost. Constant clean-query and daily-insertion costs do not change the minimizing period under these assumptions.
 - Integrating the excess query work over a cycle gives
 
-$$
+```math
 \begin{aligned}
 W_{\mathrm{cycle}}(T)
 &=B+\lambda\int_0^T Q_0ct\,dt
@@ -211,7 +211,7 @@ g(T)&=\frac{B}{T}+\frac{\lambda Q_0cT}{2},\\
 g'(T)&=-\frac{B}{T^2}+\frac{\lambda Q_0c}{2},\\
 T^*&=\sqrt{\frac{2B}{\lambda Q_0c}}.
 \end{aligned}
-$$
+```
 
 - For $`B,\lambda,Q_0,c>0`$, $`g''(T)=2B/T^3>0`$, so this is the unique continuous optimum. If $`c=0`$ or $`\lambda=0`$, this stale-query term supplies no finite economic optimum. Different per-evaluation costs require conversion to a common currency first.
 - At $`10\,\mathrm{QPS}`$, $`\lambda=864{,}000\,\mathrm{day^{-1}}`$ and $`T^*=\sqrt{3{,}616.898148\ldots}\,\mathrm{days}\approx60.140653\,\mathrm{days}`$. At that optimum $`cT^*\approx1.202813`$ and $`\phi\approx54.6035\%`$.
@@ -320,11 +320,11 @@ $$
 #### Recall bounds require query-conditioned coverage
 - For a query $`q`$, let $`G_q`$ be its relevant authorized gold set and $`A_q`$ the set admitted by the metadata predicate. Any result set drawn only from $`A_q`$ satisfies
 
-$$
+```math
 \mathop{\mathrm{Recall}}\nolimits@k(q)
 \le \frac{|G_q\cap A_q|}{|G_q|},
 \qquad |G_q|>0.
-$$
+```
 
 - This is a set-recall bound. For multi-gold queries, $`\mathop{\mathrm{Hit}}\nolimits@k`$ can still equal $`1`$ when only one of several relevant chunks survives. Do not substitute query hit rate for the fraction of gold chunks admitted.
 - Special equality model: assume one gold item per answerable query, a truly applicable single-value equality constraint, missing values rejected, and incorrect values unable to match that equality. Define $`c_g=\Pr(\text{field present}\mid\text{query's gold item})`$ and $`a_g=\Pr(\text{field correct}\mid\text{present, query's gold item})`$. Then $`\Pr(\text{gold admitted})=c_ga_g`$ and $`\mathbb E[\mathop{\mathrm{Hit}}\nolimits@k]\le c_ga_g`$.
@@ -362,9 +362,9 @@ $$
 - IID model: if each of those candidates passes independently with known probability $`s`$, then $`S_{\mathrm{surv}}\sim\mathop{\mathrm{Binomial}}\nolimits(K,s)`$, $`\mathbb E[S_{\mathrm{surv}}]=Ks`$ and $`\mathop{\mathrm{Var}}\nolimits(S_{\mathrm{surv}})=Ks(1-s)`$. Actual ANN rankings need not satisfy either assumption.
 - Exact model requirement for at least $`k`$ survivors with probability $`0.99`$ is
 
-$$
+```math
 1-\sum_{j=0}^{k-1}\binom Kj s^j(1-s)^{K-j}\ge0.99.
-$$
+```
 
 - This is a probability conditional on known model parameters, not a confidence interval for an unknown pass rate. Enough surviving candidates also does not by itself prove semantic recall.
 - For small $`s`$, a Poisson approximation with mean $`\mu=Ks`$ gives $`\Pr(\mathop{\mathrm{Poisson}}\nolimits(\mu)\ge10)=0.99`$ at approximately $`\mu=18.783117`$. Thus $`K\approx18.783117/s`$ is a small-$`s`$ approximation, not a certified integer bound.
@@ -420,12 +420,12 @@ $$
 - Partition extraction outcomes into correct, wrong-and-detectable, and wrong-but-undetected, with probabilities $`p`$, $`e_d`$ and $`e_u`$, so $`p+e_d+e_u=1`$. These must be estimated on the intended workload.
 - For a fixed retrieval metric such as single-gold $`\mathop{\mathrm{Hit}}\nolimits@k`$, the general law is
 
-$$
+```math
 \mathbb E[R]
 =p\,\mathbb E[R\mid\text{correct}]
 +e_d\,\mathbb E[R\mid\text{detectable error}]
 +e_u\,\mathbb E[R\mid\text{undetected error}].
-$$
+```
 
 - In a deliberately pessimistic toy model, correct extraction gives $`R_f`$ and every executed wrong predicate gives zero. Blind execution then has $`\mathbb E[R]=pR_f`$. Wrong predicates need not give zero in reality.
 - If the ordinary authorized baseline is $`R_0`$ and $`R_f>R_0>0`$, this toy model beats that baseline only when $`p>R_0/R_f`$. For $`R_f=0.95`$ and $`R_0=0.62`$, the boundary is $`p>0.652631579\ldots`$, approximately $`65.2632\%`$, not a universal extraction requirement.
@@ -475,7 +475,7 @@ flowchart LR
 ```
 Panel (b), continuous work proxy between instantaneous cleanups:
 
-$$
+```math
 \begin{aligned}
 Q(t)&=Q_0(1+ct),\qquad 0\le t\le T,\\
 Q_0&=2{,}048,\qquad c=0.02\,\mathrm{day^{-1}},\\
@@ -485,7 +485,7 @@ T=10\,\mathrm{days}
 \mathrm{ef}(t)/64\le1.2
 &\Longrightarrow t\le9.375\,\mathrm{days}.
 \end{aligned}
-$$
+```
 
 Figure $`17.1`$: (a) The schematic illustrates a possible failure of local bridge repair, not a proof that every supported deletion method fails. If removing $`v`$ leaves no route to the right cluster, search from the left cannot find that region. (b) The linear work scenario resets at each instantaneous cleanup; actual work need not follow that curve. The continuous $`20\%`$ cap gives $`10`$ days, whereas a strict integer-width cap gives $`9.375`$ days. The economic optimum $`\sqrt{2B/(\lambda Q_0c)}`$ must be combined with measured latency, completion obligations and real build lead time. Tombstoning excludes results but does not erase retained navigation data.
 ### Figure 17.2

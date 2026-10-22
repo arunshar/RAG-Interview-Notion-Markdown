@@ -94,8 +94,8 @@
       "title": "01_what_a_rag_interview_actually_tests",
       "path": "book/part-01-landscape/01_what_a_rag_interview_actually_tests.md",
       "group": "Part I: The RAG Interview Landscape",
-      "bytes": 88958,
-      "sha256": "4a21aa714f4550f2eb9b6259d486bf90c9196bfe0bf2fa6e0314b0430bca01da",
+      "bytes": 89048,
+      "sha256": "9e6d8beca9b7e57cbece9090f34f21ad7ad7abfd50717905e529713ec06d04f5",
       "source_markdown_sha256": "e408a0c1efa8f259d8a70343748c8c445383ee1e4776e9e29c9e298dec7f5d29"
     },
     {
@@ -110,48 +110,48 @@
       "title": "02_the_competing_answers_to_the_same_problem",
       "path": "book/part-01-landscape/02_the_competing_answers_to_the_same_problem.md",
       "group": "Part I: The RAG Interview Landscape",
-      "bytes": 103731,
-      "sha256": "3c2fa31f5cf9e82ab074be66c580d8ff32259dd7e89ba19b2223efbf3e0578a8",
+      "bytes": 103893,
+      "sha256": "18ba47e139cee66515d4cbedf90e3b88ceeb4450ca310ad93ca8ea1e4b0f5ef7",
       "source_markdown_sha256": "3fefe64e920f1bc08505728920770ec0c492d794c1d9dd6e40744063155c9220"
     },
     {
       "title": "03_a_repeatable_framework_for_any_rag_design_question",
       "path": "book/part-01-landscape/03_a_repeatable_framework_for_any_rag_design_question.md",
       "group": "Part I: The RAG Interview Landscape",
-      "bytes": 90513,
-      "sha256": "dff762f5922f35ec3af4f13d46701fddd209364558d245e085c593ebccc2a949",
+      "bytes": 90597,
+      "sha256": "c13bff5f45703e5213d81377bfb5c1239091f29e3da7499e9f37b8069e86374e",
       "source_markdown_sha256": "f018936196d0d10f5f58e62a697674b5fd2752f0333243f6cdf7594f906f71f3"
     },
     {
       "title": "04_what_the_llm_brings_and_what_it_breaks",
       "path": "book/part-02-generator/04_what_the_llm_brings_and_what_it_breaks.md",
       "group": "Part II: The Generator Side",
-      "bytes": 81554,
-      "sha256": "5e43bcab195a9a5bf1dfea47fadb9d7b14388af78bb2aefa5080319d6f7ab974",
+      "bytes": 81632,
+      "sha256": "5d2188f6776fac766d76b9cb1375a72fb47371ef8f096474088650e6976d9a3c",
       "source_markdown_sha256": "ad585bfaff2eff7823bc4199781e1209bbbff9be3e3df0fcc214ae9d8a59b35b"
     },
     {
       "title": "05_data_privacy_and_the_legal_surface",
       "path": "book/part-02-generator/05_data_privacy_and_the_legal_surface.md",
       "group": "Part II: The Generator Side",
-      "bytes": 93206,
-      "sha256": "e83bd379f3ce4a9778369ee5cc2df1fece0391aa13d446c64b4984573d067abf",
+      "bytes": 93362,
+      "sha256": "8fc36ce378823be9b2c259d1169a13de9a9b7807b3660743f687bade3c806475",
       "source_markdown_sha256": "998781ae02a619aaf14faaf830f266ea4829b20cc6cdd0bad54229987dea64bc"
     },
     {
       "title": "06_scaling_laws_and_the_economics_of_retrieval_vs_parameters",
       "path": "book/part-02-generator/06_scaling_laws_and_the_economics_of_retrieval_vs_parameters.md",
       "group": "Part II: The Generator Side",
-      "bytes": 70510,
-      "sha256": "bded8d9097472cb32651f788adef0e013e74c552dae6b75dd3950601032568cc",
+      "bytes": 70780,
+      "sha256": "de9c3566a81378c26c58dbea822d8057c6f996e21dde35f15640689594f163dc",
       "source_markdown_sha256": "4474ca5bf5619421c90f0e45c8b6c8994a2cdd29903b422cb7cbc7a8b3b97a37"
     },
     {
       "title": "07_in_context_learning_the_mechanism_rag_rides_on",
       "path": "book/part-02-generator/07_in_context_learning_the_mechanism_rag_rides_on.md",
       "group": "Part II: The Generator Side",
-      "bytes": 69588,
-      "sha256": "ab9d6d9a39424cd9b370299f7ce2039cf64fbb6e6a134cae14c0ceab186f0c5d",
+      "bytes": 69600,
+      "sha256": "13a0226e14c075dc30c5a10489c7b0fd643eb89c8ca2940c529331f9a43dad5d",
       "source_markdown_sha256": "b06831e20b0625db69b705dcfe0927e31cafd90c929d6cafdd8c744a1ed914da"
     },
     {
@@ -166,264 +166,264 @@
       "title": "09_prompting_for_retrieval_augmented_systems",
       "path": "book/part-03-prompting/09_prompting_for_retrieval_augmented_systems.md",
       "group": "Part III: Prompting and Context Construction",
-      "bytes": 64830,
-      "sha256": "b777576b6669e4c2eb4b545ab96d64e0d8c02786b29d3fd3b2c589ac591fc1a4",
+      "bytes": 64908,
+      "sha256": "8abd973a3650227c0cbdb6beb6d2196c9997f9acea630451e67c78c36e7efc4c",
       "source_markdown_sha256": "65876ba0e8e3f4e72dd74de11b79954090eac261e572a02aad69cab563b66baf"
     },
     {
       "title": "10_prompt_sensitivity",
       "path": "book/part-03-prompting/10_prompt_sensitivity.md",
       "group": "Part III: Prompting and Context Construction",
-      "bytes": 79225,
-      "sha256": "1f484b6950146c370c030a24f093dc527bd13324bf3196ee2dfdc9a920193587",
+      "bytes": 79327,
+      "sha256": "7bc96c21fe084bea494c09bfc71d3fc4969495332897af0d11189bdca5de546c",
       "source_markdown_sha256": "1470a6ba3cd9b63066e1bdb0c8f6449a11bb442d19252d498d6f0905c2029ab8"
     },
     {
       "title": "11_abstention_and_calibration",
       "path": "book/part-03-prompting/11_abstention_and_calibration.md",
       "group": "Part III: Prompting and Context Construction",
-      "bytes": 77415,
-      "sha256": "ae110da1b8f9addcef59e2c5831cc87f2a17425c1191e09b6d0de0104f728d23",
+      "bytes": 77589,
+      "sha256": "c1fb63bfbfa458e66bfb647236f46a54e92e1b25b787b19783e28135bf1b9d78",
       "source_markdown_sha256": "613bb1d4eff6f4d3df6030916ba7735e6fdd03ada2b47602cd3508079a82abf5"
     },
     {
       "title": "12_text_representation",
       "path": "book/part-04-representations/12_text_representation.md",
       "group": "Part IV: Representing What You Retrieve",
-      "bytes": 85393,
-      "sha256": "86ddba7655b75bfde8d286891ea8d9961f5e6047100824e4fca60c1772286647",
+      "bytes": 85573,
+      "sha256": "4bd268216663ee0b4cb2fe259b15b75282bc53aea2c41fdbd5f85dea1824eb0a",
       "source_markdown_sha256": "eb4c77e907b5d2bf0ef9ffeacc475b6969b26d53d961b80bfbf4a28cefd1d144"
     },
     {
       "title": "13_chunking_and_granularity",
       "path": "book/part-04-representations/13_chunking_and_granularity.md",
       "group": "Part IV: Representing What You Retrieve",
-      "bytes": 90181,
-      "sha256": "61d5524b7309640e0138a84617a9c0f98c7db002d280be3aae36cc1a6d3d27b6",
+      "bytes": 90331,
+      "sha256": "b7c776e0bed49df571579328601bbcc2ea17b52a047cebe1c8ee8ebcb7eb2034",
       "source_markdown_sha256": "e0bac1e2cfcb03d03b91cedda28dfe205f36fddb77f08b637287db6706d0e269"
     },
     {
       "title": "14_beyond_plain_text_tables_layout_documents",
       "path": "book/part-04-representations/14_beyond_plain_text_tables_layout_documents.md",
       "group": "Part IV: Representing What You Retrieve",
-      "bytes": 77764,
-      "sha256": "aaf671dcc13ed66a52d9025b0970ec32e071496ca298132f1397feb592799225",
+      "bytes": 77854,
+      "sha256": "3bb820a524cb94a8ad8543ba412867682cadf5b9bf71b4612a33c0126d4c185d",
       "source_markdown_sha256": "d423ee0d822a6e4d7eeca37bb9bba7527ada0bd2954ed44e64b3eeecb894c7cd"
     },
     {
       "title": "15_approximate_nearest_neighbor_search",
       "path": "book/part-05-indexing/15_approximate_nearest_neighbor_search.md",
       "group": "Part V: Indexing and Vector Search",
-      "bytes": 95161,
-      "sha256": "6a0b1bbd41114bd3d566b31f34fe3137aa76b28877b62a998e72d88e85068fca",
+      "bytes": 95227,
+      "sha256": "adc13c01232f1df7aed061f653984b88e38ec094c83c728dc98559ffe6027b3f",
       "source_markdown_sha256": "705b54cd707038e65ae3094bcc77eee5b443efcfaf2820bfb699defcd7acb96d"
     },
     {
       "title": "16_compression_and_index_economics",
       "path": "book/part-05-indexing/16_compression_and_index_economics.md",
       "group": "Part V: Indexing and Vector Search",
-      "bytes": 81520,
-      "sha256": "9aaf0f21b74205d4a3eea9b3dc4475f8e938416e8227174aff8b0e2aac849451",
+      "bytes": 81838,
+      "sha256": "31afe96f39adb1ea19e8309912434827b2bc21c2cbb8e97a13e35cd0c9f6370d",
       "source_markdown_sha256": "ccb18791c5701155659415c332f2e30cf7ae401e604e011d2e6d86b11f8c1549"
     },
     {
       "title": "17_operating_a_vector_store",
       "path": "book/part-05-indexing/17_operating_a_vector_store.md",
       "group": "Part V: Indexing and Vector Search",
-      "bytes": 119588,
-      "sha256": "90a45dbe5f4a9bcb96b3ccf0be4faa977ec66005e39755a430ef03d29b41749b",
+      "bytes": 119624,
+      "sha256": "1471c28d8206cd8d1e8d10d33364142e66d97bfd3a7ccf591256633a621a15b8",
       "source_markdown_sha256": "d2e2887f719b05d7d812e273c3e7be12ed3afc91df525436011d7598bd3620e5"
     },
     {
       "title": "18_classical_ir_you_are_expected_to_know",
       "path": "book/part-06-retrieval-ranking/18_classical_ir_you_are_expected_to_know.md",
       "group": "Part VI: Retrieval and Ranking",
-      "bytes": 90349,
-      "sha256": "543f684d8c38a74924e0009222db9c171d88c1fa6972c26f8d019192f3ce8f04",
+      "bytes": 90547,
+      "sha256": "7274ce20ab21773af6c076d9b00384fbe93cf3ba16f395320eb5a25c45afa42f",
       "source_markdown_sha256": "1f7bf7a3237b01644bf6a373a9d3dc7f005c6ecab406e8b1356d735fd9d9f7cd"
     },
     {
       "title": "19_learning_to_rank",
       "path": "book/part-06-retrieval-ranking/19_learning_to_rank.md",
       "group": "Part VI: Retrieval and Ranking",
-      "bytes": 103898,
-      "sha256": "c51d26656229e7a41cf2fd08a9386aeeae3e704e7905219eda73f19e50fd4564",
+      "bytes": 104144,
+      "sha256": "954bbb5d222e6dfadae4dd3e276ad92e3bd5c1e83044003fe4ed172cd1290146",
       "source_markdown_sha256": "4d76955233e99c789622c1926e5627fec0d33b29c336de23d5d33a9a020e0c29"
     },
     {
       "title": "20_dense_retrieval",
       "path": "book/part-06-retrieval-ranking/20_dense_retrieval.md",
       "group": "Part VI: Retrieval and Ranking",
-      "bytes": 125504,
-      "sha256": "0cf09bcac8212082a4f151d15108e5d1dabd7dd5b3956ca05eb55fcdcfc84bb2",
+      "bytes": 125708,
+      "sha256": "b756899b45bad2f8062d1c55784378c6a0d1e0a2603eb012e9c7ea1cb43eedd4",
       "source_markdown_sha256": "d33ab5230f4a3abadfd82e6156eed8cc8d5afc32d6e6b5e99b6de640c27a4f7e"
     },
     {
       "title": "21_learned_sparse_and_multi_vector_retrieval",
       "path": "book/part-06-retrieval-ranking/21_learned_sparse_and_multi_vector_retrieval.md",
       "group": "Part VI: Retrieval and Ranking",
-      "bytes": 116977,
-      "sha256": "1437d4637f1e571dff5dd3e70f1ae5532b3e6cc52b0027eb7425cbed35abab88",
+      "bytes": 117145,
+      "sha256": "cf15506089d8aef66af7694c0b7b6df82f4fdf48d3cbbd595883827a9f8e845e",
       "source_markdown_sha256": "c1a10afbc62f646327d25856c4224d541d135d0d9a966c1449b9b52ee7c55b44"
     },
     {
       "title": "22_reranking",
       "path": "book/part-06-retrieval-ranking/22_reranking.md",
       "group": "Part VI: Retrieval and Ranking",
-      "bytes": 89282,
-      "sha256": "fabf2a3f54ad352e3bb60c41b0b555d173105105a63c2d5c82f7e1c343b88590",
+      "bytes": 89636,
+      "sha256": "12ec10e5fa2abeb69c2b4a3b994486e1779f842e1a1af40937676112eb2e982e",
       "source_markdown_sha256": "688d29165ac6f501f7e1e29d96db4a4eab3fcdf84f77fda2df461f28e512c0f1"
     },
     {
       "title": "23_generative_retrieval",
       "path": "book/part-06-retrieval-ranking/23_generative_retrieval.md",
       "group": "Part VI: Retrieval and Ranking",
-      "bytes": 94633,
-      "sha256": "f6def709c6fed49aadd071a5f71d019963ee1923688ca019d7f5969594358734",
+      "bytes": 94717,
+      "sha256": "43650e9ef39b91437f0d9e372e399805b9601b92df50d7117cd337bac35234e6",
       "source_markdown_sha256": "6d73686f0525bb5b4beb6bce4f1914e7a897e94e0f21983eedea97703c667089"
     },
     {
       "title": "24_query_reformulation",
       "path": "book/part-07-query-control/24_query_reformulation.md",
       "group": "Part VII: Query Understanding and Control Flow",
-      "bytes": 106145,
-      "sha256": "d6b03d9e16b3955d209854f9ffffbbc2f9cd9dd83bc767cdaddb0307e71565d2",
+      "bytes": 106385,
+      "sha256": "b6db7321594335c99b4581d3007682fb309bab38b74972c5506ed29905e6263f",
       "source_markdown_sha256": "56696ac8f8cdac8ece0aacb72252fb8157995dee7f5068a0985bce0030e7e163"
     },
     {
       "title": "25_routing_and_adaptive_retrieval",
       "path": "book/part-07-query-control/25_routing_and_adaptive_retrieval.md",
       "group": "Part VII: Query Understanding and Control Flow",
-      "bytes": 116070,
-      "sha256": "b840705eba363839d09b758f3bc5a7cf2b8dd10f447ec43376be945c23ffa7ae",
+      "bytes": 116130,
+      "sha256": "f48f78847d3e8de50e89c0a97bf36b71e98005bb9cd2f9eab6bbd39442ac008c",
       "source_markdown_sha256": "b70ce2fdf7fa6ba88538f1012093f8426039c2e69b0bc117b386d8cac9d90da6"
     },
     {
       "title": "26_iterative_recursive_and_agentic_retrieval",
       "path": "book/part-07-query-control/26_iterative_recursive_and_agentic_retrieval.md",
       "group": "Part VII: Query Understanding and Control Flow",
-      "bytes": 98892,
-      "sha256": "a1884c2816ff1ef94408221e4fee4a4bb055c1008f0ba65387f498982990edaf",
+      "bytes": 99048,
+      "sha256": "0c4b8e0d2c0520ef1f4f134a251d60caa871bcd272764fcedfcab5e2ffedf8f9",
       "source_markdown_sha256": "a7006e3b1855a23ddf5fcf568c0257645b5188fd105346780400fa28f45da8ee"
     },
     {
       "title": "27_fine_tuning_the_generator",
       "path": "book/part-08-training/27_fine_tuning_the_generator.md",
       "group": "Part VIII: Training the RAG System",
-      "bytes": 86300,
-      "sha256": "4c8ceb12288e9a9d743043efd4418f725be1bc6d8f1fc4375a22161291b73e9c",
+      "bytes": 86696,
+      "sha256": "62a36d9d38fc108f150c853bd30a30bdc0c936ca5f46d98fb87ac1b00b7e85a0",
       "source_markdown_sha256": "e3b3e7403afc14798bce1152e5d7420fc7384dcc465bfa86dd5601ba273a082b"
     },
     {
       "title": "28_training_the_retriever",
       "path": "book/part-08-training/28_training_the_retriever.md",
       "group": "Part VIII: Training the RAG System",
-      "bytes": 90852,
-      "sha256": "b4ccf4e3f93dd13a3b5932b4933494bfc28925db33fcb3f668b79261b74b955a",
+      "bytes": 91144,
+      "sha256": "62166ff8cff42258521e49c4c27b3fdbab34393c69654ede10f84490d3a6667f",
       "source_markdown_sha256": "37e3799c8c093871cc5d4a931f1768fe0f150f3276012a5bc1fb3231d65b1f6a"
     },
     {
       "title": "29_bootstrapping_training_data",
       "path": "book/part-08-training/29_bootstrapping_training_data.md",
       "group": "Part VIII: Training the RAG System",
-      "bytes": 83570,
-      "sha256": "5ab2011f4dd7bd06315bbf80998be7176130e396fcfe02134de88abc78713dd9",
+      "bytes": 83672,
+      "sha256": "e9ab87c1a6ffcb77e69915c8de88013fdc73e05832c9a8e6e8b038018a747e65",
       "source_markdown_sha256": "4b501105de80b2df9aef5a65793ed17f5cfcf61361e50c704d2d1f3521e64408"
     },
     {
       "title": "30_lost_in_the_middle",
       "path": "book/part-09-context-assembly/30_lost_in_the_middle.md",
       "group": "Part IX: Generation and Context Assembly",
-      "bytes": 78331,
-      "sha256": "f39cfe8d54690f61a343dcc52acdd0a6dfa35ad9aae96a004234b7d78e0e35d1",
+      "bytes": 78439,
+      "sha256": "eb7fb140cac562e8ceb4b6d1b1360b10d5ac063c6971f181b10631996398206f",
       "source_markdown_sha256": "ac74eb3b9e98c1aa6a64c1aa35f579878c48a0f3d16c438fa00574d65b9b87e9"
     },
     {
       "title": "31_attribution_and_citation",
       "path": "book/part-09-context-assembly/31_attribution_and_citation.md",
       "group": "Part IX: Generation and Context Assembly",
-      "bytes": 68033,
-      "sha256": "f2576e074889613c977ca8ac035b27581530f49093655daa34bbf142ed9948fb",
+      "bytes": 68141,
+      "sha256": "089f9bda6505f519e8971664142fddf115dc5a50a84c4fe7de4dea37c717a2de",
       "source_markdown_sha256": "a78ccd50675dcf6d7f4e33ba1d7b95087b676cb034ffacde70f83be9781b0ed7"
     },
     {
       "title": "32_evaluating_retrieval",
       "path": "book/part-10-evaluation/32_evaluating_retrieval.md",
       "group": "Part X: Evaluation",
-      "bytes": 69086,
-      "sha256": "0ab6e1dfe43d1d2a31789e5b248b189c1e28db8dd154faf57711bc3fb5fa97b7",
+      "bytes": 69374,
+      "sha256": "1b99e7c17f862ab4f8b52de7aac8ce5dfc857bd59e875bf45f73bb76fc86f13a",
       "source_markdown_sha256": "91a88e91ec9fb02b8b2952187b19de50586a0280568a9bcc77cf015a3010ff71"
     },
     {
       "title": "33_evaluating_generation",
       "path": "book/part-10-evaluation/33_evaluating_generation.md",
       "group": "Part X: Evaluation",
-      "bytes": 74694,
-      "sha256": "bff175f8d984e234287bc5dbe62d5730d5a97d7fefd79d17c06df67a9baac473",
+      "bytes": 74748,
+      "sha256": "b39d644cbbf1fc4a0597ca26f5b93c2e85b8d5134d4f0e1aae6db03fccb4942c",
       "source_markdown_sha256": "e86046f4ce36fbad07ca361f27530943ac8ce70e2a1f896bfca05da9f8db0533"
     },
     {
       "title": "34_evaluating_the_system",
       "path": "book/part-10-evaluation/34_evaluating_the_system.md",
       "group": "Part X: Evaluation",
-      "bytes": 76217,
-      "sha256": "4c395fc486b8b5aca0fe1db5068643e40c15c89770a6df516475105620103c8a",
+      "bytes": 76283,
+      "sha256": "b8bfc72962496287f896af7cfe855239169772305b8731dcdf138c992eb3d488",
       "source_markdown_sha256": "d3cd55900a91fc033694cb178f139b1e9e5380f5a3bb3df644e7791abb498755"
     },
     {
       "title": "35_source_credibility",
       "path": "book/part-11-trust-robustness/35_source_credibility.md",
       "group": "Part XI: Trust, Credibility, and Adversarial Robustness",
-      "bytes": 90573,
-      "sha256": "fb12d94cd1cd0f17e24d611d0003546ff82e72fb6e9c318a8a4946c2f02c28b4",
+      "bytes": 90627,
+      "sha256": "95676b19d8fcac1b1c2526bbc8fe7919267d893f3a7a524ba7c1c2b98423ca92",
       "source_markdown_sha256": "dfa6e799a1eec1c93950b95f67604f365714ed15b10aa9451a171c03d8049255"
     },
     {
       "title": "36_provenance_and_adversarial_robustness",
       "path": "book/part-11-trust-robustness/36_provenance_and_adversarial_robustness.md",
       "group": "Part XI: Trust, Credibility, and Adversarial Robustness",
-      "bytes": 88222,
-      "sha256": "ce98f19eb79c71043a926ee9ee16081b4ae14da08e1f34c7c75fb4ca13c4ecbb",
+      "bytes": 88294,
+      "sha256": "efc91daaf2be3416a6fe2822dff8e46d14f4d90667e698200abbaf8e1afe003d",
       "source_markdown_sha256": "0912e77f02bea5ab451d0ded552a95ceeeb73f2fac29679fd533836130a45270"
     },
     {
       "title": "37_latency_cost_and_systems",
       "path": "book/part-12-systems-design/37_latency_cost_and_systems.md",
       "group": "Part XII: Scaling, Advanced Variants, and Design Drills",
-      "bytes": 102224,
-      "sha256": "ad715fbc8efc627b12d6e229e57826ec78a1b8d9116269e44d64318c1af7758e",
+      "bytes": 102356,
+      "sha256": "66784bb57dab31bb4557fd2663789b6621fc72a7eb4207f165da8c0b4e4ff206",
       "source_markdown_sha256": "6615cdccfecd8861638cb8be8fcb22f41fc285dd82f12ccb1ebc5b420fa26173"
     },
     {
       "title": "38_distributed_and_federated_rag",
       "path": "book/part-12-systems-design/38_distributed_and_federated_rag.md",
       "group": "Part XII: Scaling, Advanced Variants, and Design Drills",
-      "bytes": 78603,
-      "sha256": "b14789d5786c4cbe040e57cecb96f1df736fe2dbec2eac9fb48130f69f090720",
+      "bytes": 78639,
+      "sha256": "025036e10402b362719fb37a39e19ade0dcba61cbbaf797ace6e119007bc6593",
       "source_markdown_sha256": "93aeff68820213ab7662939151ecf590b5704ad5c08e4faa09dd90f45c8f5b98"
     },
     {
       "title": "39_multimodal_rag",
       "path": "book/part-12-systems-design/39_multimodal_rag.md",
       "group": "Part XII: Scaling, Advanced Variants, and Design Drills",
-      "bytes": 89270,
-      "sha256": "6a6364888a999106ddc3a347aca47c0b94ad4bcc3629888e9dd6c25726dc1a41",
+      "bytes": 89354,
+      "sha256": "4918d57fbbc398a7e6d2ae812564aeac89cea9566e8377961313cc0820590422",
       "source_markdown_sha256": "6c2cfd135c3e4f22790f1fb7565af614b534b4e5cd13d9a6e7d55e7637670429"
     },
     {
       "title": "40_graph_rag",
       "path": "book/part-12-systems-design/40_graph_rag.md",
       "group": "Part XII: Scaling, Advanced Variants, and Design Drills",
-      "bytes": 87964,
-      "sha256": "9d580d85c6d1bcbb74dded9069f55a9a962d12137edfb5e0dcd8c6bad3d697a0",
+      "bytes": 88102,
+      "sha256": "c0be23839b28a55611598d2745c1c14b8bb40309ddf0bfc0e06d8c48d864351a",
       "source_markdown_sha256": "f66a3b630cf16bc6d8de80fea31e31a9775bc51d1a3e63ad022b9b3743ca37c3"
     },
     {
       "title": "41_end_to_end_design_drills",
       "path": "book/part-12-systems-design/41_end_to_end_design_drills.md",
       "group": "Part XII: Scaling, Advanced Variants, and Design Drills",
-      "bytes": 87966,
-      "sha256": "33d88c6e5c61542f3b7d91d2783a632fbceb9c8d1292c72fe0c7d8fe80190c03",
+      "bytes": 88056,
+      "sha256": "4c33f3499f9091c392411e25c2b18fa3fbbd898f278a46a2a331e284b55e5285",
       "source_markdown_sha256": "c272fd91db500d5395fcb4020b3c0fe990d13eb6dae87fdb4436f8b8076735e7"
     },
     {
@@ -438,8 +438,8 @@
       "title": "A1_formula_sheet",
       "path": "book/appendices/A1_formula_sheet.md",
       "group": "Appendices",
-      "bytes": 49366,
-      "sha256": "c4caae6217ee5f38f167dbe279a2c69987df3cdd7fae3950d170611c49114e05",
+      "bytes": 49828,
+      "sha256": "f733f35c97ed161759d68dae6137a796bfa298f04fae49029e55346cddda3e9b",
       "source_markdown_sha256": "936d13dc500b715706949aa4b14f053277172ad7d7118ccc5ca04ed71fe57a44"
     },
     {

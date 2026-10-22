@@ -179,14 +179,14 @@ Use decimal storage units, with $`1\,\mathrm{GB}=10^9\,\mathrm B`$. Model-forwar
 #### The formal boundary
 Let $`x`$ be user input, $`D`$ the datastore, $`\theta`$ generator weights, $`c_1,\ldots,c_k`$ retrieved chunks, and $`y`$ the answer. A simple retrieval-then-generation pipeline is:
 
-$$
+```math
 c_1,\ldots,c_k = \mathop{\text{RET}}(x,D)
-$$
+```
 
 
-$$
+```math
 y = \mathop{\text{GEN}}_{\theta}(x,c_1,\ldots,c_k)
-$$
+```
 
 The five choices organize the retrieval contract; they are not a mathematical enumeration of every free parameter of a production system. The two-line abstraction also hides ingestion, security, caching, decoding, evaluation and serving policies. Changing generator weights is outside these five retrieval choices, not outside the full design space.
 The component walk loses because ingest, chunk, embed, index, retrieve, rerank, and generate appear in nearly every design. It cannot express the highest-leverage option, which is not retrieving. In the opening prompt, a candidate has 38 minutes and only “design retrieval for our support assistant.” The weak pattern spends 20 minutes naming six components and makes zero explicit decisions. The staff interviewer has seen the loop 40 times and listens for decision order.
@@ -239,19 +239,19 @@ The source’s generation example asks a model trained through 2023 for total H-
 #### Additive and multiplicative latency
 Let $`L_r`$ be retrieval latency, $`L_g`$ final generation, $`L_c`$ one control call, $`L_k`$ reranking, $`L_{g'}`$ an intermediate generation, and $`T`$ the number of sequential retrieve-reason rounds. The simplified serial budgets are:
 
-$$
+```math
 L_{\text{naive}} = L_r + L_g
-$$
+```
 
 
-$$
+```math
 L_{\text{advanced}} = L_c + L_r + L_k + L_g
-$$
+```
 
 
-$$
+```math
 L_{\text{modular}}(T) = T(L_c + L_r + L_k + L_{g'}) + L_g
-$$
+```
 
 Naive to advanced adds $`L_c+L_k`$ only when the unchanged stages really retain their latency. A loop pays for each control, retrieval, rerank and intermediate-generation round before the final answer. Parallel work contributes the maximum branch latency rather than the sum, but only with enough capacity and no additional contention.
 #### Worked maturity budget
@@ -273,21 +273,21 @@ For a product with a $`2\,\mathrm{s}`$ target and a $`12\%`$ multi-hop slice, ro
 #### One distribution, three entry points
 Let $`q`$ be the query, $`\mathcal D_q=\{d_1,\ldots,d_k\}`$ selected documents, $`\theta`$ generator weights, $`h`$ hidden width, $`e(\cdot)\in\mathbb R^d`$ the retrieval encoder, and $`W_p:\mathbb R^d\to\mathbb R^h`$ a projector. Three schematic injection paths are:
 
-$$
+```math
 p_{\theta}(y \mid \mathop{\text{tok}}(d_1) \oplus \cdots \oplus \mathop{\text{tok}}(d_k) \oplus \mathop{\text{tok}}(q))
-$$
+```
 
 The text interface converts documents into tokens and concatenates them with the query.
 
-$$
+```math
 p_{\theta}(y \mid W_p e(d_1), \ldots, W_p e(d_k), \mathop{\text{tok}}(q))
-$$
+```
 
 The embedding interface projects retrieval vectors into generator hidden states and uses one input slot per document in the worked design.
 
-$$
+```math
 p_{\theta + \Delta\theta(D)}(y \mid \mathop{\text{tok}}(q))
-$$
+```
 
 The parameter interface compiles the corpus into a weight delta before the query arrives.
 
@@ -338,14 +338,14 @@ The opening design interview lasts 45 minutes. The weak candidate names HNSW, a 
 Ask first for chunk count $`N`$, peak query rate $`\lambda`$, and end-to-end latency budget $`L`$. Index family, quantization, shards, replicas, and reranker depth follow from them.
 Document count alone is misleading. Let document $`i`$ contain $`t_i>0`$ tokens, chunk length be $`c`$, and positive stride be $`s=c(1-\rho)`$ with $`0\le\rho<1`$. For fixed-stride chunks that stay inside each document and retain the final partial chunk, the exact count is:
 
-$$
+```math
 \begin{aligned}
 n_i&=\max\!\left(1,\ 1+\left\lceil\frac{t_i-c}{s}\right\rceil\right),\\
 N&=\sum_{i=1}^{D}n_i,\\
 N&\approx\frac{D\bar t}{c(1-\rho)}
 \quad\text{only as a long-document approximation}.
 \end{aligned}
-$$
+```
 
 One million $`30`$-token tweets give one million chunks when each tweet is kept intact. One million filings of exactly $`50{,}000`$ tokens, $`c=400`$ and $`s=300`$ give $`1+\lceil(50000-400)/300\rceil=167`$ chunks each, hence $`167`$ million chunks. Average lengths alone do not uniquely determine these document-wise ceilings.
 For extracted plain English text, the source uses roughly four bytes per token as a planning approximation. Characters and bytes differ for non-ASCII text; compressed PDF file size is not extracted-text size. Extraction, tables, OCR, language and tokenizer all affect the conversion.
@@ -401,33 +401,33 @@ The opening shipped pipeline uses recursive character chunks of 512 tokens, one 
 Traffic separates into four needs. A fifth is parametric-sufficient, and retrieval can disturb it. Half is one fact in one paragraph. The remaining 30 percent is split between multi-hop evidence and tabular or numeric questions.
 Let segment weights $`\pi_i`$ sum to 1. Let $`a_{ij}`$ be the accuracy of configuration $`j`$ on segment $`i`$.
 
-$$
+```math
 A_{\text{fix}} = \max_j \sum_i \pi_i a_{ij}
-$$
+```
 
 The best fixed policy chooses one column for all traffic.
 
-$$
+```math
 A^{*} = \sum_i \pi_i \max_j a_{ij}
-$$
+```
 
 Oracle routing chooses the best cell in every row.
 
-$$
+```math
 D = A^{*} - A_{\text{fix}} \ge 0
-$$
+```
 
 The adaptivity dividend $`D`$ is zero exactly when one configuration is at least as good as every other configuration on each segment with positive weight.
 Let $`\rho`$ be the probability of choosing a row-optimal branch, and let $`L_{\mathrm{loss}}`$ be mean accuracy loss conditional on a misroute. Then $`A(\rho)=A^\star-(1-\rho)L_{\mathrm{loss}}`$. The conditional loss depends on the router's actual confusion pattern; a single aggregate route-accuracy value does not determine it. For $`L_{\mathrm{loss}}>0`$, beating the best fixed column requires:
 
-$$
+```math
 A(\rho) = A^{*} - (1-\rho)L_{\text{loss}}
-$$
+```
 
 
-$$
+```math
 \rho \ge 1 - \frac{D}{L_{\text{loss}}}
-$$
+```
 
 The numerator is only the improvement over the already-best compromise. The denominator includes every wrong route, including closed-book handling of a multi-hop query or an expensive loop on a known fact.
 The source names UAR’s four-criterion tree, Self-RAG’s distilled reflection tokens, and Adaptive-RAG’s silver-label supervision as examples of controller engineering.

@@ -140,9 +140,9 @@ Use natural logarithms and nats for probabilities; percentages of accuracy chang
 - **Failure without it:** A team treats one inherited string as neutral and attributes its effect to the retriever or model.
 - **Cost or complexity:** The raw family is small enough for a grid once, but not cheap enough to repeat carelessly on every release.
 
-$$
+```math
 \lvert F\rvert=5\times4\times6\times3\times2\times2=1{,}440.
-$$
+```
 
 #### Explain the mechanism
 - **What:** A format change retokenizes the prompt.
@@ -169,37 +169,37 @@ $$
 The same retrieval system can get different accuracy scores depending on how its prompt is formatted. So accuracy should be written as $`A(f)`$, where $`f`$ identifies the prompt wrapper—for example, its headers or separators. A score measured with one wrapper, $`f_0`$, is just one result for that format, not a format-independent measure of the system.
 The first formula compares two retrievers using the **same fixed wrapper**:
 
-$$
+```math
 \widehat\Delta_{f_0}=\widehat A_{R_1,\mathrm{test}}(f_0)-\widehat A_{R_2,\mathrm{test}}(f_0).
-$$
+```
 
 That tells you which retriever scored higher under *that particular* format. It does not necessarily tell you which retriever can perform better overall, because changing the retrieved content may also change which wrapper works best.
 The next equations distinguish the population-optimal wrapper from a development-selected wrapper evaluated on held-out data:
 
-$$
+```math
 \begin{aligned}
 f_R^\star&\in\mathop{\mathrm{arg\,max}}_{f\in F}A_R(f),\\
 \Delta^\star&=A_{R_1}(f_{R_1}^\star)-A_{R_2}(f_{R_2}^\star),\\
 \widehat f_R&=\mathop{\mathrm{Search}}\nolimits(R,F;\mathcal D_{\mathrm{dev}},B),\\
 \widehat\Delta_{\mathrm{tuned}}&=\widehat A_{R_1,\mathrm{test}}(\widehat f_{R_1})-\widehat A_{R_2,\mathrm{test}}(\widehat f_{R_2}).
 \end{aligned}
-$$
+```
 
 A tuned-system comparison is appropriate when both systems are allowed to choose their wrappers. Match the search budget and search family, then report held-out performance of each selected wrapper. Taking the largest noisy score on the same test set is not a fair confirmation. A shared fixed-wrapper experiment answers a different, valid question.
 
-$$
+```math
 \widehat\Delta_{f_0}=\widehat A_{R_1,\mathrm{test}}(f_0)-\widehat A_{R_2,\mathrm{test}}(f_0).
-$$
+```
 
 
-$$
+```math
 \begin{aligned}
 f_R^\star&\in\mathop{\mathrm{arg\,max}}_{f\in F}A_R(f),\\
 \Delta^\star&=A_{R_1}(f_{R_1}^\star)-A_{R_2}(f_{R_2}^\star),\\
 \widehat f_R&=\mathop{\mathrm{Search}}\nolimits(R,F;\mathcal D_{\mathrm{dev}},B),\\
 \widehat\Delta_{\mathrm{tuned}}&=\widehat A_{R_1,\mathrm{test}}(\widehat f_{R_1})-\widehat A_{R_2,\mathrm{test}}(\widehat f_{R_2}).
 \end{aligned}
-$$
+```
 
 #### Search efficiently and control selection bias
 - Use successive halving on development data, then confirm the selected wrapper on untouched questions.
@@ -246,11 +246,11 @@ $$
 - **Failure without it:** A variant that raises one answer’s likelihood and lowers another’s can average to false calm.
 - **Cost or complexity:** The full matrix uses $`N(N - 1)`$ scoring passes after $`N`$ generations.
 
-$$
+```math
 \mathop{\mathrm{POSIX}}\nolimits=\frac1{N(N-1)}\sum_{i=1}^N\sum_{j\ne i}
 \frac1{\lvert y_i\rvert}\left\lvert\ln\frac{P(y_i\mid x_j)}{P(y_i\mid x_i)}\right\rvert,
 \qquad N\ge2,\quad\lvert y_i\rvert>0.
-$$
+```
 
 - A $`40`$-token response moving from total log likelihood $`-12.0`$ to $`-13.6`$ contributes $`1.6/40=0.040\,\mathrm{nats/token}`$. Probabilities must be positive or scores need an explicit zero-probability convention.
 #### Connect sensitivity to the decoding margin
@@ -261,14 +261,14 @@ $$
 - **Failure without it:** A raw agreement bit discards how close the answer was to changing.
 - **Cost or complexity:** The logits are computed during decoding, but extracting normalized token scores can require additional access, storage and some computation. This is often cheap on an owned stack, not universally free or exposed by a hosted API.
 
-$$
+```math
 \Delta z = \log \frac{p_1}{p_2}
-$$
+```
 
 
-$$
+```math
 \bar{\ell}(y) = \frac{1}{|y|} \sum_{t=1}^{|y|} \log p(y_t \mid x, y_{1:t-1})
-$$
+```
 
 - A confident $`0.90`$ versus $`0.05`$ split has a 2.89-nat barrier.
 - A hesitant $`0.35`$ versus $`0.30`$ split has a 0.154-nat barrier.
@@ -306,18 +306,18 @@ $$
 - **Failure without it:** A team writes that the lowest-sensitivity template is the most accurate without labels.
 - **Cost or complexity:** Estimating $`r`$ requires a labeled vertical with the same model, task, and variant family.
 
-$$
+```math
 \widehat{A} = \mu_A + \rho \frac{\sigma_A}{\sigma_S}(S - \mu_S)
-$$
+```
 
 
-$$
+```math
 \begin{aligned}
 \mathop{\mathrm{sd}}\nolimits(A-\widehat A)&=\sigma_A\sqrt{1-\rho^2},\\
 Z_A&=\rho Z_S+\sqrt{1-\rho^2}\,\varepsilon
 \quad\text{under a standardized joint-Gaussian model}.
 \end{aligned}
-$$
+```
 
 - At $`r = 0.7`$, the residual is $`0.714\,\sigma_A`$.
 - This reduces residual standard deviation by $`1-\sqrt{1-0.7^2}\approx28.59\%`$; the fraction of variance explained is $`r^2=49\%`$. Neither quantity is a $`70\%`$ removal of uncertainty.
@@ -330,9 +330,9 @@ $$
 - **Failure without it:** The phrase “strong correlation” hides a substantial reversal rate.
 - **Cost or complexity:** Even a high $`r`$ leaves some pairs backwards.
 
-$$
+```math
 \tau = \frac{2}{\pi}\arcsin \rho, \qquad \Pr[\text{correct order}] = \frac{1}{2} + \frac{1}{\pi}\arcsin r
-$$
+```
 
 - $`r = 0.3`$ gives $`59.7\%`$ pairwise accuracy.
 - $`r = 0.5`$ gives exactly two thirds.
@@ -377,14 +377,14 @@ $$
 - **Failure without it:** A team buys a 10-times larger serving bill to solve a variance problem the objective never names.
 - **Cost or complexity:** Measuring variance requires evaluating a format family rather than one leaderboard prompt.
 
-$$
+```math
 \mu_M = \mathbb{E}_{f \sim F}[A_M(f)]
-$$
+```
 
 
-$$
+```math
 \sigma_M^2 = \mathop{\text{Var}}_{f \sim F}[A_M(f)]
-$$
+```
 
 #### Why scale and standard instruction tuning do not impose invariance
 - **What:** Pre-training minimizes expected negative log-likelihood under observed corpus frequencies.
@@ -403,9 +403,9 @@ $$
 - **Failure without it:** A demonstration rendered in a different wrapper uses context without supplying the intended pattern match.
 - **Cost or complexity:** The constant-$`g`$ equation is a local toy model, not a law of attention. A saturating model would instead use $`\Delta z(k)=\Delta z_0+\sum_{i=1}^k g_i`$ with diminishing $`g_i`$; attention normalization alone does not prove this pattern.
 
-$$
+```math
 \Delta z(k) = \Delta z_0 + kg
-$$
+```
 
 - For the illustrative constant-gain equation, $`\Delta z_0=0.154`$ and $`g=0.35`$ give gaps $`0.154,0.504,0.854,1.554,2.954`$ nats at $`k=0,1,2,4,8`$.
 - These assumed gaps are not measured effects of adding examples. The $`0.02375`$ POSIX average cannot be used as a competing-logit perturbation, so the former $`15.5\%`$ to $`0.81\%`$ “barrier shares” do not establish robustness.
@@ -458,9 +458,9 @@ This passage gives practical advice for making prompts more robust without letti
 - **Failure without it:** A search result is described as broad when it covers a microscopic local slice.
 - **Cost or complexity:** Every workable optimizer must impose a structural restriction.
 
-$$
+```math
 \lvert\mathcal X\rvert=(C+1)^L=9^{60}\approx1.79701\times10^{57}.
-$$
+```
 
 #### COPLE restriction and guarantee
 - **What:** COPLE changes one word slot at a time.
@@ -473,14 +473,14 @@ $$
 - **Cost or complexity:** Five sweeps evaluate 700 prompts, only $`4 \times 10^{-55}`$ of the space.
 - A finite, noisy search restricted to the top $`m`$ slots does not certify even a full coordinate-wise local optimum. Such a certificate would require checking every allowed one-coordinate neighbor with sufficiently reliable scores; no global optimum is guaranteed.
 
-$$
+```math
 I(w_j) = \left|S(x) - S(x_{\setminus j})\right|
-$$
+```
 
 
-$$
+```math
 L+mC=60+10\times8=140,\qquad b_{\mathrm{heuristic}}=\sigma\sqrt{2\ln(mC)}.
-$$
+```
 
 #### The accept rule controls whether a gain is real
 - **What:** Compare candidate and incumbent on identical examples. Pryzant et al. (2023) attach this best-arm-identification step to ProTeGi.

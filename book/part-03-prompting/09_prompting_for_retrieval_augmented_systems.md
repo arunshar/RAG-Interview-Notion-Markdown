@@ -166,10 +166,10 @@ Natural logarithms measure likelihood in nats. The $`8`$-billion-parameter examp
 | Cost and complexity | Version the instruction, demonstration block, retrieval configuration, and checkpoint separately. |
 
 
-$$
+```math
 x = [s \Vert e_{1:m} \Vert d_{1:k} \Vert q],
 \qquad p_{\theta}(y \mid x)
-$$
+```
 
 The slots are instruction, demonstrations, retrieved passages, and query.
 #### Rung 1: completion
@@ -235,9 +235,9 @@ Query dependence is not exclusive to RAG: demonstration selection can also depen
 | Cost and complexity | $`4{,}000\times250=10^6`$ corpus tokens divided by $`8\times400=3{,}200`$ retrieved tokens gives a $`312.5{:}1`$ selection ratio, not lossless compression. The corpus fills $`122`$ complete $`8{,}192`$-token windows plus $`576`$ tokens, requiring $`123`$ windows to include all tokens without overlap. |
 
 
-$$
+```math
 \rho = \frac{M t_f}{k t_c}
-$$
+```
 
 #### Binding latency
 
@@ -250,9 +250,9 @@ $$
 | Cost and complexity | For deterministic periodic fact changes spaced $`\Delta`$ apart and a fixed effective update lag $`\tau`$, the illustrative stale-time fraction is $`\min(1,\tau/\Delta)`$. This assumes time-uniform observation and the specified update schedule, not an arbitrary three-day periodic training cycle. At $`\tau=3`$ days and $`\Delta=7`$ days it is $`3/7\approx42.86\%`$; at $`\tau=5\,\mathrm s`$ it is $`5/604{,}800\approx8.2672\times10^{-6}`$. With Poisson changes, fixed-lag staleness is instead $`1-e^{-\tau/\Delta}`$. |
 
 
-$$
+```math
 \text{stale fraction} = \min\left(1, \frac{\tau}{\Delta}\right)
-$$
+```
 
 #### Why the growing system prompt loses
 
@@ -322,10 +322,10 @@ A short prompt, with token count depending on the tokenizer, such as `Let's thin
 | Cost and complexity | One greedy chain uses one model call. |
 
 
-$$
+```math
 p_{\theta}(a \mid x) =
 \sum_z p_{\theta}(a \mid z, x) p_{\theta}(z \mid x)
-$$
+```
 
 Three complete paths can reach the answer “yes, with a $`\$40`$ cap” with joint probabilities $`0.20`$, $`0.18`$, and $`0.15`$.
 Their answer mass totals $`0.53`$.
@@ -359,11 +359,11 @@ That separates it from best-of-$`N`$ against a reward model.
 | Cost and complexity | At $`p = 0.60`$, majority-of-five scores $`0.683`$.<br><br>Majority-of-nine scores $`0.733`$.<br><br>The first five samples buy $`8.3`$ points over one sample.<br><br>The next four buy $`5.0`$ more points.<br><br>At $`p = 0.40`$, majority-of-nine scores $`26.7\%`$, below the $`40\%`$ single-sample accuracy. |
 
 
-$$
+```math
 P(\text{majority correct}) =
 \sum_{i=\lfloor m/2 \rfloor + 1}^{m}
 \binom{m}{i} p^i (1-p)^{m-i}
-$$
+```
 
 Voting can improve accuracy when the correct answer has sufficient probability under the sampled distribution. It does not generally eliminate systematic bias; treating vote share as calibrated confidence requires validation.
 #### Chain, fan, tree, and graph
@@ -428,21 +428,21 @@ In the source example, that pipeline scores $`61.2\%`$ on the full multi-hop sli
 A two-line fan of five scores $`68.0\%`$ in one round at one sixth of the calls.
 For $`c`$ stages that are all required to succeed, let $`q_j`$ be the conditional probability that stage $`j`$ succeeds given previous required successes. The chain rule then gives the product below without an independence assumption. Using unconditional $`q_j`$ would need independence or another justified joint model. Requiring every exploratory call to succeed is a pessimistic scenario, not a necessity for all tree algorithms.
 
-$$
+```math
 e = \prod_{j=1}^{c} q_j
-$$
+```
 
 Realized accuracy mixes the perfectly executed design with its misfire state:
 
-$$
+```math
 A = e p_s + (1-e) p_d
-$$
+```
 
 For $`p_s>p_d`$, the equality with incumbent accuracy is $`e^\star=(A_0-p_d)/(p_s-p_d)`$. A target above $`p_s`$ is infeasible, a target at or below $`p_d`$ requires no execution improvement, and $`p_s=p_d`$ has no meaningful execution crossover. An architectural label does not identify these conditional accuracies.
 
-$$
+```math
 e^\star = \frac{A_0-p_d}{p_s-p_d}
-$$
+```
 
 Use $`A_0 = 0.683`$, $`p_s = 0.85`$, and $`p_d = 0.45`$.
 The equality is $`e^\star=(0.683-0.45)/(0.85-0.45)=0.5825`$.
@@ -500,9 +500,9 @@ A two-point change on $`500`$ questions is not resolved by looking at one arm's 
 
 The naive model assumes perfect use of the gold passage and closed-book fallback otherwise.
 
-$$
+```math
 A_{\text{naive}}(k) = R(k) + (1-R(k))p_0
-$$
+```
 
 This expression can only rise with recall.
 Production breaks its two assumptions.
@@ -519,9 +519,9 @@ This co-occurrence substitution gives no-gold accuracy $`m`$, with $`m \lt p_0`$
 | Cost and complexity | Here $`u(k)=\Phi(\mu)^{k-1}`$. For random gold score $`G`$ with density $`f_G`$, $`u(k)=\int f_G(g)\Phi(g)^{k-1}\,dg`$. Neither model follows automatically from a cross-encoder's retrieval scores. |
 
 
-$$
+```math
 u(k) = \Phi(\mu)^{k-1}
-$$
+```
 
 The relative penalty per added passage is $`\beta = 1 - \Phi(\mu)`$.
 At $`\mu = 2.0`$, $`\beta = 0.0228`$.
@@ -530,26 +530,26 @@ At $`\mu = 3.0`$, $`\beta = 0.00135`$.
 A reranker can change selected passages and order, but a larger retrieval-score margin does not automatically increase the generator’s effective score margin. That causal link requires a separate intervention or measurement.
 #### The non-monotone accuracy model
 
-$$
+```math
 A(k) = m + (1-m) R(k) u(k)
-$$
+```
 
 $`G(k)=R(k)u(k)`$ is the probability of selecting the gold passage in this scenario, not measured grounding or faithfulness. The accuracy formula further assumes correctness whenever gold is selected and constant fallback accuracy $`m`$ in every other state, including gold present but not selected. Measuring $`m`$ only after deleting gold does not establish that second conditional accuracy.
 Recall rises with $`k`$ while utilization falls.
 Karpukhin et al. (2020) reported Dense Passage Retrieval (DPR) accuracy on Natural Questions of $`78.4\%`$ at top-20 and $`85.4\%`$ at top-100.
 The reported anchors bracket $`20\le k\le100`$. Use a log-linear scenario curve there; values at $`5\le k<20`$ are extrapolations, not interpolation or reported DPR measurements:
 
-$$
+```math
 R(k)=0.784+c\ln(k/20),\qquad c=\frac{0.854-0.784}{\ln5}\approx0.04349345.
-$$
+```
 
 Marginal recall decays as $`\frac{c}{k}`$.
 Marginal dilution stays near constant at $`\beta`$.
 The optimum solves:
 
-$$
+```math
 k^\star R(k^\star) = \frac{c}{-\ln\Phi(\mu)} \approx \frac{c}{\beta}
-$$
+```
 
 At $`\mu=3`$, the continuous stationary point of this scenario is $`k\approx39.571`$. Check nearby integers and feasible-domain endpoints. This remains a toy optimum, not a deployment guarantee.
 At $`\mu=2.5`$, the continuous stationary point of this scenario is $`k\approx9.301`$. Check nearby integers and feasible-domain endpoints. This is below the $`20`$–$`100`$ anchor bracket and is an extrapolation, not a validated optimal retrieval depth.

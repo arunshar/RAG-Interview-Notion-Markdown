@@ -5,7 +5,7 @@ This page is a smoke-test fixture for the book’s GitHub previews. The examples
 ## Writing equations
 
 - Keep inline equations inside GitHub’s dollar-and-backtick delimiters.
-- Separate each display-equation block from the surrounding prose with blank lines.
+- Use a fenced `math` block for display equations, separated from the surrounding prose with blank lines. Fences protect TeX from Markdown list, link, emphasis, and HTML parsing.
 - Use supported named-operator notation and retain the appropriate limit behavior.
 - Prefer named vertical-bar delimiters inside tables so a bar cannot be mistaken for a Markdown column separator.
 
@@ -29,30 +29,30 @@ An optimization operator: $`\mathop{\mathrm{arg\,max}}\nolimits_{d\in D}s(q,d)`$
 
 A full expression with subscripts:
 
-$$
+```math
 (c_1,\ldots,c_k)=\mathop{\mathrm{RET}}\nolimits(q,D),\qquad y\sim p_\theta(\cdot\mid x,c_1,\ldots,c_k).
-$$
+```
 
 A multiline aligned expression:
 
-$$
+```math
 \begin{aligned}
 a_1&=b_2,\\
 c_3&=d_4.
 \end{aligned}
-$$
+```
 
 A matrix:
 
-$$
+```math
 \begin{pmatrix}1&2\\3&4\end{pmatrix}
-$$
+```
 
 An operator with display limits:
 
-$$
+```math
 \mathop{\mathrm{arg\,max}}\limits_{d\in D}s(q,d)
-$$
+```
 
 ## Compatibility changes
 
@@ -62,4 +62,4 @@ GitHub currently rejects `\operatorname`. The book uses `\mathop{\mathrm{…}}\n
 
 Repository checks validate math delimiters, display-block boundaries, braces, environments, and known incompatible commands. The publishing audit also checks the actual GitHub previews for rendering errors and raw LaTeX outside intentional code examples. GitHub’s renderer can change independently of this repository.
 
-The Notion import retains blank-line-separated display equations rather than GitHub-only rendering assets. Verify native equation and diagram blocks after importing into Notion.
+The import builder converts the protected math fences to Notion-native display-equation delimiters with the TeX contents unchanged. Code and diagram fences are not converted. Verify native equation and diagram blocks after importing into Notion.

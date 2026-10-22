@@ -151,16 +151,16 @@ The language-centroid toy model assumes unit centroid directions, orthogonal uni
 **What:**
 A cross-encoder scores the concatenated query and passage.
 
-$$
+```math
 s(q,p)=f_{\theta}([q;p])
-$$
+```
 
 **What:**
 A bi-encoder scores two independently computed vectors.
 
-$$
+```math
 s(q,p)=E_Q(q)^{\top}E_P(p)
-$$
+```
 
 **Why:**
 $`E_P(p)`$ is independent of the current query and may be computed at index time. Its version includes weights, tokenizer, chunking, pooling and normalization, not just a model name. Query-independent document work can also exist in late-interaction architectures; the single-vector formula describes one particular factorization.
@@ -170,25 +170,25 @@ A width-$`768`$ passage vector must support future questions through the chosen 
 #### Corpus-depth arithmetic
 Use the approximate forward rule $`2P`$ FLOPs per processed token, with $`P=110\times10^6`$ parameters per BERT-base encoder, $`L_q=32`$ and $`L_p=128`$. These token lengths are stipulated independently of the prose description of a hundred-word passage. Joint attention, embedding/head details and serving overhead are omitted:
 
-$$
+```math
 W_{\mathrm{pair}}\approx2P(L_q+L_p)=35{,}200{,}000{,}000\ \mathrm{FLOP}.
-$$
+```
 
 
-$$
+```math
 W_q\approx2PL_q=7{,}040{,}000{,}000\ \mathrm{FLOP}.
-$$
+```
 
 With the full corpus count $`N=21{,}015{,}324`$, not a rounded $`21`$ million inside the calculation, the two online arithmetic proxies are:
 
-$$
+```math
 W_{\mathrm{cross}}\approx NW_{\mathrm{pair}}=7.397394048\times10^{17}\ \mathrm{FLOP}.
-$$
+```
 
 
-$$
+```math
 W_{\mathrm{bi,flat}}\approx W_q+2Nd=39{,}319{,}537{,}664\ \mathrm{FLOP}.
-$$
+```
 
 **Why:**
 The arithmetic ratio is approximately $`1.881353263\times10^7`$, about seven orders of magnitude. It excludes the bi-encoder's offline passage encoding, stored index, memory movement, top-$`k`$ selection and index traversal; it is not the query-latency ratio.
@@ -198,9 +198,9 @@ The arithmetic ratio is approximately $`1.881353263\times10^7`$, about seven ord
 **What:**
 For query $`q_i`$, a chosen positive $`p_i^+`$ and $`M_i`$ eligible negatives $`p_{i,j}^-`$, DPR uses a contrastive softmax over dot products. The following equation uses temperature one; a different temperature must rescale every logit consistently.
 
-$$
+```math
 L(q_i)=-\log\frac{\exp\bigl(E_Q(q_i)^{\top}E_P(p_i^+)\bigr)}{\exp\bigl(E_Q(q_i)^{\top}E_P(p_i^+)\bigr)+\sum_j\exp\bigl(E_Q(q_i)^{\top}E_P(p_{i,j}^-)\bigr)}
-$$
+```
 
 **Why:**
 The training objective encourages separately computed vectors to meet the supervision task. It does not recreate arbitrary query-conditioned token interaction at inference or guarantee relevance generalization; augmentation, labels, negatives and architecture still matter.
@@ -220,9 +220,9 @@ That division is approximately $`43{,}514.082635`$ times the $`0.05\,\mathrm s`$
 **Configuration 2:**
 A flat bi-encoder index occupies:
 
-$$
+```math
 N d(4\,\mathrm B)=64{,}559{,}075{,}328\,\mathrm B\approx64.559075328\,\mathrm{GB}.
-$$
+```
 
 Dot products cost $`2Nd=32{,}279{,}537{,}664`$ FLOPs, whose arithmetic division is $`94.939817\,\mathrm{\mu s}`$. A complete uncached payload pass at $`\mathcal B=2.0\times10^{12}\,\mathrm{B\,s^{-1}}`$ takes $`32.279538\,\mathrm{ms}`$ by division. The read/compute quotient ratio is exactly $`340`$ under these constants. This suggests a bandwidth bottleneck for this flat resident scan, not a measured universal limit. Halving $`d`$ halves these two work terms; it does not necessarily halve end-to-end latency. Doubling arithmetic throughput leaves the payload-read division unchanged, not every component of serving. Capacity, data placement, query encoding, selection, kernels and overhead require separate accounting.
 **Configuration 3:** An HNSW candidate stage may visit far fewer vectors, then a cross-encoder reranks $`k=100`$. The visited count and quality depend on data, graph parameters, filters and search settings; “a few thousand” is not an ANN guarantee.
@@ -236,9 +236,9 @@ Price nominal vector payload as $`Ndb`$ bytes per coordinate width $`b`$, with i
 #### Re-indexing when the model changes
 When the passage embedding function changes incompatibly, existing passage vectors no longer belong to the new scoring contract. Query-only updates can sometimes reuse a fixed passage index, and an explicitly valid vector-space transformation is another special case; validate compatibility rather than assuming every parameter edit forces re-encoding. For a full rebuild of $`500\times10^6`$ chunks at $`256`$ tokens, the encoding work proxy is:
 
-$$
+```math
 W_{\mathrm{reencode}}\approx2(110\times10^6)(256)(500\times10^6)=2.816\times10^{19}\ \mathrm{FLOP}.
-$$
+```
 
 Division by $`R`$ gives $`82{,}823.529412\,\mathrm s\approx23.006536\,\mathrm h`$ on one stipulated accelerator, or $`1.917211\,\mathrm h`$ on twelve only under perfect scaling. The width-$`768`$ fp32 payload is $`1.536\,\mathrm{TB}`$; keeping old and new payloads gives $`3.072\,\mathrm{TB}`$. Graphs, source data, replicas, build buffers and dual-write ingestion are additional. Version the tokenizer, chunking, encoder, pooling, normalization, any language centroids and search metric, then use a validated cutover.
 **Decision boundary:** A shadow change smaller than a well-specified uncertainty interval has not demonstrated a benefit, but is not proof of equivalence. Use paired query analysis, important cohorts, serving compatibility and rebuild cost rather than an unspecified “noise band.”
@@ -247,27 +247,27 @@ Division by $`R`$ gives $`82{,}823.529412\,\mathrm s\approx23.006536\,\mathrm h`
 **What:** A standard lexical BM25 sum includes terms present in the analyzed query and document. This chapter uses the positive guarded IDF convention from Chapter 18:
 Its inverse document frequency is:
 
-$$
+```math
 \mathop{\mathrm{IDF}}\nolimits_+(t)=\ln\!\left(1+\frac{N-n(t)+0.5}{n(t)+0.5}\right)=\ln\frac{N+1}{n(t)+0.5}.
-$$
+```
 
 **Why:**
 With fixed $`N`$ and $`0\le n(t)\le N`$, this guarded weight is positive, finite and decreases with frequency. Raw RSJ log odds and log odds plus one are other conventions, not algebraically the same formula. The examples below consistently use the guarded version; benchmark results are not recomputed from these toy weights.
 **Failure without overlap:** If every analyzed query term has zero frequency in a candidate, this lexical sum is zero, absent additional signals or boosts. Synonym expansion or a different analyzer can change the overlap; tuning term saturation alone cannot create it.
 On the $`21{,}015{,}324`$-passage corpus, $`n(t) = 3`$ gives:
 
-$$
+```math
 \mathop{\mathrm{IDF}}\nolimits_+(n=3)=\ln\frac{21{,}015{,}325}{3.5}\approx15.607999523.
-$$
+```
 
 At $`n(t)=100{,}000`$, $`\mathop{\mathrm{IDF}}\nolimits_+(t)\approx5.347832026`$, so the rare/frequent IDF ratio is approximately $`2.918565775`$. These are dimensionless scoring weights formed with natural logarithms, not measured mutual information or full-document BM25 ratios; term frequency and length factors also matter.
 #### Dense supervised exposure
 **Toy exposure model:** Suppose each positive training passage is sampled independently and uniformly from the corpus. Then training count $`T`$ gives expected term sightings $`Tn(t)/N`$. Real query-positive supervision is not uniform; pretraining, subwords, related terms and generalization also affect dense behavior.
 For $`T=58{,}880`$ training pairs and $`n(t)=3`$, that explicit toy model gives:
 
-$$
+```math
 \mathbb E[C_t]=\frac{(58{,}880)(3)}{21{,}015{,}324}\approx0.008405295.
-$$
+```
 
 Under the same independent-draw assumption, the probability of at least one sighting is $`1-(1-3/N)^{58{,}880}\approx0.008370070`$, about one in $`119.473314`$. An expectation alone is not that probability. With $`n(t)=100{,}000`$, expected count is approximately $`280.176504`$; this is not a measured count of useful supervised examples.
 **Why it can help:** Repeated useful patterns can receive more training support, but the count above does not prove a dense accuracy curve or a universal relation between frequency and competence.
@@ -282,9 +282,9 @@ Thakur et al. report BM25 as a strong zero-shot baseline that most dense retrie
 #### Enterprise support worked example
 The constructed support example has $`N=2\times10^6`$ documents and $`d=768`$. Assume the SSO-certificate query and the relevant SAML/signing-key passage share no terms after the specified analysis; the lexical sum is then zero. Its dense rank one is an assumed outcome, not a deduction from a paraphrase. For `ERR_SSL_5417 remediation`, assume the analyzer preserves the code as a searchable literal with document frequency four:
 
-$$
+```math
 \mathop{\mathrm{IDF}}\nolimits_+(\text{code})=\ln\frac{2{,}000{,}001}{4.5}\approx13.004580842.
-$$
+```
 
 For `remediation` at frequency $`200{,}000`$, guarded IDF is approximately $`2.302583093`$. The code's share of these two IDF weights is approximately $`13.004580842/(13.004580842+2.302583093)=84.957481\%`$, not necessarily its share of a document's BM25 score once frequency and length factors apply.
 If all four code-matching passages are relevant and the constructed BM25 top twenty includes all four, passage recall is $`100\%`$ and answer-hit rate is also $`100\%`$. That ranking is stipulated, not proved by IDF alone. For a clean comparison, suppose a dense neighborhood has $`1{,}800`$ candidate passages including those four, and chooses twenty uniformly without replacement. Expected passage recall is $`20/1{,}800\approx1.111111\%`$, but probability of at least one relevant result is $`1-\binom{1796}{20}/\binom{1800}{20}\approx4.374504\%`$. Counting distinct codes instead of passages would be a different sampling model.
@@ -299,23 +299,23 @@ Track lexical zero-overlap queries and semantic-only hits without equating eithe
 #### Margin form of the contrastive loss
 For temperature-one logits, let $`s^+`$ be the chosen positive score, $`s_j^-`$ the $`j`$th negative score, and $`\Delta_j=s^+-s_j^-`$. The same contrastive loss can be written in margin form:
 
-$$
+```math
 \mathcal L=\ln\!\left(1+\sum_{j=1}^{M}e^{-\Delta_j}\right).
-$$
+```
 
 For $`Z=1+\sum_j e^{-\Delta_j}`$, define the negative softmax probability $`w_j=e^{-\Delta_j}/Z`$. Score derivatives and the complete parameter gradient are:
 
-$$
+```math
 \frac{\partial\mathcal L}{\partial s_j^-}=w_j,\qquad \frac{\partial\mathcal L}{\partial s^+}=-\sum_jw_j.
-$$
+```
 
 
-$$
+```math
 \begin{aligned}
 g_j&=w_j\bigl(\nabla_\theta s_j^- -\nabla_\theta s^+\bigr),\\
 \nabla_\theta\mathcal L&=\sum_{j=1}^{M}g_j.
 \end{aligned}
-$$
+```
 
 **What:**
 A negative's unnormalized score weight is $`e^{-\Delta_j}`$. Its parameter-component norm is $`\lVert g_j\rVert=w_j\lVert\nabla_\theta(s_j^- -s^+)\rVert`$, so the margin alone is insufficient. It is not generally the gradient of an independent loss $`\mathcal L_j`$, because the normalizer couples all scores. If every score only shares one additive-shift parameter, the entire parameter gradient is zero despite nonzero score weights.
@@ -325,21 +325,21 @@ For margins eight and one, unnormalized weights are $`e^{-8}\approx0.00033546262
 #### Variance-optimal sampling
 Condition on parameters and a fixed complete negative pool, so $`g=\nabla f(\theta)=\sum_jg_j`$ is the exact gradient of that objective. Draw one index $`J`$ with probabilities $`p_j\ge0`$, $`\sum_jp_j=1`$, requiring $`p_j>0`$ whenever $`g_j\ne0`$. The importance estimator $`\widehat g=g_J/p_J`$ is unbiased. For an $`L_f`$-smooth objective and step $`\theta^\prime=\theta-\eta\widehat g`$, the conditional descent bound is:
 
-$$
+```math
 \mathbb E[f(\theta^\prime)\mid\theta]\le f(\theta)-\eta\lVert g\rVert_2^2+\frac{L_f\eta^2}{2}\mathbb E[\lVert\widehat g\rVert_2^2\mid\theta].
-$$
+```
 
 For that particular estimator, sampling controls the second moment. Cauchy–Schwarz yields:
 
-$$
+```math
 \mathbb E[\lVert\widehat g\rVert_2^2]=\sum_j\frac{\lVert g_j\rVert_2^2}{p_j}\ge\left(\sum_j\lVert g_j\rVert_2\right)^2.
-$$
+```
 
 When at least one component is nonzero, equality holds at the distribution below, with zero probability allowed for zero components. If all components are zero, any supported sampling rule has zero variance:
 
-$$
+```math
 p_j^*=\frac{\lVert g_j\rVert_2}{\sum_i\lVert g_i\rVert_2}.
-$$
+```
 
 Even with this result, an ANN-ranked top list is not the exact optimal sampling distribution. Norms include score Jacobians, while ANN typically ranks scores. Top-$`k`$ truncation drops nonzero-gradient support, and a list does not specify probabilities or importance correction. Moreover, evaluating $`g_j`$ for the fixed contrastive objective presumes its complete normalizer; replacing that denominator with a sampled one is generally not an unbiased full-softmax gradient. High-score mining is a useful heuristic motivated by informative examples, not an equality proved by the variance bound.
 **Claim limit:** The bound is for a fixed smooth objective with supported importance correction. Practical ANCE or sampled-softmax training can intentionally optimize a different sampled objective. Good retrieval quality is an empirical result, not a consequence of variance-optimality alone.
@@ -362,9 +362,9 @@ Here $`Z\approx1.453422411`$, loss $`\approx0.373921059`$ nats and summed negati
 #### Refresh cost and cadence
 Encoding a $`128`$-token passage has proxy $`2PL_p=2.816\times10^{10}`$ FLOPs. The MS MARCO refresh is $`2.4898573568\times10^{17}`$ FLOPs, or $`732.310987\,\mathrm s`$ by division at $`R`$. This excludes ANN construction, reading/tokenizing the corpus and writing vectors. For the baseline $`B`$ queries and $`2B`$ passages, training work is:
 
-$$
+```math
 W_0\approx6P(BL_q+2BL_p)=2.433024\times10^{13}\ \mathrm{FLOP}.
-$$
+```
 
 The baseline step division is $`0.071559529\,\mathrm s`$, so one refresh has the same encoder-work proxy as $`10{,}233.591435`$ baseline steps. At an interval of ten thousand steps, refresh adds approximately $`102.335914\%`$ to baseline training work, for a total factor $`2.023359`$.
 If each query gets one distinct extra mined passage used only in its own denominator, the additive-slot example instead encodes $`3B`$ passages: $`W_1\approx6P(BL_q+3BL_p)=3.514368\times10^{13}`$ FLOPs, or $`0.103363765\,\mathrm s`$ by division. A refresh then equals approximately $`7{,}084.794071`$ augmented steps. Replacing a passage already in the $`2B`$ pool avoids this extra encoding but does not add a $`256`$th negative to the original denominator. Specify the design before comparing cadence.
@@ -382,9 +382,9 @@ MS MARCO is reported to have $`502{,}939`$ training queries and $`8{,}841{,}823`
 #### InfoNCE: an information-bound certificate, not a capacity ceiling
 Let $`X,Y`$ be paired augmented views, with one positive from their joint distribution and $`K`$ negatives independently drawn from the appropriate marginal. Under the standard population InfoNCE sampling and critic assumptions, with expected loss $`\mathcal L_{\mathrm{NCE}}`$ in nats:
 
-$$
+```math
 I(X;Y)\ge\ln(K+1)-\mathcal L_{\mathrm{NCE}}.
-$$
+```
 
 **What:**
 Because the contrastive loss is nonnegative, the right-hand certificate cannot exceed $`\ln(K+1)`$ nats, or $`\log_2(K+1)`$ bits. This limits that certificate, not the actual mutual information or the encoder's capacity. Correlated, stale, mined or filtered negatives require checking the derivation rather than automatically importing the same IID bound.
@@ -393,9 +393,9 @@ For one positive per example in a $`B=128`$ view pool, there are $`127`$ negativ
 #### Activation cost versus a queue
 For a particular uncheckpointed half-precision implementation, the cited activation accounting per layer is $`s h(34+5as/h)`$ bytes, for token length $`s`$, hidden width $`h`$ and head count $`a`$. With twelve layers, define $`A(s)=12s h(34+5as/h)\,\mathrm B`$. This is implementation-specific accounting, not a universal physical-memory requirement; activation checkpointing, fused attention and replay change it. For $`h=768`$ and $`a=12`$:
 
-$$
+```math
 A(128)=51{,}904{,}512\,\mathrm B=51.904512\,\mathrm{MB},\qquad A(32)=10{,}764{,}288\,\mathrm B=10.764288\,\mathrm{MB}.
-$$
+```
 
 Retaining $`65{,}536`$ passage activation graphs by this accounting uses $`3{,}401{,}614{,}098{,}432\,\mathrm B=3.401614098432\,\mathrm{TB}`$. A width-$`768`$ fp32 key is $`768\times4=3{,}072\,\mathrm B`$; the same number of keys is $`201{,}326{,}592\,\mathrm B=201.326592\,\mathrm{MB}=192\,\mathrm{MiB}`$. The activation/key component ratio is exactly $`16{,}896`$. This does not compare total training memory: query and current-key activations, gradients, parameters, optimizer state and score matrices remain.
 **Trade-off:** Queued keys carry no retained encoder graph, so gradients do not flow through the historical key computations. MoCo also uses momentum-encoder keys rather than recomputing every negative with the current query encoder. This changes the gradient and temporal objective relative to a fully differentiable fresh large batch.
@@ -403,15 +403,15 @@ Easy negatives can individually receive small softmax weights, but many such ter
 #### MoCo timescales: a drift heuristic, not a stability theorem
 MoCo enqueues new key vectors and evicts older ones in FIFO order. For momentum $`0\le m<1`$, the key encoder follows the query encoder by an exponential moving average:
 
-$$
+```math
 \theta_k\leftarrow m\theta_k+(1-m)\theta.
-$$
+```
 
 With $`B`$ new keys per step, queue turnover spans roughly $`K/B`$ steps, with an indexing-dependent one-batch difference in the oldest age. The EMA weight window $`1/(1-m)`$ is a useful heuristic. Its steady-state mean weight age is $`m/(1-m)`$ steps; for $`0<m<1`$, its exponential-decay timescale is $`-1/\ln m`$. A common design comparison is:
 
-$$
+```math
 \frac{K}{B}\lesssim\frac{1}{1-m}\qquad\text{(heuristic only)}.
-$$
+```
 
 **Why monitor drift:** Queue contents should remain comparable with current queries. Actual embedding drift depends on the training trajectory, optimizer and normalization, not solely on the EMA weight distribution.
 The timescale comparison is neither necessary nor sufficient for convergence. With constant encoder parameters, even $`m=0`$ and a long queue have no representation staleness. Conversely, a numerically long momentum window does not guarantee compatible embeddings during a rapidly changing trajectory.
@@ -419,15 +419,15 @@ The timescale comparison is neither necessary nor sufficient for convergence. Wi
 #### Temperature and a bounded-cosine loss floor
 For unit-norm vectors with cosine logits divided by $`\tau>0`$, a positive-minus-negative cosine margin is at most two. With $`K`$ negatives, the per-example loss therefore obeys:
 
-$$
+```math
 \mathcal L_{\mathrm{NCE}}\ge\ln\left(1+Ke^{-2/\tau}\right).
-$$
+```
 
 At $`K=65{,}536`$, this optimistic floor is approximately $`9.090468`$ nats for $`\tau=1`$, and $`2.558976\times10^{-8}`$ nats for $`\tau=0.07`$. Simultaneous extreme margins may not be attainable across an entire dataset. For this floor to be no greater than $`\varepsilon=0.01`$, the exact temperature condition is:
 
-$$
+```math
 \tau\le\frac{2}{\ln\!\left(K/(e^{\varepsilon}-1)\right)}\approx0.127465494\quad(K=65{,}536,\ \varepsilon=0.01).
-$$
+```
 
 The expression $`2/\ln(100K)\approx0.127424855`$ replaces $`e^{0.01}-1`$ with $`0.01`$ and is a slightly stricter small-loss approximation for the floor. Neither threshold guarantees successful optimization or good retrieval; the floor is only an optimistic necessary feasibility check for reaching that loss. The bounded-margin argument does not apply unchanged to unnormalized dot products. Trying $`\tau=0.01`$ for sharp distillation is a source heuristic, not the only valid use of that temperature.
 **Failure without this distinction:** Loss can reflect the score scale and geometry rather than retrieval quality. Very small temperature multiplies score derivatives by $`1/\tau`$, can emphasize noisy or false negatives, and needs numerical and validation checks; a lower training loss alone is not evidence of better ranking.
@@ -458,27 +458,27 @@ Keep a lexical route for native-language exact matches and language-independent 
 #### Language centroid model
 The following is a toy unit-norm embedding decomposition, not a claim that a real multilingual encoder has a separable language subspace. For text $`t`$ in language $`l`$:
 
-$$
+```math
 e(t)=\alpha\mu_l+\sqrt{1-\alpha^2}\,r(t),\qquad0\le\alpha<1.
-$$
+```
 
 Assume unit language directions $`\mu_l`$, unit semantic residuals $`r(t)`$ orthogonal to every language direction, a common amplitude $`\alpha`$, and $`\mathbb E[r(t)\mid l]=0`$. Then $`\mathbb E[e(t)\mid l]=\alpha\mu_l`$, not $`\mu_l`$. The language component has norm $`\alpha`$ and squared norm share $`\alpha^2`$. For query language $`a`$ and document language $`b`$:
 
-$$
+```math
 e(q)^{\mathsf T}e(d)=\alpha^2\mu_a^{\mathsf T}\mu_b+(1-\alpha^2)s,\qquad s=r(q)^{\mathsf T}r(d).
-$$
+```
 
 For a cross-language positive, let centroid-direction cosine $`c=\mu_a^{\mathsf T}\mu_b\in[-1,1]`$, semantic score $`s^+`$, and a same-query-language distractor have semantic score $`s^-`$. If $`\Delta s=s^+-s^->0`$, the positive outranks that distractor exactly when:
 
-$$
+```math
 (1-\alpha^2)\Delta s>\alpha^2(1-c).
-$$
+```
 
 Equivalently:
 
-$$
+```math
 \alpha^2<\frac{\Delta s}{\Delta s+1-c}.
-$$
+```
 
 For $`s^+=0.9`$, $`s^-=0.1`$ and $`c=0.5`$, the exact squared-amplitude threshold is $`0.8/1.3\approx0.615384615`$, so $`\alpha<\sqrt{0.8/1.3}\approx0.784464541`$. At $`\alpha=0.9`$, these specified examples score $`0.81(0.5)+0.19(0.9)=0.576`$ for the cross-language answer and $`0.81+0.19(0.1)=0.829`$ for the same-language distractor. They are the given scores, not global best/worst bounds. For $`c=0`$, the amplitude threshold is exactly $`2/3\approx0.666666667`$, not an exact cutoff of $`0.67`$.
 **Model-specific failure:** At $`\alpha=0.9,c=0.5`$, even a cross-language residual score of one gives at most $`0.81(0.5)+0.19=0.595`$, while a same-language residual score of minus one gives at least $`0.81-0.19=0.620`$. Thus no residual semantic gap can overcome language in this particular toy case. More generally $`\Delta s\le2`$; this is not a universal diagnosis of multilingual encoders or proof that centering fixes them.
@@ -529,18 +529,18 @@ flowchart TD
 > Figure $`20.1`$: At $`N=21{,}015{,}324`$, the full joint-encoding proxy is $`7.397394048\times10^{17}`$ FLOPs, giving $`36.261736`$ minutes by the stipulated throughput. The fp32 vector payload is $`64.559075328\,\mathrm{GB}`$; reading it at $`2\,\mathrm{TB\,s^{-1}}`$ gives $`32.279538\,\mathrm{ms}`$, not measured bi-encoder response time. Reranking one hundred candidates has proxy $`3.52\times10^{12}`$ FLOPs, giving $`10.352941\,\mathrm{ms}`$. These are differently scoped work quotients, not a matched latency experiment. Dashed paths are precomputed; solid paths are request-dependent.
 ### Figure 20.2
 
-$$
+```math
 \begin{array}{c|rr}
  n(t)&\text{guarded BM25 IDF}&\mathbb E[\text{toy training sightings}]\\\hline
  3&15.607999523&0.008405295\\
  10^5&5.347832026&280.176503584
 \end{array}
-$$
+```
 
 
-$$
+```math
 \frac{d}{dn}\ln\frac{N+1}{n+0.5}=-\frac{1}{n+0.5}<0,\qquad\frac{d}{dn}\left(\frac{Tn}{N}\right)=\frac{T}{N}>0.
-$$
+```
 
 > Figure $`20.2`$: Use $`N=21{,}015{,}324`$ and $`T=58{,}880`$ uniform IID training-passage draws. Guarded IDF decreases with document frequency and expected sightings increase. Treating integer frequency as continuous gives the displayed derivatives. IDF and counts have different units: their numerical intersection near $`n\approx3{,}143.55`$ is not a dense/sparse performance boundary. These toy trends do not prove either model dominates any frequency interval, or that their error sets barely overlap.
 ### Figure 20.3
@@ -582,23 +582,23 @@ flowchart TD
 > Figure $`20.4`$: Two document views supply proxy positives, not guaranteed semantic labels. A $`B=128`$ one-positive in-batch pool has $`127`$ negatives; a queue with $`K=65{,}536`$ has $`65{,}537`$ logits including the positive. Count terms are seven versus approximately $`16.000022`$ bits, but the population InfoNCE certificate needs its sampling assumptions. Queued fp32 payload is $`201.326592\,\mathrm{MB}`$ versus $`3.401614098432\,\mathrm{TB}`$ for retaining that many passage activation graphs under the particular accounting. This is not all-in memory, matched fresh gradients or a proved learned-information gain. At $`B=128,m=0.999`$, span $`512`$ versus weight window $`1{,}000`$ is a heuristic only.
 ### Figure 20.5
 
-$$
+```math
 \begin{array}{c}
  d^+\text{ in English},\quad q,d^-\text{ in Swahili},\\
  \lVert\mu_{\mathrm{en}}\rVert=\lVert\mu_{\mathrm{sw}}\rVert=1,\quad
  c=\mu_{\mathrm{en}}^{\mathsf T}\mu_{\mathrm{sw}}=0.5,\\
  \bar e_l=\alpha\mu_l\quad\text{under the zero-mean-residual assumption}.
 \end{array}
-$$
+```
 
 
-$$
+```math
 \begin{aligned}
 \alpha&=0.9,\quad s^+=0.9,\quad s^-=0.1,\\
 e(q)^{\mathsf T}e(d^-)&=0.81+0.19(0.1)=0.829,\\
 e(q)^{\mathsf T}e(d^+)&=0.81(0.5)+0.19(0.9)=0.576.
 \end{aligned}
-$$
+```
 
 Subtract the actual mean $`\bar e_l=\alpha\mu_l`$. Under the toy assumptions, $`e(t)-\bar e_l=\sqrt{1-\alpha^2}\,r(t)`$, so centered dot product is $`(1-\alpha^2)s`$ and, after renormalization, cosine is $`s`$. Do not multiply an already estimated mean by $`\alpha`$ again.
 ```mermaid

@@ -110,11 +110,11 @@ Why the failure appears:
 - A chain needs facts $`f_1,\ldots,f_h`$. Let $`E_j`$ mean that the selected context contains the evidence for fact $`j`$.
 - The joint evidence probability is a conditional chain product. If $`\rho_j`$ instead denotes marginal recall, replacing the conditional factors by $`\rho_j`$ requires independence:
 
-$$
+```math
 \Pr\!\left(\bigcap_{j=1}^{h}E_j\right)
 =\Pr(E_1)\prod_{j=2}^{h}\Pr(E_j\mid E_1,\ldots,E_{j-1})
 \;\overset{\text{independent }E_j}{=}\;\prod_{j=1}^{h}\rho_j.
-$$
+```
 
 For two independent evidence events with $`\rho_1=\rho_2=0.8`$, joint coverage is $`0.8^2=0.64`$. Correlated retrieval errors need not give this value. A missing bridge can lower recall, but absence of a literal term does not prove that dense retrieval, links or a broader first result cannot recover the second document.
 Failure without it:
@@ -141,30 +141,30 @@ What:
 - In a toy service graph, one document maps billing-api to prod-ledger-3; another maps prod-ledger-3 to eu-central-1. The bridge $`e`$ is in both documents but absent from the original query and final region answer.
 - Let $`r_1`$ be first-document recall and $`r_{2\mid1}`$ second-document recall conditional on obtaining the first. One-shot joint recall is then a chain-rule product, without an independence assumption:
 
-$$
+```math
 R_{\mathrm{one\text{-}shot}}=r_1r_{2\mid1}.
-$$
+```
 
 - ITER-RETGEN alternates retrieval and generation:
 
-$$
+```math
 D_1=\mathop{\mathrm{RET}}\nolimits(q,D;k).
-$$
+```
 
 
-$$
+```math
 y_1=\mathop{\mathrm{GEN}}\nolimits(q,D_1).
-$$
+```
 
 
-$$
+```math
 D_t=\mathop{\mathrm{RET}}\nolimits(q\oplus y_{t-1},D;k).
-$$
+```
 
 
-$$
+```math
 y_t=\mathop{\mathrm{GEN}}\nolimits(q,D_t),\qquad t=2,\ldots,T.
-$$
+```
 
 Why:
 - The original question anchors generation while the previous draft augments retrieval. Joining a draft can surface a bridge, but can also amplify a hallucinated bridge; validate the resulting evidence.
@@ -176,13 +176,13 @@ Failure without it:
 Cost and complexity:
 For full prompt replay, fixed $`Q`$ and $`C`$, and $`b`$ retained generated tokens per prior round, distinguish three prompt-position ledgers. The accumulating external-token ledger excludes those retained outputs; adding them changes the total:
 
-$$
+```math
 \begin{aligned}
 P_{\mathrm{replace}}(T)&=T(Q+kC),\\
 P_{\mathrm{acc,external}}(T)&=TQ+kC\frac{T(T+1)}2,\\
 P_{\mathrm{acc,history}}(T)&=TQ+kC\frac{T(T+1)}2+b\frac{T(T-1)}2.
 \end{aligned}
-$$
+```
 
 If $`D_{h+1}\approx D_h`$, stable retrieval is a possible stopping signal, not a proof of a fixed point. Stochastic decoding, changed drafts and retrieval ties can still change later states or create cycles. An extra round still pays for retrieval and generation, and replacement can lose earlier supporting passages.
 Worked example:
@@ -200,15 +200,15 @@ Practice decisions:
 What:
 For a deliberately simplified $`h`$-hop chain, let $`p_{\mathrm{on}}`$ be conditional retrieval success when the subject is named, $`p_{\mathrm{off}}`$ the conditional rate when it is not, and $`a`$ correct bridge extraction conditional on successful evidence. If one-shot is on-subject only for the first hop and these rates stay constant along successful paths:
 
-$$
+```math
 P_{\mathrm{one\text{-}shot}}=p_{\mathrm{on}}p_{\mathrm{off}}^{h-1}.
-$$
+```
 
 A recursive loop that correctly names each next subject has the following successful-path probability under the same stationary conditional-rate model, with no retries, alternate paths or repair. It is not yet the final answer probability:
 
-$$
+```math
 P_{\mathrm{rec}}=p_{\mathrm{on}}^h a^{h-1}.
-$$
+```
 
 Why:
 - Make the example unambiguous: “Who succeeded the U.S. president in office when the Soviet Union dissolved?” The original “who was president after it dissolved?” could mean George H. W. Bush, not necessarily Bill Clinton.
@@ -242,9 +242,9 @@ Practice decisions:
 What:
 FLARE drafts the next sentence $`s_t`$ of $`m`$ tokens, using ordinary model probabilities $`p_i`$ for its drafted tokens under a defined decoding distribution. These are not probabilities that the tokens are true. If no token crosses the threshold, accept the draft; otherwise retrieve and regenerate the affected sentence.
 
-$$
+```math
 \text{retrieve}\quad\Longleftrightarrow\quad\min_{1\le i\le m}p_i<\theta.
-$$
+```
 
 On a trigger, remove or mask uncertain guessed spans when constructing the query, retrieve passages and regenerate $`s_t`$; discard the fired draft, not every non-triggering draft. Dropping the retrieved passages afterward changes context and may invalidate a cached suffix. Charge that context management where it occurs.
 Why:
@@ -252,18 +252,18 @@ A minimum-token gate is sensitive to a single uncertain entity, but rare correct
 Failure without it:
 With twenty-four token probabilities of $`0.95`$ and one of $`0.10`$, the arithmetic mean is $`0.916`$. It can hide one weak token; neither the mean nor the minimum is a proof of factuality.
 
-$$
+```math
 \bar p=\frac{24(0.95)+0.10}{25}=0.916.
-$$
+```
 
 Using natural-log token loss, the same draft has perplexity
 
-$$
+```math
 \begin{aligned}
 H&=-\frac{24\ln0.95+\ln0.10}{25}\approx0.1413449663,\\
 \mathop{\mathrm{PPL}}\nolimits&=\exp(H)\approx1.151821919.
 \end{aligned}
-$$
+```
 
 For all twenty-five probabilities equal to $`0.95`$, $`H=-\ln0.95\approx0.0512932944`$ and $`\mathop{\mathrm{PPL}}\nolimits=1/0.95\approx1.052631579`$. The relative perplexity gap is about $`9.423082\%`$. This demonstrates averaging dilution, not a calibrated factuality threshold; rounded exponents must not be connected by exact equality.
 Implicit and explicit queries:
@@ -279,13 +279,13 @@ Cost and complexity:
 - Six explicit twelve-token query generations add $`72\tau\approx300.895522\,\mathrm{ms}`$, for $`2{,}146.890255\,\mathrm{ms}`$, before their extra input processing. These partial ledgers omit shared answer-history processing, cache changes and other serving overhead; they are not complete wall-clock latencies.
 Break-even criterion:
 
-$$
+```math
 \begin{aligned}
 L_{\mathrm{every}}&=n(S+R),\\
 L_{\mathrm{implicit}}&=nS+fn(S+R),\\
 f^\star&=\frac{R}{S+R},\qquad S=m\tau.
 \end{aligned}
-$$
+```
 
 - The break-even assumes every non-triggering draft is reused, each triggered draft adds one equal-length regeneration, and all other costs match. An explicit-query cost $`d`$ per trigger changes it to $`f^\star=R/(S+R+d)`$.
 - Here $`f^\star\approx0.294384128`$. Four triggers in twelve sentences are above it, so implicit FLARE is approximately $`69.204565\,\mathrm{ms}`$ slower than every-sentence retrieval in these components, while using one third of the searches and raw injected tokens.
@@ -305,9 +305,9 @@ What:
 Why:
 For a binary gate, let $`p`$ be useful-local-evidence presence, $`r`$ detection probability given a local miss, $`f`$ false-discard probability given a useful local hit, and $`\alpha,\alpha_0`$ useful-web-evidence presence after those two types of escalation. Assume constant answer accuracy $`g`$ when useful evidence is present and zero otherwise. Then the answer-accuracy change is
 
-$$
+```math
 \Delta A=g\bigl[(1-p)r\alpha-pf(1-\alpha_0)\bigr].
-$$
+```
 
 - The bracket alone is a change in useful-evidence presence under this model, not answer accuracy unless $`g=1`$. The first term is rescued misses and the second useful hits lost after false discard and failed web recovery.
 - Sensitivity to $`f`$ relative to sensitivity to missed detection $`1-r`$ is $`p(1-\alpha_0)/[(1-p)\alpha]`$. At $`p=0.72`$, $`\alpha=0.60`$ and $`\alpha_0=0.50`$, it is $`2.142857`$, not $`2.5`$; it depends on the web rates, not $`p`$ alone.
@@ -332,15 +332,15 @@ Practice decisions:
 What:
 Self-RAG extends the generator vocabulary with learned reflection groups: Retrieve decisions, IsRel relevance, IsSup support and IsUse ordinal usefulness ratings. For a specified desired token $`r_G^\star`$ in group $`G`$, normalize its probability within that group, with a positive denominator:
 
-$$
+```math
 s_G=\frac{p_\theta(r_G^\star\mid\text{current context})}{\sum_{r\in G}p_\theta(r\mid\text{current context})},\qquad\sum_{r\in G}p_\theta(r\mid\text{current context})>0.
-$$
+```
 
 For $`K`$ passage-conditioned candidate segments, a schematic decode-time ranking combines segment likelihood with weighted reflection scores. Specify the target reflection token or rating expectation used in each group; IsUse can be an expected ordinal score rather than an argmax token. One illustrative score is
 
-$$
+```math
 f\!\left(\hat y_t^{(i)}\right)=\log p_\theta\!\left(\hat y_t^{(i)}\mid x,d_i,y_{<t}\right)+\sum_G w_Gs_G^{(i)}.
-$$
+```
 
 The weights $`w_G`$ are decode-time choices. Group-normalized model scores are not automatically calibrated truth probabilities. Use a consistent sequence-likelihood or length-normalized convention across candidates; otherwise unequal segment lengths can distort the ranking. This schematic is not a claim that every Self-RAG implementation uses exactly this score.
 Why:
@@ -368,19 +368,19 @@ Why GRPO:
 - For an unsharded $`7`$-billion-parameter bf16 critic under the specified AdamW accounting, weights and gradients are $`14\,\mathrm{GB}`$ each, while fp32 master weights and two fp32 moments are $`28\,\mathrm{GB}`$ each. Total training state is $`112\,\mathrm{GB}`$, excluding activations, caches, actor and reference models.
 - This is not unavoidable PPO critic memory: critic size, shared trunks, sharding, optimizer precision and offload change it. Define the population-standard-deviation group advantage as follows, setting it to zero for an exactly constant-reward group:
 
-$$
+```math
 \hat A_i=\begin{cases}(r_i-\mu)/\sigma,&\sigma>0,\\0,&\sigma=0.\end{cases}
-$$
+```
 
 
-$$
+```math
 \mu=\frac1G\sum_{j=1}^{G}r_j.
-$$
+```
 
 
-$$
+```math
 \sigma=\sqrt{\frac1G\sum_{j=1}^{G}(r_j-\mu)^2}.
-$$
+```
 
 - For binary rewards and $`c`$ successes, let $`\hat p=c/G`$ be the empirical group success fraction, distinct from a true sampling probability. If $`0<c<G`$, success advantage is $`\sqrt{(1-\hat p)/\hat p}`$ and failure advantage is $`-\sqrt{\hat p/(1-\hat p)}`$ under the population variance above.
 - At $`G=5`$ with one success, advantages are $`+2`$ and four copies of $`-0.5`$. With two successes, the positive value is $`\sqrt{1.5}\approx1.224745`$ and the negative value is $`-\sqrt{2/3}\approx-0.816497`$, with $`\sigma=\sqrt{0.24}\approx0.489898`$.
@@ -388,9 +388,9 @@ $$
 Failure without safeguards:
 If every reward is identical, these reward advantages are zero. This eliminates the reward-advantage term, not necessarily the entire training gradient: KL regularization, entropy, auxiliary losses, weight decay or optimizer state can still cause updates. For conditionally IID binary-reward rollouts with true success probability $`\pi`$, the probability of a constant-reward group is
 
-$$
+```math
 P_{\mathrm{constant}}(\pi,G)=\pi^G+(1-\pi)^G.
-$$
+```
 
 - At $`G=5`$, constant-reward probabilities are $`0.0625`$ for $`\pi=0.5`$, $`0.5905`$ for $`\pi=0.9`$ and $`0.77378125`$ for $`\pi=0.95`$. At $`\pi=0.9`$, $`G=16`$ gives approximately $`0.185302019`$. Correlated samples or nonbinary total rewards need a different calculation.
 - An $`810`$-token transcript with $`40`$ prompt, $`170`$ policy-generated and $`600`$ retrieved tokens has a retrieved fraction $`600/810\approx74.074074\%`$.
@@ -425,9 +425,9 @@ Failure and crossover:
 - Splitting initial prefill already saves $`1{,}080.876702-205.570839=875.305864\,\mathrm{ms}`$ on the ideal critical path. Net non-loop overhead here is therefore only $`\Delta_0\approx7.674998\,\mathrm{ms}`$, before other scheduling differences.
 - Let $`W_s^{\mathrm{mono}}`$ and $`W_s^{\mathrm{agent}}`$ denote additional adaptive follow-up durations for source $`s`$ under their respective context schedules. If those follow-ups serialize in the monolith but overlap across agents, the conditional crossover is
 
-$$
+```math
 \sum_s W_s^{\mathrm{mono}}-\max_s W_s^{\mathrm{agent}}>\Delta_0.
-$$
+```
 
 - In the further simplification of equal per-round cost $`c`$ and $`n_s`$ additional follow-ups per source, this becomes $`c(\sum_s n_s-\max_s n_s)>\Delta_0`$. Initial retrieval waits that can already run concurrently in either architecture must not be counted as saved serial follow-ups.
 - The former “more than $`1.08`$ rounds” threshold follows only from separately ignoring the initial prefill advantage and taking $`\Delta_0=882.980862\,\mathrm{ms}`$, $`c=815\,\mathrm{ms}`$: the quotient is $`1.083412`$. It is not the crossover for the worked context-splitting scenario or a universal requirement for agents.
@@ -451,9 +451,9 @@ Practice decisions:
 What:
 Let $`\pi_h`$ be a stipulated traffic fraction requiring $`h`$ hops. In a no-retry toy model, every required hop must succeed with constant conditional retrieval rate $`p_{\mathrm{on}}`$ and bridge rate $`a`$. If paths requiring more than $`T`$ hops cannot be discovered within cap $`T`$, cumulative path-discovery coverage is
 
-$$
+```math
 C(T)=\sum_{h\le T}\pi_h p_{\mathrm{on}}^h a^{h-1}.
-$$
+```
 
 - Use the source’s illustrative depth mixture $`(0.55,0.30,0.12,0.03)`$, with $`p_{\mathrm{on}}=0.85`$ and $`a=0.90`$. Treat this as a scenario input, not a traffic measurement independently established here.
 - For $`T=1,\ldots,5`$, coverage is $`0.4675`$, $`0.662575`$, $`0.72226795`$, $`0.7336842267`$ and $`0.7336842267`$. Added coverage is $`0.195075`$, $`0.05969295`$, $`0.0114162767`$ and zero.
@@ -464,20 +464,20 @@ Dilution and accuracy:
 - With $`k=5`$, $`\mu=2.5`$, $`\Phi(2.5)\approx0.993790335`$, each extra round multiplies $`u`$ by $`\Phi(2.5)^5\approx0.969334886`$, a $`3.066511\%`$ relative utilization tax in this toy.
 - Let $`m_{\mathrm{floor}}=0.31`$ be fallback correctness when the discovered evidence is not used. Assuming usable evidence yields correctness one and otherwise this fixed floor, the illustrative answer accuracy is
 
-$$
+```math
 A(T)=m_{\mathrm{floor}}+(1-m_{\mathrm{floor}})C(T)u(T).
-$$
+```
 
 For $`C(T-1)>0`$, $`m_{\mathrm{floor}}<1`$ and the stated multiplicative utilization model, adding a round improves this toy accuracy exactly when
 
-$$
+```math
 \frac{C(T)-C(T-1)}{C(T-1)}>\Phi(\mu)^{-k}-1=\exp(k\beta_{\mathrm d})-1\approx k\beta_{\mathrm d}.
-$$
+```
 
 
-$$
+```math
 \beta_{\mathrm d}=-\ln\Phi(\mu).
-$$
+```
 
 - Here $`\beta_{\mathrm d}\approx0.006229025486`$. The exact relative-coverage threshold is $`3.163521\%`$; the first-order approximation $`k\beta_{\mathrm d}`$ is $`3.114513\%`$. Do not interchange them as exact values.
 - Relative coverage gains for rounds two, three and four are approximately $`41.727273\%`$, $`9.009237\%`$ and $`1.580615\%`$. The first two beat the exact threshold; the fourth does not.
@@ -486,13 +486,13 @@ Latency and economic stop:
 - Build one consistent full-replay ledger: query $`Q=200`$, $`k=5`$ chunks of $`200`$ tokens, retrieval $`83\,\mathrm{ms}`$ per round, $`30`$ generated reasoning tokens per round and an additional $`80`$-token final reader output.
 - Round $`t`$ processes $`200+1{,}000t+30(t-1)`$ prompt positions. The final reader processes $`200+1{,}000T+30T`$. This includes prior generated reasoning wherever it is replayed; it is not just an external-document token count.
 
-$$
+```math
 \begin{aligned}
 P_{\mathrm{acc}}(T)&=200(T+1)+1{,}000\frac{T(T+3)}2+30\frac{T(T+1)}2,\\
 \Lambda_{\mathrm{acc}}(T)&=83T+\frac{2N}{F}(1{,}000)P_{\mathrm{acc}}(T)+\tau(30T+80)
 \quad\text{in milliseconds}.
 \end{aligned}
-$$
+```
 
 - Here $`2N/F`$ is in seconds per position, hence the explicit $`1{,}000`$ converts to milliseconds; $`\tau`$ is already in milliseconds. Attention, tool variability and queuing remain omitted. Full latency components for caps one through five are approximately $`642.760316`$, $`985.368745`$, $`1{,}370.388938`$, $`1{,}797.820896`$ and $`2{,}267.664618\,\mathrm{ms}`$.
 - Marginal costs for rounds two through five are $`342.608428`$, $`385.020193`$, $`427.431958`$ and $`469.843723\,\mathrm{ms}`$. This replaces the conflicting source formula/table ledgers rather than mixing their rates.

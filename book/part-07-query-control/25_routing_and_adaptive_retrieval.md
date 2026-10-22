@@ -10,16 +10,16 @@ Always retrieving scores $`\alpha+\gamma=70\%`$; answering closed-book scores $`
 The hypothetical gate skips retrieval on $`30\%`$ of all questions. Its skips rescue six percentage points from $`\beta`$ and lose three percentage points from $`\gamma`$. These are fractions of the entire workload, not conditional percentages of skipped questions.
 The resulting accuracy is
 
-$$
+```math
 A_g=0.70+0.06-0.03=0.73=73\%.
-$$
+```
 
 The net gain recovers $`3/10=30\%`$ of the outcome-oracle's ten-percentage-point headroom, not one third. Skips in $`\alpha`$ or $`\delta`$ change cost but not this paired score.
 At $`100{,}000`$ daily queries, always using a $`2{,}200`$-token prompt processes $`220\times10^6`$ prompt tokens. If the skipped queries instead use $`200`$ tokens, the daily total is
 
-$$
+```math
 T_g=70{,}000(2{,}200)+30{,}000(200)=160\times10^6\ \text{prompt tokens}.
-$$
+```
 
 Prompt-token work falls by $`60/220\approx27.272727\%`$, while retrieval calls fall by $`30\%`$. Neither percentage is automatically the reduction in total serving cost or latency.
 ### 3. Why the classifier saves time
@@ -28,11 +28,11 @@ Charging a separately stipulated $`2\,\mathrm{ms}`$ classifier to every query le
 ### 4. Why the confidence check can cost more than it saves
 For the compared confidence implementation, a thirty-token draft incurs $`125.373134\,\mathrm{ms}`$ of modeled weight-stream work before every decision. In the no-reuse comparison, the draft is additional to the common answer-generation budget. Thus
 
-$$
+```math
 \Delta t_{\mathrm{saved}}
 \approx49.605882-125.373134
 =-75.767252\,\mathrm{ms}.
-$$
+```
 
 That implementation is approximately $`76\,\mathrm{ms}`$ slower per query under the stated proxy. A draft reused as the final answer on skipped queries changes the comparison; discarded drafts, extra prefill, cache validity and answer length must be accounted for explicitly. Token-logit, hidden-state and pre-answer control-token gates have different timing.
 ### 5. Use one reconciled set of numbers
@@ -191,9 +191,9 @@ Distinguish an oracle over conditional expected accuracies from an oracle that s
 #### What it is
 Let $`p(q)=\Pr(B=1\mid q)`$ and $`r(q)=\Pr(R=1\mid q)`$ be closed-book and retrieval-branch correctness probabilities for fixed system versions and a stated scoring rule. Let $`g(q)\in\{0,1\}`$ choose retrieval. If the gate uses additional features, condition both correctness models on that same available information. With branch randomness averaged under the prescribed decoding law,
 
-$$
+```math
 A(g)=\mathbb E_q\!\left[g(q)r(q)+(1-g(q))p(q)\right].
-$$
+```
 
 Always retrieving has expected accuracy $`\mathbb E[r]`$ and never retrieving has $`\mathbb E[p]`$. An oracle that knows the conditional means achieves $`A_{\mathrm{mean}}^\star=\mathbb E[\max(p,r)]`$; its gain is $`\mathbb E[(p-r)_+]`$, where $`(u)_+=\max(u,0)`$.
 For a specified joint pairing of realized binary outcomes, define $`\alpha=\Pr(B=1,R=1)`$, $`\beta=\Pr(B=1,R=0)`$, $`\gamma=\Pr(B=0,R=1)`$ and $`\delta=\Pr(B=0,R=0)`$. An outcome-clairvoyant oracle reaches $`A_{\mathrm{outcome}}^\star=\alpha+\beta+\gamma`$ and gains exactly $`\beta`$ over always retrieving. In general $`A_{\mathrm{mean}}^\star\le A_{\mathrm{outcome}}^\star`$; equality is not automatic. For example, with the same observable input and independent branches each correct with probability $`1/2`$, the two ceilings are $`1/2`$ and $`3/4`$. A real gate cannot observe future decoding outcomes. The cell-based examples below concern fixed paired outcomes; their attainable accuracy must still be measured.
@@ -214,9 +214,9 @@ Evaluate both branches on representative production queries, retaining paired ou
 #### What it is
 Let binary criteria $`a_{\mathrm{int}}`$, $`a_{\mathrm{know}}`$, $`a_{\mathrm{time}}`$ and $`a_{\mathrm{self}}`$ indicate external-knowledge intent, need for world knowledge, time sensitivity and sufficient stable self-knowledge. Under this chosen UAR policy, the retrieval decision is
 
-$$
+```math
 y_{\mathrm{ret}}=a_{\mathrm{int}}\land a_{\mathrm{know}}\land\bigl(a_{\mathrm{time}}\lor\neg a_{\mathrm{self}}\bigr).
-$$
+```
 
 First skip if external intent is absent; otherwise skip if no world knowledge is needed. Retrieve for a time-sensitive request. For a stable request, skip only if the self-knowledge criterion is positive. This tree is one implementation of the Boolean rule; it prioritizes freshness over self-knowledge. Its bits are predictions whose errors can still produce a bad decision.
 #### Why it exists
@@ -227,11 +227,11 @@ An intent-only gate may retrieve roadmap text for a limerick. A self-knowledge-o
 A probe with input width $`4{,}096`$, hidden width $`512`$ and two logits has $`4{,}096(512)+512(2)=2{,}098{,}176`$ matrix weights. Including $`512+2`$ biases gives $`2{,}098{,}690`$ parameters. At two FLOPs per multiply-accumulate, its linear-layer work is $`4{,}196{,}352`$ FLOPs; four probes use $`16{,}785{,}408`$ FLOPs, omitting nonlinearities and other overhead. A 7B forward-token proxy is $`14\times10^9`$ FLOPs, so the four-probe arithmetic ratio is $`0.001198958`$, or $`0.119896\%`$ of that one-token work—not of end-to-end latency. For scale, acquiring a $`200`$-token hidden state with the same generator has a $`2.8\times10^{12}`$-FLOP prefill proxy, $`8.235294\,\mathrm{ms}`$ of arithmetic; whether it is incremental depends on the actual reuse path.
 For a serial cascade, let $`c_i`$ be gate evaluation cost and $`p_i=\Pr(\text{termination at }i\mid\text{gate }i\text{ is reached})`$. With deterministic costs, the chain rule gives
 
-$$
+```math
 \mathbb E[C_{\mathrm{serial}}]
 =\sum_{i=1}^{n}c_i\Pr(\text{reach }i)
 =\sum_{i=1}^{n}c_i\prod_{j<i}(1-p_j).
-$$
+```
 
 Conditional termination rates make this expectation valid without independence, provided they are measured for the actual order. They cannot in general be reused unchanged after reordering correlated gates. For interchangeable terminal predicates that preserve the same overall verdict, compare two candidates after a common prefix. If their stopping probabilities under that prefix are $`q_i,q_j`$, the local costs are $`c_i+(1-q_i)c_j`$ versus $`c_j+(1-q_j)c_i`$. The first is no larger exactly when $`q_i/c_i\ge q_j/c_j`$, for positive costs. A universal static sort needs additional stability assumptions, such as independent terminal events; arbitrary UAR criteria are not all interchangeable because some terminal verdicts differ.
 Equal-cost gates still save arithmetic with serial early exit: fewer gates are evaluated on stopped queries. Running all four probes in a batch may instead have lower wall time by exploiting parallelism. That scheduling trade-off is not “no work saving.” Measure prefill, weight reads, launch overhead and elapsed time in addition to FLOPs.
@@ -295,10 +295,10 @@ Evaluate case selection with held-out outcomes and policy/ethical constraints, a
 #### What it is
 Adaptive-RAG selects among A (no retrieval), B (one retrieval) and C (a retrieve-and-reason loop capped at $`T`$ iterations). For fixed system versions, let $`G_\pi(q;\xi)`$ be the output for query $`q`$ and execution randomness $`\xi`$, and let $`c_\pi(q;\xi)`$ be a specified measured or modeled cost. The illustrative configuration orders nominal costs A, B, C, but real costs can vary with length, early stopping and scheduling. With gold answer $`a^\star`$, form the observed successful set $`I(q,\xi)=\{\pi:\mathop{\mathrm{EM}}\nolimits(G_\pi(q;\xi),a^\star)=1\}`$. Exact match is a declared scoring convention, not universal truth or complete semantic correctness. For a nonempty set,
 
-$$
+```math
 \pi^\star(q,\xi)\in\underset{\pi\in I(q,\xi)}{\mathop{\mathrm{arg\,min}}\nolimits}\ c_\pi(q;\xi),
 \qquad I(q,\xi)\ne\varnothing.
-$$
+```
 
 Break cost ties by an explicit rule. If no tested policy succeeds, there is no cheapest successful policy; record “unsolved,” improve the policy set, or retain a clearly marked heuristic fallback. The source uses a dataset's single-hop/multi-hop bias as such a fallback. That label is not an observed success and should not silently be mixed into verified successful-policy labels. Repeated stochastic executions can estimate route success and cost more reliably than one lucky output.
 #### Why it exists
@@ -309,13 +309,13 @@ Always using a multi-step loop can waste substantial work on simple questions; o
 Assume serial service rates of $`50`$ decoded tokens per second and $`8{,}000`$ prompt tokens per second, plus $`90\,\mathrm{ms}`$ per retrieval returning five $`200`$-token chunks. Instruction and question use $`100`$ tokens. A generates $`120`$ answer tokens and takes $`100/8{,}000+120/50=2.4125\,\mathrm s`$. B takes $`1{,}100/8{,}000+0.09+120/50=2.6275\,\mathrm s`$. These are conditional service-time proxies, not measured request latencies.
 For C, specify the accumulated prefix. Each of $`T`$ iterations retrieves $`1{,}000`$ new tokens and generates $`120`$ tokens; take the last iteration's output as the final answer, so no extra final-generation call is hidden. Retain all previous retrieved text and generated outputs, and recompute the full prompt without valid KV reuse on each iteration. Iteration $`t`$ prefills $`100+1{,}000t+120(t-1)`$ tokens. Thus
 
-$$
+```math
 \begin{aligned}
 P_C(T)&=100T+\frac{1{,}000T(T+1)}2+\frac{120T(T-1)}2,\\
 c_C(T)&=0.09T+2.4T+\frac{P_C(T)}{8{,}000}
 =2.5575T+0.07T^2\quad\text{seconds}.
 \end{aligned}
-$$
+```
 
 At $`T=5`$, prefill is $`16{,}700`$ tokens or $`2.0875\,\mathrm s`$, retrieval is $`0.45\,\mathrm s`$ and decode is $`12\,\mathrm s`$, totaling $`14.5375\,\mathrm s`$—$`5.532826`$ times B. The earlier $`14.3875\,\mathrm s`$ proxy corresponds instead to dropping all previous generated reasoning from subsequent prompts: $`P_C=15{,}500`$ and $`c_C(T)=2.565T+0.0625T^2`$. It is not the full retained-reasoning accounting. Valid append-only KV reuse, summaries, changed prompts or an additional final answer would require a different cost model.
 For $`30{,}000`$ silver-labeled queries, suppose a perfect label router chooses A/B/C in proportions $`22\%,51\%,27\%`$. Its mean proxy is $`0.22(2.4125)+0.51(2.6275)+0.27(14.5375)=5.7959\,\mathrm s`$, versus $`14.5375\,\mathrm s`$ for always C, a factor $`2.508239`$. Equal success to always C is an additional empirical condition, not implied by those proportions or single-run labels.
@@ -357,13 +357,13 @@ Monitor branch share, scores, distance, permissions, evidence outcomes and sampl
 | Wrong | $`\gamma=18\%`$ | $`\delta=20\%`$ |
 
 
-$$
+```math
 \begin{aligned}
 A_{\mathrm{retrieve}}&=\alpha+\gamma=70\%,\\
 A_{\mathrm{closed}}&=\alpha+\beta=62\%,\\
 A_{\mathrm{outcome}}^\star&=\alpha+\beta+\gamma=80\%.
 \end{aligned}
-$$
+```
 
 #### Panel B: when each family’s signal becomes available
 ```mermaid
@@ -462,7 +462,7 @@ flowchart TD
 **Figure **$`25.6`$**:** Silver supervision comes from executions, not a human guess at a particular model's required hop count. The displayed times use the explicit retained-reasoning, no-KV-reuse model. Exact match and a single execution only establish observed success under that scorer. An all-failed fallback is heuristic, not a cheapest successful policy; track it separately and revalidate after system changes.
 ### Figure 25.7
 
-$$
+```math
 \begin{aligned}
 w&=(1,0)^{\mathsf T},\quad b=0,\quad \mu=(2,0)^{\mathsf T},\quad r>0,\\
 x_{\mathrm{near}}&=(2,0)^{\mathsf T},\quad x_{\mathrm{far}}=(2,2.6r)^{\mathsf T},\\
@@ -470,7 +470,7 @@ w^{\mathsf T}x_{\mathrm{near}}+b&=w^{\mathsf T}x_{\mathrm{far}}+b=2,\\
 \sigma(2)&\approx0.880797,\\
 \|x_{\mathrm{near}}-\mu\|_2&=0,\qquad \|x_{\mathrm{far}}-\mu\|_2=2.6r.
 \end{aligned}
-$$
+```
 
 **Figure **$`25.7`$**:** This explicit two-dimensional binary-linear example replaces unreproducible millimeter measurements of an ASCII drawing. Both points have logit two, the same confidence and the same distance two from the boundary $`x_1=0`$, yet differ in Euclidean distance to prototype $`\mu`$. The positive scale $`r`$ and factor $`2.6`$ are stipulated, not measured training statistics. The example proves that a logit alone need not identify input familiarity; it does not prove a centroid threshold detects all unfamiliar inputs, that all softmax confidence is geometric distance, or that escalation is safe.
 ## Whiteboard pack

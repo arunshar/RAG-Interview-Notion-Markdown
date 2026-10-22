@@ -139,10 +139,10 @@ Token counts and span lengths are integers. For fixed overlapping windows use $`
 For a nonempty document with $`T`$ tokens, chunk length $`L`$ and overlap $`o`$, let stride $`S=L-o`$. Chunk starts are $`0,S,2S,\ldots`$ until a chunk first covers the document end.
 The resulting count is
 
-$$
+```math
 n(T;L,o)=1+\left\lceil\frac{\max(0,T-L)}{L-o}\right\rceil
 =\max\!\left(1,\left\lceil\frac{T-o}{L-o}\right\rceil\right),\qquad T>0.
-$$
+```
 
 Set $`n=0`$ for an empty document.
 With an unpadded final chunk and no extra windows after coverage, the exact embedded-token count is $`T+(n-1)o`$ for $`T>0`$. The long-document approximation is $`T\,L/(L-o)`$; padding every call to $`L`$ instead processes $`nL`$ slots.
@@ -202,15 +202,15 @@ Breakpoint chunking compares each sentence $`s_i`$ with neighbor $`s_{i+1}`$. It
 Pseudo-instruction chunking generates a document summary $`g`$ and compares every sentence with that global anchor.
 For each sentence,
 
-$$
+```math
 r_i = \cos\!\bigl(e(s_i), e(g)\bigr).
-$$
+```
 
 The threshold is the document mean
 
-$$
+```math
 r_{\mathrm{mean}} = \frac{\sum_{j=1}^{n} r_j}{n}.
-$$
+```
 
 The binary label is $`z_i=1`$ when $`r_i\ge r_{\mathrm{mean}}`$ and 0 otherwise.
 The boundary set is every i where $`z_i`$ differs from $`z_{i+1}`$.
@@ -232,9 +232,9 @@ Twelve sentences contain policy. Twenty-eight contain preamble, revision history
 The toy geometry takes $`u,v,w,\{\epsilon_i\},\{\delta_j\}`$ to be mutually orthonormal directions. Each policy sentence has vector $`0.8u+0.6\epsilon_i`$; each boilerplate sentence has $`0.8v+0.6\delta_j`$. The query is $`q=u`$. A unit summary direction $`g=0.9u+0.2v+\sqrt{0.15}\,w`$ gives policy similarity $`0.72`$ and boilerplate similarity $`0.16`$. Assume all $`12`$ policy sentences form one contiguous run. For the mixed-chunk comparison, take a $`20`$-sentence, $`440`$-token unit under a $`512`$-token cap; it is not an exact blind $`512`$-token window.
 For the general version, write each policy vector as $`\alpha u+\sqrt{1-\alpha^2}\epsilon_i`$ and each boilerplate vector as $`\beta v+\sqrt{1-\beta^2}\delta_j`$, with $`0\le\alpha,\beta\le1`$. Here $`\alpha=\beta=0.8`$. A normalized sum of $`a`$ policy and $`b`$ boilerplate vectors, for $`a+b>0`$, has
 
-$$
+```math
 \cos(q,c) = \frac{a\alpha}{\sqrt{a^2\alpha^2 + a(1-\alpha^2) + b^2\beta^2 + b(1-\beta^2)}}.
-$$
+```
 
 
 | Configuration | Composition and score | Ranking or error |
@@ -265,9 +265,9 @@ Prefill is $`2.816/3.072=11/12\approx91.667\%`$ of this summarization work.
 - **Cost and complexity:** Multi-level indexes add vectors, searches, a router, and a context-budget decision.
 Index nested sentence, paragraph, and section units. Let $`a`$ be query similarity to the one answering sentence. Let $`b`$ be similarity to each non-answering neighbor. Let $`\rho`$ be mean pairwise sentence similarity. For an $`n`$-sentence chunk:
 
-$$
+```math
 s(n) = \frac{a+(n-1)b}{\sqrt{n\bigl(1+(n-1)\rho\bigr)}}.
-$$
+```
 
 For $`\rho>0`$ and a feasible family of unit-vector geometries, $`s(n)\to b/\sqrt\rho`$ as $`n\to\infty`$. Feasibility constrains the parameters; in the limit $`b^2\le\rho`$. The expression is not a law for arbitrary contextual embeddings or for $`\rho=0`$.
 For $`n>1`$, a coarse chunk beats the answer sentence when $`b>a[\sqrt{n(1+(n-1)\rho)}-1]/(n-1)`$. The simpler $`b>a\sqrt\rho`$ compares the limiting score with $`a`$, not every finite chunk.
@@ -292,9 +292,9 @@ For a thematic query with $`a=b=0.45`$, sentence, paragraph, and section scores 
 - **Cost and complexity:** The router needs downstream answer-quality supervision and creates a query-conditioned failure surface.
 Each candidate receives weighted score
 
-$$
+```math
 w_g(q)\times s_g(c).
-$$
+```
 
 Top-$`k`$ selection is not differentiable. The source therefore describes a soft training target over levels, not a gradient through retrieval.
 Under the displayed multiplicative score rule, factoid weights $`(0.70,0.20,0.10)`$ give approximately $`(0.434,0.134081,0.069628)`$ for the three answering units. This toy restores the desired order; multiplication alone is not a general calibration method, particularly for negative scores.
@@ -337,17 +337,17 @@ Section vectors add $`0.6144\,\mathrm{GB}`$ payload and $`0.0512\,\mathrm{GB}`$ 
 - **Cost and complexity:** Proposition retrieval removes dilution by creating more vectors and requiring model-written, self-contained units.
 Assume $`m`$ unit proposition vectors, that the query equals one of them, and that its mean similarity to the other $`m-1`$ vectors equals the overall mean pairwise similarity $`\rho`$. The pooled gold-passage cosine is:
 
-$$
+```math
 \sqrt{\frac{1+(m-1)\rho}{m}}.
-$$
+```
 
 At $`m=8`$ and $`\rho=0.5`$, the score is $`\sqrt{\frac{4.5}{8}}=0.75`$.
 For a distractor with eight propositions, each at query similarity $`\gamma=0.6`$ and the same $`\rho`$, the score is $`\frac{4.8}{6}=0.80`$.
 The distractor wins whenever
 
-$$
+```math
 \gamma > \frac{1+(m-1)\rho}{m}.
-$$
+```
 
 That threshold is the square of the gold passage score. It is $`0.5625`$ in this example.
 At proposition granularity, the exact fact scores $`1.00`$ and the distractor scores $`0.60`$.
@@ -390,9 +390,9 @@ At $`96\,\mathrm{B}`$ per product-quantized code, the proposition payload become
 #### When fine granularity pays
 The gain is
 
-$$
+```math
 1-\sqrt{\frac{1+(m-1)\rho}{m}}.
-$$
+```
 
 At $`m=8`$, $`\rho=0.2`$, the idealized cosine-score headroom is $`0.45227744`$, about $`45.23`$ cosine points on a $`0`$–$`100`$ scale. It is not an accuracy gain.
 At $`m=8`$, $`\rho=0.9`$, the same cosine headroom is $`0.04475134`$, about $`4.48`$ cosine points, not a measured relative quality gain.
@@ -412,31 +412,31 @@ At $`m=8`$, $`\rho=0.9`$, the same cosine headroom is $`0.04475134`$, about $`4.
 For query $`q`$, let $`E_q`$ be gold source positions and $`T_q`$ the union of retrieved source positions, keyed by document and token offset. Require nonempty gold for the recall formulas. If no text is retrieved, define recall and IoU as $`0`$ and declare a precision convention rather than dividing by zero. Duplicate prompt copies count once in $`T_q`$ but still cost prompt tokens.
 Recall
 
-$$
+```math
 R_q = \frac{\lvert E_q\cap T_q\rvert}{\lvert E_q\rvert}.
-$$
+```
 
 Precision
 
-$$
+```math
 P_q = \frac{\lvert E_q\cap T_q\rvert}{\lvert T_q\rvert}.
-$$
+```
 
 
-$$
+```math
 \mathop{\mathrm{IoU}}\nolimits_q = \frac{\lvert E_q\cap T_q\rvert}{\lvert E_q\cup T_q\rvert}.
-$$
+```
 
 For nonempty gold and retrieved sets with positive intersection, let $`a=\lvert E\cap T\rvert`$, $`e=\lvert E\rvert`$, $`t=\lvert T\rvert`$. The reciprocal identity below needs $`a>0`$; the direct $`F_1`$ identity also extends to zero overlap when $`e+t>0`$.
 
-$$
+```math
 \frac{1}{\mathop{\mathrm{IoU}}\nolimits} = \frac{1}{R}+\frac{1}{P}-1.
-$$
+```
 
 
-$$
+```math
 \mathop{\mathrm{IoU}}\nolimits = \frac{F_1}{2-F_1}.
-$$
+```
 
 Per query, IoU is a monotone transform of $`F_1`$ and adds no ranking information. Averaging this nonlinear transform across queries can change system rankings, so macro-mean IoU is not the transform of macro-mean $`F_1`$.
 $`F_1=0.80`$ gives $`\mathop{\mathrm{IoU}}\nolimits=2/3\approx0.667`$; $`F_1=0.50`$ gives $`\mathop{\mathrm{IoU}}\nolimits=1/3\approx0.333`$.
@@ -468,16 +468,16 @@ The illustrative evaluation has $`200`$ queries with exactly $`60`$ gold tokens 
 For chunk length $`c`$ and overlap $`o`$, stride is $`c-o`$.
 Split probability is
 
-$$
+```math
 p_{\mathrm{split}}=\min\!\left(1,\max\!\left(0,\frac{s-1-o}{c-o}\right)\right),\qquad 1\le s\le c.
-$$
+```
 
 For no overlap, a continuously uniform split fraction gives conditional best-piece recall $`3/4`$. With an integer $`60`$-token span, the $`59`$ possible interior cuts give $`\sum_{j=1}^{59}\max(j,60-j)/(59\times60)\approx0.745763`$ instead. Use integer phases for the table below.
 For a uniform split fraction $`u`$, the expectation is
 
-$$
+```math
 \int_0^1 \max(u,1-u)\,du = \frac{3}{4}.
-$$
+```
 
 
 | Configuration | Split and recall | Precision and $`\mathop{\mathrm{IoU}}\nolimits`$ | Prompt cost at $`k=5`$ |
@@ -510,9 +510,9 @@ As a local approximation, model within-topic cosine gaps as $`\mathcal N(\mu_w,\
 The equal-variance assumption is part of the example. Different variances, prevalence or score calibration change the detector’s precision–recall curve.
 Separability
 
-$$
+```math
 \Delta = \frac{\mu_b-\mu_w}{\sigma}.
-$$
+```
 
 The source fixes $`\sigma=0.08`$ for its worked model.
 For stitched text, $`(0.90-0.25)/0.08=8.125`$.
@@ -523,15 +523,15 @@ Take a 200-sentence article with 8 real boundaries among 199 gaps. Boundaries ar
 A strict empirical $`95`$th-percentile threshold yields roughly $`10`$ cuts among $`199`$ distinct gaps, with details set by quantile and tie conventions. Population-mixture thresholds below approximate this top-$`5\%`$ rule; a finite document need not realize the expected count.
 For threshold $`t`$, boundary recall is
 
-$$
+```math
 \Phi\!\left(\frac{\mu_b-t}{\sigma}\right).
-$$
+```
 
 FPR is
 
-$$
+```math
 \Phi\!\left(\frac{\mu_w-t}{\sigma}\right).
-$$
+```
 
 
 | Corpus | Threshold | Boundary result | Final quality |
@@ -544,9 +544,9 @@ Qu, Tu, and Bao (2024) report no consistent performance gains justifying semanti
 #### Overlap as the cheaper repair
 For answer span length $`L = 80`$, chunk length $`C = 512`$, and stride $`S = C-o`$, intact probability is
 
-$$
+```math
 p_{\mathrm{intact}}=\min\!\left(1,\frac{C-L+1}{C-o}\right),\quad 1\le L\le C;\qquad p_{\mathrm{intact}}=0\ \text{for }L>C.
-$$
+```
 
 At $`o=0`$, intact probability is $`\frac{433}{512}=84.6\%`$. Split rate is $`15.4\%`$.
 At $`o=50`$, intact probability is $`\frac{433}{462}=93.7\%`$. Split rate is $`6.3\%`$.
@@ -613,9 +613,9 @@ flowchart TB
   end
 ```
 
-$$
+```math
 r_i = \cos\!\bigl(e(s_i),e(g)\bigr)
-$$
+```
 
 **Figure **$`13.2`$**:** Breakpoint chunking compares neighbors; PIC compares each sentence with a generated global summary. The latter estimates intent through a proxy rather than knowing future queries. A poor anchor can still split or merge the wrong evidence.
 ### Figure 13.3
@@ -638,13 +638,13 @@ flowchart TB
   end
 ```
 
-$$
+```math
 \begin{aligned}
 \text{Sentence: }&0.70(0.620)=0.434,\\
 \text{Paragraph: }&0.20(0.670402864)\approx0.134081,\\
 \text{Section: }&0.10(0.696284256)\approx0.069628.
 \end{aligned}
-$$
+```
 
 For a thematic query, the router emits weights $`(0.10,0.20,0.70)`$. The section wins at $`0.70\times0.617=0.432`$. Raw scores from different levels never compete directly.
 **Figure **$`13.3`$**:** In the stated positive-coherence pooling toy, the wrong section scores about $`0.686`$ above the answer sentence’s $`0.620`$. A feasible long-chunk family approaches $`b/\sqrt\rho`$ when $`\rho>0`$. The displayed router weights restore this example’s ordering, not a universal guarantee.
@@ -663,14 +663,14 @@ flowchart TB
   end
 ```
 
-$$
+```math
 \begin{aligned}
 m&=8,\quad k=30,\quad \overline{\text{fan-in}}=1.7,\\
 \text{Gold cosine}&=\sqrt{4.5/8}=0.75,\\
 \text{Distractor cosine}&=4.8/6=0.80,\\
 \text{Planning parents}&=\lceil30/1.7\rceil=18.
 \end{aligned}
-$$
+```
 
 The proposition is the self-contained match unit. The full passage is the serve unit that restores dates, conditions, and qualifiers.
 **Figure **$`13.4`$**:** Under this toy geometry, passage pooling lowers the exact-match score from $`1`$ to $`0.75`$, letting a $`0.80`$ distractor win. Proposition indexing restores the toy ranking; parent expansion restores surrounding source text. Actual fan-in and context size must be measured, not inferred exactly from a mean.
@@ -691,9 +691,9 @@ C. Misaligned: top-1 is tokens 61-110
                     dashed guides mark the gold extent
 ```
 
-$$
+```math
 \begin{array}{lccc}&P&R&\mathop{\mathrm{IoU}}\nolimits\\\text{A. Too small}&1.00&0.50&0.50\\\text{B. Too big}&0.20&1.00&0.20\\\text{C. Misaligned}&0.60&0.75&0.50\end{array}
-$$
+```
 
 **Figure **$`13.5`$**: The three ways a chunker gets the extent wrong, scored against one gold excerpt (dashed guides).**
 Cases A and C reach the same $`\mathop{\mathrm{IoU}}\nolimits`$ of $`0.50`$ from opposite directions. One starves the answer. The other pads and clips it. Report $`\mathop{\mathrm{IoU}}\nolimits`$ beside precision and recall.
@@ -714,13 +714,13 @@ ______/  \_______|________/  \______________ distance di
 Identical rule: recall 31%, precision 24%
 ```
 
-$$
+```math
 \begin{array}{lcccc}
 \text{Corpus}&\Delta&t&\mathbb E[\text{recall}]&\text{modeled precision}\\
 \text{Stitched}&8.125&0.435&\approx100\%&\approx80.147\%\\
 \text{One real document}&1.25&0.39&\approx30.854\%&\approx24.391\%
 \end{array}
-$$
+```
 
 These thresholds are rounded approximations to a population top-$`5\%`$ rule. Exact mixture quantiles are approximately $`0.435485`$ for stitched and $`0.390708`$ for real text, giving expected $`9.95`$ cuts. At the displayed rounded thresholds, expected true/false cuts are approximately $`8.000/1.982`$ and $`2.468/7.651`$, respectively; finite documents fluctuate.
 **Figure **$`13.6`$**:** The Gaussian examples show how standardized separation, prevalence and threshold jointly control precision and recall. They are not measured curves and do not establish a universal $`\Delta`$ cutoff or a claim that semantic chunking can never work within a coherent document.

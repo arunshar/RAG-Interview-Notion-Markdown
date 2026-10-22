@@ -139,9 +139,9 @@ Use natural logarithms and nats except for explicit $`\log_2`$ information calcu
 
 Fix a vocabulary $`\mathcal V`$ with size $`V=\lvert\mathcal V\rvert`$. A chunk becomes a vector in $`\mathbb R^V`$ whose coordinate $`t`$ depends on the count of term $`t`$. A vocabulary near $`10^5`$ is the chapter’s scenario scale. TF–IDF and BM25 retain the same lexical basis, but use different term-frequency, query and document-length weights; BM25 need not be a symmetric dot product of identically transformed vectors. With diagonal $`W=\mathop{\mathrm{diag}}\nolimits(\mathop{\mathrm{idf}}\nolimits_1,\ldots,\mathop{\mathrm{idf}}\nolimits_V)`$, a weighted bilinear score has:
 
-$$
+```math
 \langle e_i, W e_j\rangle = \mathop{\mathrm{idf}}\nolimits_i\cdot\delta_{ij}
-$$
+```
 
 For the ordinary dot product of two vectors each multiplied by $`W`$, the diagonal weights are squared: $`\langle We_i,We_j\rangle=\mathop{\mathrm{idf}}\nolimits_i^2\delta_{ij}`$. Neither convention creates off-diagonal synonym similarity.
 
@@ -170,14 +170,14 @@ The worked corpus has $`5\times10^6`$ chunks and about $`150`$ distinct terms pe
 
 Project vocabulary axes into about 300 learned dimensions. Similar contexts place words near one another. CBOW predicts the center word from its surrounding window. Skip-gram predicts the surrounding window from the center word (Mikolov et al., 2013). GloVe factorizes a global co-occurrence matrix (Pennington et al., 2014). For $`m`$ equally frequent, mutually orthogonal unit senses $`v_{j}`$, Arora et al. (2018) give the cited clean-case superposition:
 
-$$
+```math
 v_w = \frac{1}{\sqrt{m}}\sum_{j=1}^{m}v_j
-$$
+```
 
 
-$$
+```math
 \cos(v_w,v_j) = \frac{1}{\sqrt{m}}
-$$
+```
 
 
 > 🎯 **Why it exists:**
@@ -204,9 +204,9 @@ Mean-pooling 300-dimensional static vectors for $`5\times 10^{6}`$ chunks costs 
 
 Token $`i`$ becomes a function of the full sequence.
 
-$$
+```math
 v_i = f(w_1,\ldots,w_n)_i
-$$
+```
 
 ELMo stacks two bidirectional LSTM layers and learns a mixture of them (Peters et al., 2018). BERT uses a bidirectional transformer trained by masked language modeling (Devlin et al., 2019).
 
@@ -255,15 +255,15 @@ A $`1{,}024`$-dimensional fp32 vector payload for $`5\times10^6`$ chunks is $`20
 #### The rare-token worked example {color="gray_bg"}
 The corpus has $`5\times10^6`$ chunks of $`250`$ tokens, four languages and $`10{,}000`$ daily queries. Consider `ERR_0x8007005F failed to write registry key`. Assume the code is one lexical term, $`to`$ is removed as a stopword, and the four remaining ordinary terms have the stated frequencies. The code occurs in three chunks. With the specified positive BM25 IDF convention:
 
-$$
+```math
 \mathop{\mathrm{idf}}\nolimits_{\mathrm{code}}=\ln\!\left(\frac{5\times10^6-3+0.5}{3+0.5}+1\right)\approx14.17218570.
-$$
+```
 
 If each retained ordinary term occurs in $`10^6`$ chunks, its IDF is $`\ln[(5{,}000{,}001)/(1{,}000{,}000.5)]\approx1.60943761`$. Assuming equal query and term-saturation factors, the code’s score share is:
 
-$$
+```math
 \frac{\mathop{\mathrm{idf}}\nolimits_{\mathrm{code}}}{\mathop{\mathrm{idf}}\nolimits_{\mathrm{code}}+4\mathop{\mathrm{idf}}\nolimits_{\mathrm{ordinary}}}\approx0.687638506\approx68.764\%.
-$$
+```
 
 Mean pooling gives each final token vector coefficient $`1/250=0.4\%`$. That coefficient and the $`68.764\%`$ lexical score share measure different things; their ratio is not a $`170`$-fold influence comparison. Token fragmentation, contextualization, pooling and normalization determine the dense effect. A $`1{,}024`$-dimensional fp32 vector uses $`4{,}096\,\mathrm B`$. If this $`250`$-token English chunk uses about $`4\,\mathrm{B/token}`$, its source payload is about $`1{,}000\,\mathrm B`$, giving a $`4.096{:}1`$ vector/text-payload ratio. This language-dependent approximation excludes both systems’ overhead.
 
@@ -283,26 +283,26 @@ Default to hybrid retrieval with a sparse leg and a contextual or universal dens
 
 The distributional hypothesis estimates representations from observed contexts. The chapter traces it to Harris (1954), Firth (1957) and Wittgenstein (1953). Let $`n_{wc}`$ count observed word-context pairs, $`n_w=\sum_c n_{wc}`$, $`n_c=\sum_w n_{wc}`$, and $`T_{\mathrm{pair}}=\sum_{w,c}n_{wc}`$. These are consistent pair-event counts, not a mix of corpus tokens, documents and bytes. For positive relevant counts, PMI is:
 
-$$
+```math
 \mathop{\mathrm{PMI}}\nolimits(w,c)=\ln\frac{P(w,c)}{P(w)P(c)}.
-$$
+```
 
 
-$$
+```math
 \mathop{\mathrm{PMI}}\nolimits(w,c)=\ln\frac{n_{wc}T_{\mathrm{pair}}}{n_wn_c}.
-$$
+```
 
 At the unconstrained positive-count optimum of skip-gram negative sampling, with $`k>0`$ negatives per positive and context sampling distribution $`q(c)>0`$, the score is $`\ln[P(c\mid w)/(kq(c))]`$. The familiar shifted-PMI form below requires $`q(c)=P(c)`$; smoothed unigram negative sampling introduces an additional context-dependent term (Levy and Goldberg, 2014). Finite-rank fitting and regularization need not attain each pairwise optimum.
 
-$$
+```math
 u_w^{\mathsf T}v_c=\mathop{\mathrm{PMI}}\nolimits(w,c)-\ln k\qquad\text{at the ideal optimum when }q(c)=P(c).
-$$
+```
 
 GloVe uses the following weighted least-squares target for positive co-occurrence counts, not an identity that every pair satisfies at a finite-dimensional fitted optimum:
 
-$$
+```math
 u_w^{\mathsf T}v_c+b_w+b_c\approx\ln n_{wc}.
-$$
+```
 
 
 > 🎯 **Why it exists:**
@@ -318,12 +318,12 @@ A representation cannot learn semantic neighborhoods from unlabeled corpora. **I
 #### Count drift {color="gray_bg"}
 Append $`m`$ word-context pair events for $`w`$, all in contexts other than the old $`c`$, and leave $`n_{wc}`$ and $`n_c`$ unchanged. Let $`r=m/n_w`$, using the original $`n_w>0`$. The old conditional-context association falls by $`-\ln(1+r)`$. PMI also includes the changed total pair count:
 
-$$
+```math
 \begin{aligned}
 \Delta\ln P(c\mid w)&=-\ln(1+r),\\
 \Delta\mathop{\mathrm{PMI}}\nolimits(w,c)&=\ln\left(1+\frac{m}{T_{\mathrm{pair}}}\right)-\ln(1+r).
 \end{aligned}
-$$
+```
 
 At $`r=0.5`$, the conditional change is $`-\ln1.5\approx-0.405465`$ nats and the conditional association is multiplied by $`2/3`$. PMI has approximately the same change only when $`m/T_{\mathrm{pair}}`$ is negligible; otherwise use the additional normalization term.
 
@@ -352,14 +352,14 @@ Two independent models can place the same relative triangle at different absolut
 
 Without known compatibility, a cross-version cosine mixes coordinate mismatch with semantic differences and cannot isolate drift. For equal-dimensional row-vector anchor matrices, the orthogonal alignment problem is: The stated Procrustes problem is:
 
-$$
+```math
 \min_{Q}\;\lVert W_tQ-W_{t+1}\rVert_F
-$$
+```
 
 
-$$
+```math
 \text{subject to}\quad Q^{\mathsf{T}}Q=I
-$$
+```
 
 If $`W_t^{\mathsf{T}}W_{t+1}`$ has SVD $`USV^{\mathsf{T}}`$, the stated closed-form map is $`Q = UV^{\mathsf{T}}`$. The chapter attributes this closed form to Schoenemann (1966).
 
@@ -373,21 +373,21 @@ Stale content requires correcting or recrawling the source. A stale index requir
 #### The engineering-wiki worked example {color="gray_bg"}
 The wiki has $`2\times10^6`$ chunks of $`250`$ tokens, encoded into $`768`$ dimensions by a $`110`$-million-parameter model. The corpus grows $`4\%`$ monthly. The term `agent` appears in $`12{,}000`$ original chunks; $`6{,}000`$ new chunks use the software sense after nine months. In a separate one-use-per-chunk conditional-frequency toy, $`r=6{,}000/12{,}000=0.5`$ gives the $`-0.405465`$-nat old-context change. These document counts alone do not establish a pair-count PMI change. A frozen contextual encoder may or may not already represent the new sense; measure relevant-query ranking, not just consistency. Mixing old v1 vectors with v2 queries is a separate compatibility risk. For independently oriented isotropic unit vectors in $`d=768`$, the cross-cosine reference is mean zero with SD:
 
-$$
+```math
 \mathop{\mathrm{sd}}\nolimits(u^{\mathsf T}v)=\frac1{\sqrt{768}}\approx0.03608439.
-$$
+```
 
 A threshold $`0.6`$ is $`0.6\sqrt{768}\approx16.6277`$ SDs above that reference mean. Real encoder-version pairs need not have random orientations or isotropic vectors; this comparison is not a measured tail probability or proof that the old index becomes unreachable. The next growth equation requires the term’s own use count to grow $`4\%`$ monthly, with all added uses in disjoint new contexts. Corpus-wide growth alone does not imply it.
 
-$$
+```math
 1+r(t)=1.04^t\qquad\text{only under the stated term-count growth model}.
-$$
+```
 
 The association-halving threshold arrives at:
 
-$$
+```math
 t_{1/2}=\frac{\ln2}{\ln1.04}\approx17.672988\ \mathrm{months}.
-$$
+```
 
 A term whose own occurrence count doubles each quarter solely through disjoint new contexts halves this old-context conditional association in a quarter. This is not an encoder-quality deadline or a universal PMI clock. Re-embedding $`2\times10^6`$ chunks of $`250`$ tokens processes $`5\times10^8`$ tokens; the forward proxy is $`1.1\times10^{17}\,\mathrm{FLOP}`$, $`323.5294\,\mathrm{s}`$ or $`5.3922`$ minutes. It becomes a repair only with corrected text or a changed/adapted representation. Validation and rollout set the actual schedule.
 #### Decisions from section 12.2 {color="gray_bg"}
@@ -434,15 +434,15 @@ An individual dense coordinate cannot carry a stable label. The dense objective 
 #### Exact match as gate versus margin {color="gray_bg"}
 Take unit token vectors $`v_{1}`$ through $`v_{n}`$ with mean pairwise inner product $`\rho`$. Let $`S`$ be their sum.
 
-$$
+```math
 \lVert S\rVert = \sqrt{n+n(n-1)\rho}
-$$
+```
 
 For $`q=v_t`$, the matching token supplies a numerator term $`q^{\mathsf T}v_t=1`$. Dividing that term by $`\lVert S\rVert`$ gives its own-term coefficient, not automatically the change in cosine relative to a nonmatching chunk. Under a stronger comparison toy in which every distinct token pair has inner product $`\rho`$ and replacing $`v_t`$ by a nonmatching unit token preserves the sum norm, the actual matched-versus-replaced score difference is:
 
-$$
+```math
 \Delta\cos=\frac{1-\rho}{\sqrt{n+n(n-1)\rho}}\qquad\text{under the matched-replacement toy}.
-$$
+```
 
 For $`n=250,\rho=0`$, this toy difference is $`1/\sqrt{250}\approx0.06324555`$. At $`\rho=0.5`$, $`\lVert S\rVert=\sqrt{31{,}375}\approx177.129896`$; the own-term coefficient is approximately $`0.00564557`$, but the matched-replacement difference is approximately $`0.002822787`$. Real contextual vectors need not satisfy this equicorrelation or fixed-norm comparison.
 
@@ -454,15 +454,15 @@ A measured exact-match advantage must be judged against the candidate-score spre
 #### Why more dense dimensions do not fix the objective {color="gray_bg"}
 Raising $`d`$ from $`768`$ to $`4{,}096`$ for $`10^7`$ fp32 vectors increases payload from $`30.72\,\mathrm{GB}`$ to $`163.84\,\mathrm{GB}`$, a ratio of $`16/3\approx5.3333`$. To state what the Welch bound does and does not show, let $`m>d`$ unit vectors have maximum absolute coherence $`\mu`$:
 
-$$
+```math
 \mu=\max_{i\ne j}\lvert v_i^{\mathsf T}v_j\rvert\ \ge\ \sqrt{\frac{m-d}{d(m-1)}}.
-$$
+```
 
 For $`m = 30{,}522`$ and $`d = 768`$, it is:
 
-$$
+```math
 \sqrt{\frac{30{,}522-768}{768\times30{,}521}}\approx0.035628102.
-$$
+```
 
 This is close to the random-unit-vector chance level $`\frac{1}{\sqrt{768}} = 0.036`$.
 
@@ -474,9 +474,9 @@ This is a necessary lower bound, not a construction or an upper bound proving th
 #### Ten-million-chunk memory example {color="gray_bg"}
 Take $`N = 10^{7}`$ chunks, 250 tokens each, 160 distinct terms per chunk, and $`d = 768`$. The inverted index has $`10^{7}\times 160 = 1.6\times 10^{9}`$ postings. Naive 4-byte document identifiers plus 4-byte term frequencies cost $`12.8`$ GB. Sorted identifiers permit gap coding. The chapter states the approximate information cost:
 
-$$
+```math
 \log_2\!\binom{N}{n} \approx n\cdot\left(\log_2\!\frac{N}{n}+\log_2(e)\right)\;\text{bits}
-$$
+```
 
 At posting-list length $`n=10^5`$, the leading sparse-subset approximation gives $`8.086551`$ bits, or $`1.010819\,\mathrm{B/posting}`$. The corresponding leading values are about $`0.5956\,\mathrm{B}`$ at $`n=10^6`$ and $`2.6718\,\mathrm{B}`$ at $`n=10`$. This is an idealized coding scale for a uniformly distributed subset, not a promise about a real gap codec. It also omits finite-density corrections. A corpus-wide average needs the posting-list frequency distribution and codec.
 If one independently assumes $`1\,\mathrm{B}`$ per document identifier on average and $`0.25\,\mathrm{B}`$ per frequency, $`1.6\times10^9`$ postings have a $`2.00\,\mathrm{GB}`$ payload budget. The dictionary, positions, skips and other overhead are extra. Raw dense payload is $`30.72\,\mathrm{GB}`$; HNSW with $`M=32`$ and $`64`$ four-byte base-layer slots adds $`2.56\,\mathrm{GB}`$, totaling a scoped $`33.28\,\mathrm{GB}`$. This is $`16.64`$ times the conditional sparse payload, not a complete-index benchmark.
@@ -506,9 +506,9 @@ Masked language modeling never asks a pooled sentence vector to place paraphrase
 #### Contrastive training and positive sensitivity {color="gray_bg"}
 For anchor $`x_{i}`$, positive $`x_{i}^{+}`$, batch size $`N`$, and temperature $`\tau`$, the stated loss is:
 
-$$
+```math
 \mathop{\mathrm{loss}}\nolimits_i = -\log\!\left(\frac{\exp\!\left(\cos(h_i,h_i^{+})/\tau\right)}{\sum_{j=1}^{N}\exp\!\left(\cos(h_i,h_j^{+})/\tau\right)}\right)
-$$
+```
 
 The chapter sets $`\tau = 0.05`$. A cosine gap of $`0.1`$ becomes a logit gap of 2.
 
@@ -526,9 +526,9 @@ A corrupted positive teaches the encoder to merge different meanings.
 #### Why vision augmentation does not transfer {color="gray_bg"}
 A $`224\times224\times3`$ image has $`150{,}528`$ scalar values; particular vision augmentations may preserve a label but are not guaranteed to do so. Text sequences lie in a discrete token space. Inserting $`not`$ into a six-token claim changes one of seven resulting positions and can reverse its meaning; this is an edit-fraction convention, not a semantic distance. Suppose $`c`$ critical positions are each independently edited with probability $`\rho`$. The probability of touching at least one is:
 
-$$
+```math
 \Pr(\text{at least one critical position edited})=1-(1-\rho)^c.
-$$
+```
 
 For $`c=2`$, the probabilities are $`19\%,36\%,51\%`$ at $`\rho=0.1,0.2,0.3`$. They equal semantic corruption only under the extra assumption that every critical edit invalidates equivalence and no other edit does. Contiguous cropping does not follow the independent-position model. One uniformly selected deletion in a $`20`$-token sentence with two critical positions touches one with probability $`2/20=10\%`$, not $`19\%`$.
 
@@ -540,32 +540,32 @@ The contrastive loss cannot identify mislabeled pairs. It pulls a claim toward i
 #### Dropout moves the function, not the input {color="gray_bg"}
 Feed the same tokens through the same encoder with independent dropout masks $`m_{1}`$ and $`m_{2}`$.
 
-$$
+```math
 h_1 = f_{m_1}(x),\qquad h_2 = f_{m_2}(x)
-$$
+```
 
 For a fixed nonzero hidden vector $`h`$, independently Bernoulli-masked coordinates in both views, and $`0\le p<1`$, consider this output-mask toy with inverted scaling:
 
-$$
+```math
 u_i = \frac{m_{1i}h_i}{1-p},\qquad v_i = \frac{m_{2i}h_i}{1-p}
-$$
+```
 
 The stated expectations are:
 
-$$
+```math
 \mathbb{E}[\langle u,v\rangle] = \lVert h\rVert^2
-$$
+```
 
 
-$$
+```math
 \mathbb{E}[\lVert u\rVert^2] = \frac{\lVert h\rVert^2}{1-p}
-$$
+```
 
 Ratios of these expectations do not equal the expectation of a cosine. If masked norms concentrate, effective dimension is large and the views are nonzero, the toy gives the approximation:
 
-$$
+```math
 \cos(u,v) \approx 1-p
-$$
+```
 
 Under those assumptions, the cosine is approximately $`0.90`$ at $`p=0.1`$ and $`0.50`$ at $`p=0.5`$. A shared mask gives cosine $`1`$ only for a nonzero resulting vector. This output-mask toy is not an exact analysis of a transformer with dropout at many internal layers.
 
@@ -604,9 +604,9 @@ The cited results support dropout as a strong default when labeled positives are
 
 A $`d = 768`$ vector in 32-bit floating point stores:
 
-$$
+```math
 768\cdot32 = 24{,}576\;\text{bits} = 3{,}072\;\text{bytes}
-$$
+```
 
 The rough English estimate uses $`32\times4=128`$ characters and about $`1`$ bit of entropy per character, giving $`128`$ estimated content bits versus $`24{,}576`$ stored vector bits, a ratio of $`192`$. This is not a per-passage entropy measurement: identifiers, languages, source distributions and side information change the budget, while floating-point coordinates can be redundant and need not carry independent information.
 
@@ -618,9 +618,9 @@ This rough capacity comparison does not rule out recovery of a short passage, bu
 #### Iterative inversion {color="gray_bg"}
 The naive decoder emits text once from $`e(x)`$. It cannot grade whether its guess maps near the target. The cited correction method emits hypothesis $`\widehat{x}(t)`$, re-embeds it, and conditions the next correction on the target vector, current text, and current vector.
 
-$$
+```math
 \widehat{x}(t+1) = \mathop{\mathrm{corrector}}\nolimits\!\left(e(x),\widehat{x}(t),e(\widehat{x}(t))\right)
-$$
+```
 
 The same public encoder supplies the objective distance between $`e(\widehat{x})`$ and $`e(x)`$.
 

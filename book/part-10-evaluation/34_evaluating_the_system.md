@@ -150,9 +150,9 @@ Latency distributions refer to the same workload, measurement boundaries and loa
 - **Cost:** Retain per-query candidate IDs, packed evidence, outputs, references and versions. Measure after any step that can change delivered evidence.
 Let $`Y\in\{0,1\}`$ denote answer correctness and $`H\in\{0,1\}`$ denote delivery of adequate evidence to the generator under a fixed rubric. Define $`h=\Pr(H=1)`$ and $`c_b=\Pr(Y=1\mid H=b)`$ for strata of positive probability. The law of total probability gives:
 
-$$
+```math
 A=\Pr(Y=1)=h c_1+(1-h)c_0.
-$$
+```
 
 Infinitely many triples within $`[0,1]^3`$ yield one $`A`$; the parameter range is bounded, not an “unbounded” numerical family. At $`h=0`$ or $`h=1`$, one empirical conditional accuracy is unobservable rather than an estimated zero. Measure candidate recall, complete-evidence delivery, context relevance, actual-context support and final correctness separately. These metrics have different denominators and are not interchangeable.
 #### Worked example
@@ -178,9 +178,9 @@ The original DPR single-dataset result reports $`78.4\%`$ NQ top-twenty answer-c
 - **Cost:** Reading roughly ten to thirty cases per direction is a workflow heuristic, not a statistical sample-size guarantee. Include random and consequential-error cases too.
 For the weighted identity below, define a per-query score $`s_i\in[0,1]`$ and a disjoint, exhaustive partition $`I_1,\ldots,I_J`$ of $`N>0`$ queries. Let $`n_j=|I_j|>0`$, $`w_j=n_j/N`$ and $`\bar s_j=n_j^{-1}\sum_{i\in I_j}s_i`$. Then:
 
-$$
+```math
 \bar s=\frac1N\sum_{i=1}^N s_i=\sum_{j=1}^Jw_j\bar s_j,\qquad \sum_jw_j=1.
-$$
+```
 
 The identity holds for means of per-query $`F_1`$, ROUGE or judge scores when defined on that scale. It does not generally hold for pooled classification $`F_1`$, corpus BLEU or overlapping slice averages. Recompute nonlinear metrics from the underlying paired records. Case inspection can precede or follow targeted monitoring; the macro→micro→mezzo order is a useful workflow, not a mathematical requirement.
 #### Worked example
@@ -190,10 +190,10 @@ A disjoint partition has $`240`$ multi-hop queries and $`960`$ single-hop querie
 The single-proportion formula $`\sqrt{p(1-p)/n}`$ is not the standard error of a two-system change. Plugging the average rates into it gives approximately $`2.776201`$ and $`1.314582`$ percentage points here, but dividing the observed changes by those values does not justify the original “$`5.4`$ standard errors” or “inside noise” conclusions. The toy metrics are not even independent binary trials.
 For matched per-query means, set $`d_i=s_i^{\mathrm{on}}-s_i^{\mathrm{off}}`$, $`\bar d=n^{-1}\sum_i d_i`$, and for $`n>1`$ use
 
-$$
+```math
 \widehat{\mathrm{SE}}(\bar d)=\frac{s_d}{\sqrt n},\qquad
 s_d^2=\frac1{n-1}\sum_{i=1}^n(d_i-\bar d)^2.
-$$
+```
 
 This requires independent query units for its usual interpretation; use paired/clustered resampling and recompute the target metric when needed. A paired binary difference depends on wins and losses (discordance), not just marginal accuracies. For a different, independent-binary planning model, two-arm standard errors would be about $`3.865984`$ and $`1.858539`$ points, still not valid significance tests for these paired F1 data. Without paired records, neither slice is statistically classified by the displayed means alone.
 #### Practical decisions
@@ -215,11 +215,11 @@ Easy cases can reveal regressions under a ceiling; hard cases test the intended 
 For one IID binary accuracy estimate at $`p=0.5`$, $`\mathrm{SE}=\sqrt{0.25/100}=0.05`$ and a nominal normal $`95\%`$ half-width is $`1.96(0.05)=0.098`$, or $`9.8`$ points. That is an interval scale for one proportion, not the difference of two systems.
 For two independent $`100`$-item proportions near one half, the difference standard error is $`\sqrt{0.25/100+0.25/100}\approx0.070710678`$ with half-width about $`13.859293`$ points. A paired toggle requires the within-query covariance or discordance instead. For binary paired counts $`u`$ (wins) and $`v`$ (losses),
 
-$$
+```math
 \hat d=\frac{u-v}{n},\qquad
 \widehat{\mathrm{SE}}(\hat d)=
 \sqrt{\frac{(u+v)/n-\hat d^2}{n-1}},\quad n>1.
-$$
+```
 
 A four-point control move and fifteen-point target move at $`n=100`$ cannot be certified harmless/significant by a ten-point rule. Use paired inference, effect size and an equivalence/harm margin; failure to reject zero is not proof the control is within that margin.
 #### Matched placebos
@@ -247,12 +247,12 @@ These are different populations and interventions from the calculator toy. A fou
 Let $`E_q`$ be the actual packed evidence and $`C_q\subseteq E_q`$ its cited items. Preserve all other evidence and instructions when removing $`e_i\in C_q`$; regenerating from only the citations would otherwise change the baseline input. Specify whether removing an item removes every duplicate occurrence and whether vacated space is refilled. Use fixed external references and a fixed answer-quality rubric $`Q`$, not a support target that silently changes with the removed context.
 For random generation/judgment state $`\xi`$, write $`y_0(\xi)=\mathop{\mathrm{Gen}}\nolimits(q,E_q;\xi)`$ and $`y_{-i}(\xi)=\mathop{\mathrm{Gen}}\nolimits(q,E_q\setminus\{e_i\};\xi)`$. One observed delta is:
 
-$$
+```math
 \begin{aligned}
 \widehat\Delta_i^{(r)}&=Q(y_0^{(r)})-Q(y_{-i}^{(r)}),\\
 \Delta_i&=\mathbb E[Q(y_0)]-\mathbb E[Q(y_{-i})].
 \end{aligned}
-$$
+```
 
 A reliably positive expected effect means this removal harms the measured target; a negative effect means it helps. Near-zero estimates mean no detected individual effect, not proof of decorative or unused evidence. Use uncertainty and practical margins before labeling. A historical macro-$`F_1`$ near $`0.80`$ for an attribution judge is not the statement “one wrong verdict in five”; class metrics and accuracy differ. Even a perfect support judge cannot establish which input was necessary.
 #### Leave-one-out blind spot
@@ -285,15 +285,15 @@ The representative stage chain is embed, search, fuse, rerank, context assembly,
 #### Latency and tail compounding
 Let $`L_i`$ be the event that stage $`i`$ exceeds its own declared slow threshold, and $`p_i=\Pr(L_i)`$. For independent events only:
 
-$$
+```math
 \Pr\!\left(\bigcup_{i=1}^m L_i\right)=1-\prod_{i=1}^m(1-p_i).
-$$
+```
 
 Four independent one-percent slow events give $`1-0.99^4=0.03940399`$, or about $`3.940399\%`$ (one in $`25.378141`$ requests). Five give $`1-0.99^5\approx4.900995\%`$. This is the chance of any stage exceeding its own threshold, not the chance of violating an arbitrary total-latency SLA. Without independence,
 
-$$
+```math
 \max_i p_i\le\Pr\!\left(\bigcup_iL_i\right)\le\min\!\left(1,\sum_i p_i\right).
-$$
+```
 
 Shared load can correlate delays; correlations need measurement rather than inference from marginal percentile shifts alone. For streaming, specify time-to-first-token and useful-answer/completion targets as appropriate. Agentic consumers may require complete verified output. Batch systems can still have deadlines and tail latency as well as throughput and queue depth.
 #### Latency worked example
@@ -305,15 +305,15 @@ A $`400\,\mathrm{ms}`$ median alone cannot assess a one-second percentile SLA. A
 #### Self-consistency
 Run a fixed query $`R\ge1`$ times under a declared generation/retrieval policy. Use a validated semantic clustering rule, with cluster counts $`c_j`$ summing to $`R`$. Define an empirical modal-answer fraction, rather than a general probability that two answers agree:
 
-$$
+```math
 \widehat{\mathrm{SC}}_{\mathrm{mode}}=\frac{\max_jc_j}{R},\qquad \sum_jc_j=R>0.
-$$
+```
 
 This diagnostic differs from the self-consistency decoding strategy of sampling reasoning paths and voting. It also differs from distinct-pair agreement,
 
-$$
+```math
 \widehat{\mathrm{SC}}_{\mathrm{pair}}=\frac{\sum_jc_j(c_j-1)}{R(R-1)},\qquad R\ge2.
-$$
+```
 
 For counts $`(4,1)`$, modal fraction is $`0.8`$ but distinct-pair agreement is $`0.6`$. One sample always gives modal fraction one, providing no stability evidence. Empirical mode selection can bias the estimate upward; report repeat count, query aggregation and clustering uncertainty. Agreement and correctness are distinct, not statistically independent by definition: identical wrong answers score perfectly consistent.
 RAG can vary because of sampling, ANN settings, replica/version changes and live updates. HNSW or multithreading is not inherently nondeterministic in every implementation. Pin index, model, evidence and seeds where supported, then vary one factor at a time. Temperature zero and a frozen index do not guarantee deterministic backend execution or eliminate the need to monitor changes. Do not disable the canary from those two settings alone.
@@ -335,9 +335,9 @@ Statistical significance concerns a specified estimator/test and its assumptions
 #### Worked example
 Use a constructed $`10{,}000`$-item image-question benchmark. Let an overlap screen flag $`1{,}800`$ items and leave $`8{,}200`$ screen-clean items; neither status is perfect knowledge of actual model training exposure. Closed-book accuracy is stipulated at $`91\%`$ on flagged items ($`1{,}638`$ correct) and $`71\%`$ on screen-clean items ($`5{,}822`$ correct). Its full-set accuracy is therefore
 
-$$
+```math
 A_{\mathrm{closed,all}}=\frac{1{,}638+5{,}822}{10{,}000}=0.746,
-$$
+```
 
 not $`76\%`$. To make the RAG comparison fully specified, additionally stipulate $`82\%`$ RAG accuracy in both strata: $`1{,}476`$ and $`6{,}724`$ correct, totaling $`8{,}200`$. The full-set matched lift is $`82\%-74.6\%=7.4`$ points; the matched screen-clean lift is $`82\%-71\%=11`$ points. Their ratio is $`11/7.4\approx1.486486`$, not nearly two.
 The clean RAG score cannot be inferred from its full-set $`82\%`$ alone; the constant-stratum score is an extra assumption. Different case difficulty can also change the lift, so this example does not causally quantify the effect of contamination. Both systems must be re-scored on the same retained items.
@@ -346,12 +346,12 @@ Also flag $`2{,}500`$ items whose target image is supplied directly, bypassing t
 An item can belong to the overlap, synthetic and retrieval-bypass groups simultaneously. To report a retained count, measure their union at item level or state the intersections; subtracting three marginal counts double-counts overlaps.
 With only marginal excluded-group sizes $`1{,}800`$, $`3{,}000`$ and $`2{,}500`$, the retained count is bounded between $`2{,}700`$ and $`7{,}000`$; $`4{,}700`$ does not follow automatically. For an explicit feasible toy, stipulate pairwise intersections $`1{,}000`$, $`500`$ and $`500`$, with no triple overlap. Then
 
-$$
+```math
 \begin{aligned}
 |A\cup B\cup D|&=1{,}800+3{,}000+2{,}500-1{,}000-500-500=5{,}300,\\
 N_{\mathrm{retained}}&=10{,}000-5{,}300=4{,}700.
 \end{aligned}
-$$
+```
 
 Here $`A`$ is overlap-flagged, $`B`$ synthetic and $`D`$ retrieval-bypassed. Treat synthetic exclusion as a declared analysis variant, not an axiom that synthetic items are invalid.
 Re-score both systems, retrieval and modality variants on those same $`4{,}700`$ items. Neither the full-set $`82\%`$ nor the earlier eleven-point screen-clean lift is automatically the result on this more restricted population.

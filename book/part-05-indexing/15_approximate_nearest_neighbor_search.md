@@ -125,10 +125,10 @@ For $`N=10^7,d=768,B=50\,\mathrm{GB/s}`$, the vector payload is exactly $`30.72\
 - **Limit:** Expected near-logarithmic behavior requires favorable geometry and balance; it is not a universal exact-query guarantee.
 For two independent vectors $`X,Y\sim\mathcal N(0,I_d)`$, let $`D=\lVert X-Y\rVert`$. Then $`D^2/2\sim\chi_d^2`$, so $`\mathbb E[D^2]=2d`$ and $`\mathop{\mathrm{Var}}\nolimits(D^2)=8d`$. The delta method gives $`\mathbb E[D]\approx\sqrt{2d}`$, $`\mathop{\mathrm{sd}}\nolimits(D)\approx1`$ and $`\mathrm{CV}\approx1/\sqrt{2d}`$ for large $`d`$. Exact moments are
 
-$$
+```math
 \mu_D=2\frac{\Gamma((d+1)/2)}{\Gamma(d/2)},\qquad
 \mathop{\mathrm{Var}}\nolimits(D)=2d-\mu_D^2.
-$$
+```
 
 The exact CVs are approximately $`36.300\%`$, $`8.85595\%`$ and $`2.55197\%`$ at $`d\in\{4,\,64,\,768\}`$; the first-order $`35.355\%`$ value at $`d=4`$ is not exact. At $`d=768`$, the unconditional pairwise mean is $`39.17908`$ with standard deviation $`0.99984`$.
 Distances to many points share the same query, so they are not independent unconditionally. Conditional on a fixed query $`q`$, $`\lVert X-q\rVert^2\sim\chi_d^{\prime2}(\lVert q\rVert^2)`$, with mean $`d+\lVert q\rVert^2`$ and variance $`2d+4\lVert q\rVert^2`$. At $`\lVert q\rVert^2=d=768`$, the local delta-method distance spread is $`\sqrt3/2\approx0.86603`$, not $`1`$. For $`N=10^7`$, the conditional distance quantiles with one-tail probability $`1/N`$ are approximately $`34.72881`$ and $`43.72841`$, ratio $`1.259139`$. These are quantile markers, not expected extrema or hard bounds. They replace the inconsistent $`33.5/44.9`$ independent-pair extreme heuristic. The conditional CDF is evaluated through its Poisson mixture of central chi-square CDFs.
@@ -161,10 +161,10 @@ With independent promotion probability $`0<p<1`$, expected occupancy of level $`
 HNSW replaces ordered-list links with stored geometric neighbors. Upper levels usually use greedy descent; the base search keeps candidates and a retained best set, so it may explore alternatives after a local greedy optimum. Its upper-layer stopping test certifies only a local result, not the global nearest vector.
 Under the stated layer convention,
 
-$$
+```math
 \ell=\left\lfloor-\frac{\ln U}{\ln M}\right\rfloor,\qquad
 \Pr(\ell\ge j)=M^{-j},\qquad U\sim\mathop{\mathrm{Uniform}}\nolimits(0,1),\ M>1.
-$$
+```
 
 Thus $`\mathbb E[N_j]=nM^{-j}`$. At $`M=16,n=10^7`$, the characteristic top-index scale is $`\log_{16}10^7\approx5.81337`$, with expected occupancies $`625{,}000`$ at layer $`1`$, $`9.53674`$ at layer $`5`$, and $`0.59605`$ at layer $`6`$. The number of occupied layers is random and includes layer $`0`$; $`5.8`$ is not literally a six-layer guarantee. Geometric occupancy alone does not prove logarithmic graph-search work.
 - **Nearest-only links:** They can waste degree within one cluster and even form disconnected components, but this is a possible failure, not a theorem for every $`k`$-NN graph.
@@ -174,10 +174,10 @@ Flat NSW combines links on one level. HNSW’s hierarchy often improves entry an
 **Illustrative query budget.** Let $`M=16,M_0=32`$, and separately assume five upper levels with two expanded nodes each and $`64`$ expanded base nodes. This gives $`5(2)(16)+64(32)=2{,}208`$ neighbor-distance evaluations if none are reused, a $`4{,}528.986`$ work reduction versus $`10^7`$. It is not a bound implied by $`\mathrm{ef}_{\mathrm{search}}=64`$. Reading a fresh $`3{,}072`$-byte vector for each evaluation costs $`6{,}782{,}976`$ bytes; expanded adjacency slots add $`[5(2)(16)+64(32)]4=8{,}832`$ bytes, total $`6.791808\,\mathrm{MB}`$. At an assumed effective scattered-read rate of $`10\,\mathrm{GB/s}`$, this component is $`0.67918\,\mathrm{ms}`$. The older $`7.1\,\mathrm{MB}`$ model charged an entire base neighbor list per evaluated candidate, rather than per expanded node. Neither model establishes observed latency or recall; metadata, caches and access dependencies matter.
 **Scoped link memory.** With four-byte IDs, expected allocated link slots contribute
 
-$$
+```math
 b_{\mathrm{link}}=4\left(2M+M\sum_{j\ge1}M^{-j}\right)
 =4\left(2M+\frac{M}{M-1}\right).
-$$
+```
 
 At $`M=16`$, this is $`132.266667\,\mathrm{B/vector}`$: $`128`$ at the base and $`4.266667`$ above. Ten million fp32 vectors plus these slots use $`32.042667\,\mathrm{GB}`$, $`4.30556\%`$ over vector payload. The documented rule $`4d+8M=3{,}200`$ omits the upper-slot term; its scoped undercount is about $`0.1332\%`$, not a complete allocation audit. Counts, pointers, alignment, external IDs, visited sets, locks and payload remain additional.
 With $`64`$-byte PQ codes, the same expected slots give $`196.266667\,\mathrm{B/vector}`$ and $`1.962667\,\mathrm{GB}`$; links occupy $`67.3913\%`$. The base-only shortcut is $`192`$ bytes and $`1.92\,\mathrm{GB}`$, and must be labeled as such. Graph links are not mathematically incompressible; they simply do not shrink automatically with the vector codes.
@@ -190,19 +190,19 @@ At $`500`$ million vectors, these expected-slot floors are $`1.602133\,\mathrm{T
 - **Failure modes:** Poorly matched boundaries or an uneven distribution can overload lists or miss nearby points. Learned partitions can have these problems too.
 For Euclidean IVF, fit $`K=\mathrm{nlist}`$ centroids and set $`q_c(x)\in\arg\min_i\lVert x-c_i\rVert`$, with a tie rule. Cell membership satisfies
 
-$$
+```math
 \lVert x-c_i\rVert^2\le\lVert x-c_j\rVert^2
 \quad\Longleftrightarrow\quad
 2x^{\mathsf T}(c_j-c_i)\le\lVert c_j\rVert^2-\lVert c_i\rVert^2.
-$$
+```
 
 For distinct centroids the separating plane is their perpendicular bisector. A Voronoi cell is an intersection of half-spaces: a convex polyhedron, possibly unbounded, and a polytope only if bounded. Tied boundaries need assignment conventions. Inner-product or other routing choices need their own geometry.
 The inverted file maps centroid IDs to posting lists, analogous to a text index mapping terms to postings. With flat full-vector centroid comparisons and balanced representative probed lists, a continuous distance-count proxy is
 
-$$
+```math
 T(K)=K+\frac{wN}{K},\qquad w=\mathrm{nprobe},\qquad
 K_\star=\sqrt{wN}.
-$$
+```
 
 Here $`T'(K)=1-wN/K^2`$ and $`T''(K)=2wN/K^3>0`$. The minimum assumes fixed $`w`$, equal-cost centroid and candidate comparisons, and feasible integer $`1\le w\le K\le N`$. Recall changes with $`K,w`$ and is not optimized by this derivative. At $`w=1`$, $`T(K_\star)=2\sqrt N`$, giving work reduction $`\sqrt N/2\approx1{,}581.139`$ at $`N=10^7`$. PQ scoring, indexed centroids, imbalanced lists and hardware change the model.
 - **Boundary miss:** A true neighbor may be in a different cell, especially near a bisector. It is not inevitable for every boundary-near query.
@@ -228,10 +228,10 @@ At $`200`$ million vectors, fp32 payload is $`614.4\,\mathrm{GB}`$. Standard HNS
 A family is $`(R,cR,p_1,p_2)`$-sensitive for $`R>0,c>1,0<p_2<p_1<1`$ if pairs at distance at most $`R`$ collide with probability at least $`p_1`$, while pairs at distance at least $`cR`$ collide with probability at most $`p_2`$. The guarantee leaves the intermediate annulus unspecified.
 For random-hyperplane cosine hashing, use nonzero normalized vectors and $`r\sim\mathcal N(0,I_d)`$:
 
-$$
+```math
 h_r(x)=\mathop{\mathrm{sign}}\nolimits(r^{\mathsf T}x),\qquad
 p(\theta)=1-\frac{\theta}{\pi}.
-$$
+```
 
 At cosine $`0.8`$, $`\theta\approx0.643501109`$ and $`p_1\approx0.7951672353`$; at cosine $`0.3`$, $`\theta\approx1.266103673`$ and $`p_2\approx0.5969866840`$. The per-bit margin is approximately $`0.1981805513`$. Keep these unrounded probabilities for all powers and table counts.
 - What AND amplification does: Concatenate $`b`$ independent bits into one table key.
@@ -243,9 +243,9 @@ At cosine $`0.8`$, $`\theta\approx0.643501109`$ and $`p_1\approx0.7951672353`$; 
 - Cost: Every table stores another full set of corpus identifiers.
 **Classical asymptotic construction.** For a real-valued algebraic code length $`b_0=\log_{1/p_2}N`$, $`Np_2^{b_0}=1`$. Define $`\rho=\ln(1/p_1)/\ln(1/p_2)`$, so $`p_1^{b_0}=N^{-\rho}`$. At $`L\approx N^\rho`$, success for a qualifying near point approaches $`1-e^{-1}\approx0.632121`$. A real index needs integer $`b,L`$; $`b=\lceil b_0\rceil`$ keeps $`Np_2^b\le1`$, and $`L=\lceil p_1^{-b}\rceil`$ gives at least the corresponding constant-success scale. Target success $`1-\varepsilon`$ instead needs
 
-$$
+```math
 L\ge\left\lceil\frac{\ln\varepsilon}{\ln(1-p_1^b)}\right\rceil.
-$$
+```
 
 The usual candidate/probe scaling is $`O(N^\rho)`$ with $`O(N^{1+\rho})`$ posting entries under the model; projection and hashing add work such as $`O(Lbd)`$ for separately computed dense hyperplanes, often suppressed with dimension/log factors or preprocessing assumptions. The construction solves an approximate near-neighbor radius problem, not a universal top-$`k`$ recall guarantee. Its query-work bound uses the model's candidate limits or early acceptance of a qualifying point. Exhaustively unioning and reranking buckets for top-$`k`$ is a different procedure: many points in the intermediate-distance annulus or overloaded buckets can produce linear-size candidate sets even though the far-point collision bound holds. Duplicates, short keys and metric choice also affect actual work.
 **Integer classical example.** With $`N=10^7`$ and the unrounded cosine-derived $`p_1,p_2`$, $`\rho\approx0.444311671`$, $`b_0\approx31.2450683`$, hence choose $`b=32`$, not $`31`$. Taking $`L=1{,}533`$ gives qualifying-point success about $`0.6324214`$. If every background point has cosine $`0.3`$, expected far candidates per table are $`0.6774365`$ and the deduplicated expected far union is approximately $`1{,}038.456`$; these are expectations, not guaranteed counts. Projection uses $`49{,}056`$ hyperplane dots or $`37{,}675{,}008`$ MACs at width $`768`$. Far-candidate reranking adds about $`797{,}534`$ MACs, plus any qualifying-point and bookkeeping work. Against $`7.68\times10^9`$ brute-force MACs, this arithmetic-only ratio is about $`199.62`$, not a measured speedup. Posting IDs alone require $`1{,}533(10^7)(8)=122.64\,\mathrm{GB}`$, before buckets, keys and $`30.72\,\mathrm{GB}`$ of vectors if retained for exact reranking. Rounding the old exponent and using $`31`$ bits produced internally inconsistent table, candidate and memory totals.
@@ -261,16 +261,16 @@ A proximity-graph index stores vector nodes and selected edges. Queries may use 
 **Cone record-minimum toy.** Distinguish the randomized cone construction here from the relative-neighborhood-inspired pruning used below. Suppose a fixed collection of $`C`$ cones covers directions around a node. Within one cone, randomly permute $`m`$ distinct candidate distances and retain every new prefix minimum. Position $`i`$ is a record with probability $`1/i`$, hence $`\mathbb E[\#\mathrm{records}]=H_m=\sum_{i=1}^m1/i=\ln m+\gamma+O(1/m)`$. At fixed cone count, expected edge storage is $`O(CN\log N)`$; $`C`$ can grow steeply with dimension and narrower cone width. The retained set need not contain only the final nearest point. Enumerating every point pair already requires $`O(N^2)`$ distance comparisons and approximately $`O(N^2d)`$ coordinate work, before cone tests. Record-count arithmetic alone does not establish logarithmic query hops; any such cited theorem needs its geometric and construction assumptions.
 **Vamana pruning.** At node $`p`$, process a candidate set by choosing the nearest surviving $`p^*`$, adding it to neighbors, and deleting candidates $`q`$ satisfying
 
-$$
+```math
 \alpha\,d(p^*,q)\le d(p,q),\qquad \alpha\ge1.
-$$
+```
 
 At $`\alpha=1`$, this is a relative-neighborhood-inspired occlusion test closely related to the HNSW diversity heuristic. The algorithms are not identical, and testing only retained candidates need not reproduce the full mathematical relative neighborhood graph. Increasing $`\alpha`$ makes this deletion test harder for a fixed retained point; the final capped greedy construction is not necessarily nested as a whole, because earlier choices can change. More candidates can survive and use the degree budget, often including useful longer edges.
 **Conditional shrinkage proof.** Assume the target $`q`$ is itself a dataset point, every other point was available to each node’s pruning step, and no candidate was left uncovered by a degree-cap stop. Then either $`p\to q`$ is retained or $`q`$ was removed by some retained $`p^*`$ satisfying $`d(p^*,q)\le d(p,q)/\alpha`$. For $`\alpha>1`$, a greedy choice at least as good as that witness yields $`d_h\le d_0\alpha^{-h}`$. If $`d_{\min}>0`$ is the minimum interpoint separation and $`\Delta=d_0/d_{\min}\ge1`$, the target must be reached by
 
-$$
+```math
 h_{\max}\le\left\lfloor\log_\alpha\Delta\right\rfloor+1,
-$$
+```
 
 since one further strictly sub-$`d_{\min}`$ distance can only be zero. At $`\Delta=10^4`$, the logarithmic scales are $`50.5170`$ for $`\alpha=1.2`$ and $`22.7155`$ for $`\alpha=1.5`$, giving conservative integer bounds $`51`$ and $`23`$ in this ideal covered-point setting. At $`\alpha=1`$, this multiplicative-shrinkage argument provides no logarithmic bound. It does not prove an arbitrary external query, approximate candidate construction, capped degree or real DiskANN walk obeys those hop counts. On disk, actual dependent I/O rounds—not this ideal formula alone—control latency.
 - **Annoy:** A forest of random-projection trees, often built from approximate two-means/split procedures. A perpendicular-bisector split between two representatives is a simplified model, not every implementation detail.
@@ -285,10 +285,10 @@ In the illustrated graph, greedy search takes $`E\,(63.6)\to P_5\,(50.4)\to P_1\
 **Forest illustration.** Suppose a simplified binary forest has exactly $`\lceil10^8/64\rceil`$ leaves per tree and a full $`768`$-float normal per internal node. It has $`1{,}562{,}499`$ internal nodes, approximately $`4.8\,\mathrm{GB}`$ of normals per tree or $`240\,\mathrm{GB}`$ for $`50`$ trees. Those normals alone are $`0.78125`$ times the vector payload; normals plus one shared vector payload are about $`1.78125`$ times it. The old claim that the $`240\,\mathrm{GB}`$ forest alone was $`1.8`$ times $`307.2\,\mathrm{GB}`$ conflated the two. Actual Annoy leaf capacity, node layout, representative construction and mapping overhead differ; measure its file and resident working set.
 **Disk record illustration.** $`96`$-byte PQ codes use $`9.6\,\mathrm{GB}`$ RAM at $`100`$ million points, $`15\%`$ of a decimal $`64\,\mathrm{GB}`$ machine before cache and other structures. Assume full vectors, four-byte neighbor IDs and a four-byte degree count are stored in separately aligned $`4\,\mathrm{KiB}`$ node records. Then
 
-$$
+```math
 4d+4R+4\le4{,}096\quad\Longrightarrow\quad R\le255
 \quad(d=768).
-$$
+```
 
 At $`R=64`$ a record is $`3{,}332`$ bytes, leaving $`764`$ bytes. At $`R=255`$ it exactly fills a page; at $`R=256`$ it is $`4{,}100`$ bytes, spilling by $`4`$ bytes. The $`255\to256`$ change is $`0.392157\%`$ in degree. Under this fixed aligned/full-record-read layout it changes one page read to two, not necessarily every real implementation’s physical I/O. Padding one node to one page consumes $`409.6\,\mathrm{GB}`$ on disk at this scale, not the unpadded $`333.2\,\mathrm{GB}`$ including degree counters. Int8 full-vector storage frees $`2{,}304`$ bytes and gives the same arithmetic ceiling $`R\le831`$; that is a layout ceiling, not a recommended graph degree.
 **Read rounds and load.** Assume $`120`$ uncached one-page reads and at most $`4`$ useful simultaneous reads per query. At least $`\lceil120/4\rceil=30`$ rounds are needed; exactly $`30`$ assumes dependencies never reduce useful concurrency. At $`100\,\mathrm{\mu s}`$ per round this component is $`3.0\,\mathrm{ms}`$ before queueing, CPU, cache misses and tail effects. A beam setting alone does not establish the read count or that concurrency. At $`5{,}000`$ QPS, demand is $`600{,}000`$ random IOPS and $`2.4576\,\mathrm{GB/s}`$ of $`4\,\mathrm{KiB}`$ read traffic. With $`100\,\mathrm{\mu s}`$ mean read service time, Little’s law requires about $`60`$ reads in flight across the workload. Saving ten such sequential rounds saves $`1\,\mathrm{ms}`$, one quarter only if a separate $`4\,\mathrm{ms}`$ I/O budget is assumed.
@@ -310,9 +310,9 @@ At $`32`$ of $`4{,}096`$ lists, the balanced-list scan fraction is $`0.78125\%`$
 The cited SIFT1B case uses $`d=128`$: its raw payload is $`512\,\mathrm{GB}`$ versus $`64\,\mathrm{GB}`$ RAM, an $`8`$-fold mismatch. Even allocating every byte to one billion points allows only $`64\,\mathrm{B/point}`$; caches and bookkeeping reduce the code allowance. It is a different setting from the $`768`$-dimensional examples.
 **Capacity and rebuilds.** Using only the expected vector-plus-link slot floor,
 
-$$
+```math
 N_{\max}=\left\lfloor\frac{\mathrm{RAM}}{db+4(2M+M/(M-1))}\right\rfloor.
-$$
+```
 
 At $`64\,\mathrm{GB},d=768,b=4,M=16`$, this is $`19{,}973{,}368`$ vectors before overhead, or $`9{,}986{,}684`$ if two full index copies must coexist. Ten million require $`64.085333\,\mathrm{GB}`$ for two copies even before other allocations: the stated $`64\,\mathrm{GB}`$ box does not have exact $`2\times`$ rebuild headroom. A $`64\,\mathrm{GiB}`$ box has $`68.719477\,\mathrm{GB}`$, a different budget. Plan a separate builder/hot swap, fewer resident vectors or more RAM. Small corpora are operationally simple only when their actual latency and QPS meet the target; one million vectors still have a $`61.44\,\mathrm{ms}`$ scan floor under these assumptions.
 For a $`500`$-million-point floor of $`1.602133\,\mathrm{TB}`$, $`\lceil1{,}602.133/64\rceil=26`$ decimal-$`64\,\mathrm{GB}`$ allocations are needed before replicas/headroom, not $`25`$. The $`52\,\mathrm{GB}`$ IVF-PQ entry array may fit one such node at steady state, but centroids, codes, metadata, refine working sets and rebuild copies must fit too. If global exactness is nonnegotiable, approximate candidates plus exact refinement are insufficient; use exhaustive or certified exact search. If a measured recall SLO is acceptable, evaluate overfetch, exact refinement and disk saturation at peak QPS. Freeze snapshots and filters for exact ground truth over a representative query sample, such as $`10{,}000`$ queries; report variation and drift. Halving $`d`$ halves full-vector and centroid payload, not fixed-width PQ codes, graph IDs, metadata or every index byte.
