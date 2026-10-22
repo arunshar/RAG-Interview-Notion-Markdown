@@ -112,7 +112,7 @@ The newsroom lesson is to separate the questions. Trust, credibility, freshness,
 | Hard ranking | One deterministic list with each item either placed or absent | Documents below the cutoff receive zero exposure |
 | Assignment matrix $`P`$ | A matrix saying which document occupies which position | Relaxing it creates a probabilistic ranking policy |
 | Assignment entry $`P_{d,k}`$ | Probability or hard indicator that document $`d`$ occupies position $`k`$ | Multiplying it by $`v(k)`$ produces expected document exposure |
-| Matrix dimensions $`N`$ and $`K`$ | Candidates and displayed slots | For $`K<N`$, unit columns coexist with at-most-unit rows, not all unit rows |
+| Matrix dimensions $`N`$ and $`K`$ | Candidates and displayed slots | For $`K\lt N`$, unit columns coexist with at-most-unit rows, not all unit rows |
 | Doubly stochastic matrix | A square nonnegative matrix with every row/column summing to one | Complete unshown zero-attention positions before applying Birkhoff to top-K display |
 | Demographic parity | Equal average per-document exposure across groups | A policy choice, not necessarily equal group-total attention |
 | Disparate treatment | The paper’s average-utility-proportional exposure constraint | Requires positive fixed merits; neither an automatic default nor a legal conclusion |
@@ -195,7 +195,7 @@ Let $`A_s(q)`$ be source $`s`$’s filtered answer or abstention $`\mathrm{IDK}`
 
 ```math
 \begin{aligned}
-r_s&=\frac{1}{|J_s|}\sum_{q\in J_s}\mathbf1[A_s(q)\sim z(q)],\qquad |J_s|>0,\\
+r_s&=\frac{1}{|J_s|}\sum_{q\in J_s}\mathbf1[A_s(q)\sim z(q)],\qquad |J_s|\gt 0,\\
 v_s&=S r_s-1.
 \end{aligned}
 ```
@@ -222,7 +222,7 @@ Consider RA-RAG when source identity is meaningful and calibration coverage is s
 - **Limit:** It does not eliminate credibility assessment. The original training construction bins retrieval relevance into high/medium/low levels; its benchmark additionally incorporates timeliness and source reliability. Those proxies are not an independently verified truth oracle.
 - **Cost:** Annotation, teacher generation, training, validation and inference-time credibility inputs all require resources; “days” is a project estimate, not a method guarantee.[\[5\]](https://arxiv.org/html/2404.06809)
 The original teacher is GPT-3.5. It receives the question, credibility-tagged documents and the gold answer, then writes a credibility-guided explanation used as the training output. The model learns to generate with annotated evidence; it is not simply trained to infer source truth from writing register or citation appearance. A coherent, gold-conditioned explanation is also not a verified causal trace of the student’s internal computation.[\[5\]](https://arxiv.org/html/2404.06809)
-As one explicit benchmark policy, relevance tier $`R\in\{1,2,3\}`$ is downgraded by elapsed time $`T\ge0`$ in intervals $`\tau>0`$, and capped by source tier $`S_{\mathrm{tier}}\in\{1,2,3\}`$:
+As one explicit benchmark policy, relevance tier $`R\in\{1,2,3\}`$ is downgraded by elapsed time $`T\ge0`$ in intervals $`\tau\gt 0`$, and capped by source tier $`S_{\mathrm{tier}}\in\{1,2,3\}`$:
 
 ```math
 c=\min\!\left\{\max\!\left(R-\left\lfloor T/\tau\right\rfloor,1\right),S_{\mathrm{tier}}\right\}.
@@ -267,11 +267,11 @@ For one head $`h`$, query-token row $`i`$ and key token $`j`$, let $`\alpha_{h,i
 ```math
 \begin{aligned}
 Z_{h,i}&=\sum_{j\in\mathcal A_i}\widetilde\alpha_{h,i,j},\\
-\alpha'_{h,i,j}&=\frac{\widetilde\alpha_{h,i,j}}{Z_{h,i}},\qquad Z_{h,i}>0.
+\alpha'_{h,i,j}&=\frac{\widetilde\alpha_{h,i,j}}{Z_{h,i}},\qquad Z_{h,i}\gt 0.
 \end{aligned}
 ```
 
-Here $`\mathcal A_i`$ is the allowed key set for row $`i`$. Masked positions remain zero, and unselected heads retain their original normalized row. If $`Z_{h,i}=0`$, use an explicitly chosen safe fallback, such as preserving the original valid row and escalating, rather than silently creating NaNs. This fallback and an equal-score policy are implementation requirements, not additional guarantees from the paper. Multiplying post-softmax weights is equivalent to adding $`\log c_j`$ to unmasked logits when $`c_j>0`$; adding raw $`c_j`$ to logits is a different operation.
+Here $`\mathcal A_i`$ is the allowed key set for row $`i`$. Masked positions remain zero, and unselected heads retain their original normalized row. If $`Z_{h,i}=0`$, use an explicitly chosen safe fallback, such as preserving the original valid row and escalating, rather than silently creating NaNs. This fallback and an equal-score policy are implementation requirements, not additional guarantees from the paper. Multiplying post-softmax weights is equivalent to adding $`\log c_j`$ to unmasked logits when $`c_j\gt 0`$; adding raw $`c_j`$ to logits is a different operation.
 #### Attention arithmetic and measured scope
 - **What:** For a generic reweighting illustration, Document A has initial row mass $`0.30`$ and multiplier $`0.8`$; B has mass $`0.20`$ and multiplier $`0.1`$. The remaining $`0.50`$ is on unscaled tokens.
 - **Arithmetic:** Scaled masses are $`0.24`$, $`0.02`$ and $`0.50`$, so the full denominator is $`0.76`$. Full-row shares become $`0.24/0.76\approx31.578947\%`$ for A and $`0.02/0.76\approx2.631579\%`$ for B.
@@ -309,7 +309,7 @@ Reassess feasibility when models, sources, scorers or resources change. Plan mai
 A statistic measured in 2020 and copied in 2023 has not been remeasured merely because a page is new. Repeated wrappers can evade a publication-age filter, but their new dates must be distinguished from retrieval/access dates and genuine new measurements.
 A reference-list omission can also propagate downstream. It is a coverage/provenance concern, not evidence that every later author independently checked completeness or that every missing reference is deliberately suppressed.
 #### Freshness-weight experiment
-- **What:** Use $`w(T,t)=2^{-(T-t)/\tau_{1/2}}`$ for evaluation time $`T\ge t`$ and half-life $`\tau_{1/2}>0`$ in the same units.
+- **What:** Use $`w(T,t)=2^{-(T-t)/\tau_{1/2}}`$ for evaluation time $`T\ge t`$ and half-life $`\tau_{1/2}\gt 0`$ in the same units.
 - **Assumption:** Treat the calendar-year labels as exact year offsets, with $`T=2026`$ and $`\tau_{1/2}=1`$ year; this is not day-accurate timestamp arithmetic.
 - **Arithmetic:** The 2023 wrapper yields $`2^{-3}=1/8=0.125`$, while the 2020 observation yields $`2^{-6}=1/64=0.015625`$. The ratio is exactly eight.
 - **Limit:** This is a freshness-weight distortion under an illustrative decay policy, not an eightfold probability of being wrong.
@@ -335,14 +335,14 @@ Treat frequent re-citation as a provenance audit signal, not automatic consensus
 Position discounts are often modeled in an NDCG-like form, but measured user attention is not automatically identical to an evaluation metric’s chosen discount. Changing discount scale changes objective and exposure units.
 On the ambiguous query “Michael Jordan,” several entities can be plausible. If the researcher is the known intended entity, a basketball-dominated list is a relevance/intent-recognition failure. The toy below instead models coverage of four plausible intents before clarification; its utility values are stipulated ranking scores, not known user-intent probabilities or measured truth.
 #### ILAD, coverage, and the combined objective
-- **What:** For $`K=|L|\ge2`$ and nonzero embeddings, define $`\mathrm{ILAD}(L)=\frac{2}{K(K-1)}\sum_{i<j}(1-\cos(e_i,e_j))`$.
+- **What:** For $`K=|L|\ge2`$ and nonzero embeddings, define $`\mathrm{ILAD}(L)=\frac{2}{K(K-1)}\sum_{i\lt j}(1-\cos(e_i,e_j))`$.
 - **Why:** It summarizes embedding dissimilarity, not necessarily factual independence or meaningful stance coverage.
 - **Limit:** Cosine dissimilarity lies in $`[0,2]`$, not automatically $`[0,1]`$; unrelated or adversarial text can increase it. It is not a probability or, without further conditions, a metric distance.
-- **Cost:** Specify embeddings, normalization and handling of $`K<2`$ (for example, omit the term). Geometric spread needs an independently defined task-quality check.
+- **Cost:** Specify embeddings, normalization and handling of $`K\lt 2`$ (for example, omit the term). Geometric spread needs an independently defined task-quality check.
 Let $`\mathcal S`$ be a fixed, nonempty reference set of eligible intents/stances and require $`S_d\subseteq\mathcal S`$. Then coverage is bounded in $`[0,1]`$:
 
 ```math
-\mathrm{coverage}(L)=\frac{\left|\bigcup_{d\in L}S_d\right|}{|\mathcal S|},\qquad |\mathcal S|>0.
+\mathrm{coverage}(L)=\frac{\left|\bigcup_{d\in L}S_d\right|}{|\mathcal S|},\qquad |\mathcal S|\gt 0.
 ```
 
 For a fixed $`K\ge2`$ and declared $`\lambda_1,\lambda_2\ge0`$, one set-level objective is:
@@ -377,7 +377,7 @@ P\in\mathbb R_{\ge0}^{N\times K},\qquad
 \sum_{k=1}^{K}P_{d,k}\le1.
 ```
 
-Their total mass is $`K`$. Requiring all $`N`$ row sums and all $`K`$ column sums to equal one is impossible when $`K<N`$. For the standard square doubly stochastic formulation, add $`N-K`$ unshown positions with zero attention and complete each row to one. If $`K<N`$, one explicit completion gives every extra column entry $`(1-\sum_{k\le K}P_{d,k})/(N-K)`$; those extra columns sum to one. When $`K=N`$, the rectangular constraints already force every row sum to one. Apply Birkhoff to this square completion, not directly to an incompatible rectangular matrix.[\[6\]](https://arxiv.org/html/1802.07281)
+Their total mass is $`K`$. Requiring all $`N`$ row sums and all $`K`$ column sums to equal one is impossible when $`K\lt N`$. For the standard square doubly stochastic formulation, add $`N-K`$ unshown positions with zero attention and complete each row to one. If $`K\lt N`$, one explicit completion gives every extra column entry $`(1-\sum_{k\le K}P_{d,k})/(N-K)`$; those extra columns sum to one. When $`K=N`$, the rectangular constraints already force every row sum to one. Apply Birkhoff to this square completion, not directly to an incompatible rectangular matrix.[\[6\]](https://arxiv.org/html/1802.07281)
 For nonempty groups with positive average utility $`\bar u_G`$, demographic parity uses $`E_{G_1}=E_{G_2}`$, while the paper’s utility-proportional (“disparate treatment”) constraint uses $`E_{G_1}/\bar u_{G_1}=E_{G_2}/\bar u_{G_2}`$. Here “disparate treatment” names that mathematical formulation, not a general legal conclusion. Fix utilities first so this is linear in $`P`$. Zero/negative utilities need an explicitly defined alternative; do not divide by zero. Choosing parity, merit-proportional exposure or another rule is a policy decision informed by validity/bias of the utility estimates—not a theorem that credibility mandates one rule.[\[6\]](https://arxiv.org/html/1802.07281)
 One LP maximizes $`\sum_d u(d)e_d`$ under these assignment and declared linear group constraints. Its coefficients require a fixed query, utility model, group definition and attention model. It allocates modeled expected utility, not necessarily end-to-end answer accuracy. Check feasibility: exposure targets outside the candidate/position polytope cannot be met by merely renormalizing totals. Singh and Joachims formalize the exposure LP; amortized fairness across a changing query stream is a further accounting choice.[\[6\]](https://arxiv.org/html/1802.07281)
 #### Serving and approximation

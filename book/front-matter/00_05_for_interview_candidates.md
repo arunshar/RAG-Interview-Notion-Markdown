@@ -228,7 +228,7 @@ At roughly $`2\,\mathrm{h/day}`$ over $`28`$ study days, the four-week plan budg
 #### Week 2: The retrieval stack
 **Coverage:** Parts IV to VI, Chapters 12 to 23.
 **Practice:** Work every example with a calculator.
-**Targets:** Derive the level distribution and scoped storage under a stated HNSW convention. For independent sampled levels with $`M>1`$, $`\Pr(\ell\ge j)=M^{-j}`$ for nonnegative integer $`j`$; maximum height is random, typically of logarithmic order, not an exact number fixed by $`N_v`$. Explain BM25 saturation, length normalization, hybrid retrieval and RRF with their assumptions.[\[5\]](../part-05-indexing/15_approximate_nearest_neighbor_search.md)[\[8\]](../part-06-retrieval-ranking/18_classical_ir_you_are_expected_to_know.md)[\[9\]](../part-06-retrieval-ranking/21_learned_sparse_and_multi_vector_retrieval.md)
+**Targets:** Derive the level distribution and scoped storage under a stated HNSW convention. For independent sampled levels with $`M\gt 1`$, $`\Pr(\ell\ge j)=M^{-j}`$ for nonnegative integer $`j`$; maximum height is random, typically of logarithmic order, not an exact number fixed by $`N_v`$. Explain BM25 saturation, length normalization, hybrid retrieval and RRF with their assumptions.[\[5\]](../part-05-indexing/15_approximate_nearest_neighbor_search.md)[\[8\]](../part-06-retrieval-ranking/18_classical_ir_you_are_expected_to_know.md)[\[9\]](../part-06-retrieval-ranking/21_learned_sparse_and_multi_vector_retrieval.md)
 #### Week 3: Control flow and evaluation
 **Coverage:** Parts VII to X, Chapters 24 to 34.
 **Practice:** For every control-flow method, write one sentence naming the failure it addresses and what it trades away.

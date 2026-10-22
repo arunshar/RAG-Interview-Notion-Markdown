@@ -292,7 +292,7 @@ The distributional hypothesis estimates representations from observed contexts. 
 \mathop{\mathrm{PMI}}\nolimits(w,c)=\ln\frac{n_{wc}T_{\mathrm{pair}}}{n_wn_c}.
 ```
 
-At the unconstrained positive-count optimum of skip-gram negative sampling, with $`k>0`$ negatives per positive and context sampling distribution $`q(c)>0`$, the score is $`\ln[P(c\mid w)/(kq(c))]`$. The familiar shifted-PMI form below requires $`q(c)=P(c)`$; smoothed unigram negative sampling introduces an additional context-dependent term (Levy and Goldberg, 2014). Finite-rank fitting and regularization need not attain each pairwise optimum.
+At the unconstrained positive-count optimum of skip-gram negative sampling, with $`k\gt 0`$ negatives per positive and context sampling distribution $`q(c)\gt 0`$, the score is $`\ln[P(c\mid w)/(kq(c))]`$. The familiar shifted-PMI form below requires $`q(c)=P(c)`$; smoothed unigram negative sampling introduces an additional context-dependent term (Levy and Goldberg, 2014). Finite-rank fitting and regularization need not attain each pairwise optimum.
 
 ```math
 u_w^{\mathsf T}v_c=\mathop{\mathrm{PMI}}\nolimits(w,c)-\ln k\qquad\text{at the ideal optimum when }q(c)=P(c).
@@ -316,7 +316,7 @@ It turns observed use into computable geometry.
 
 A representation cannot learn semantic neighborhoods from unlabeled corpora. **Its limit:** The vector describes one corpus at one moment. It does not store an eternal meaning.
 #### Count drift {color="gray_bg"}
-Append $`m`$ word-context pair events for $`w`$, all in contexts other than the old $`c`$, and leave $`n_{wc}`$ and $`n_c`$ unchanged. Let $`r=m/n_w`$, using the original $`n_w>0`$. The old conditional-context association falls by $`-\ln(1+r)`$. PMI also includes the changed total pair count:
+Append $`m`$ word-context pair events for $`w`$, all in contexts other than the old $`c`$, and leave $`n_{wc}`$ and $`n_c`$ unchanged. Let $`r=m/n_w`$, using the original $`n_w\gt 0`$. The old conditional-context association falls by $`-\ln(1+r)`$. PMI also includes the changed total pair count:
 
 ```math
 \begin{aligned}
@@ -452,7 +452,7 @@ For $`n=250,\rho=0`$, this toy difference is $`1/\sqrt{250}\approx0.06324555`$. 
 
 A measured exact-match advantage must be judged against the candidate-score spread; neither $`0.00564557`$ nor $`0.00282279`$ is a universal production margin. The chapter cites Ethayarajh (2019) for last-layer GPT-2 word cosine near $`1.0`$ and increasing anisotropy with depth in BERT and ELMo. On the sparse side, a document without the term scores exactly $`0`$ for that term. The distinction is a gate rather than a small margin.
 #### Why more dense dimensions do not fix the objective {color="gray_bg"}
-Raising $`d`$ from $`768`$ to $`4{,}096`$ for $`10^7`$ fp32 vectors increases payload from $`30.72\,\mathrm{GB}`$ to $`163.84\,\mathrm{GB}`$, a ratio of $`16/3\approx5.3333`$. To state what the Welch bound does and does not show, let $`m>d`$ unit vectors have maximum absolute coherence $`\mu`$:
+Raising $`d`$ from $`768`$ to $`4{,}096`$ for $`10^7`$ fp32 vectors increases payload from $`30.72\,\mathrm{GB}`$ to $`163.84\,\mathrm{GB}`$, a ratio of $`16/3\approx5.3333`$. To state what the Welch bound does and does not show, let $`m\gt d`$ unit vectors have maximum absolute coherence $`\mu`$:
 
 ```math
 \mu=\max_{i\ne j}\lvert v_i^{\mathsf T}v_j\rvert\ \ge\ \sqrt{\frac{m-d}{d(m-1)}}.
@@ -544,7 +544,7 @@ Feed the same tokens through the same encoder with independent dropout masks $`m
 h_1 = f_{m_1}(x),\qquad h_2 = f_{m_2}(x)
 ```
 
-For a fixed nonzero hidden vector $`h`$, independently Bernoulli-masked coordinates in both views, and $`0\le p<1`$, consider this output-mask toy with inverted scaling:
+For a fixed nonzero hidden vector $`h`$, independently Bernoulli-masked coordinates in both views, and $`0\le p\lt 1`$, consider this output-mask toy with inverted scaling:
 
 ```math
 u_i = \frac{m_{1i}h_i}{1-p},\qquad v_i = \frac{m_{2i}h_i}{1-p}

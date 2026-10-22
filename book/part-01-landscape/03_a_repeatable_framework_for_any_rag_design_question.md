@@ -235,7 +235,7 @@ The opening maturity prompt arrives 25 minutes into a design loop. The bad refle
 | Augmentation | Evidence is noisy, redundant, badly ordered, or stitched. | After retrieval and before generation. | Concatenation repeats or buries facts. |
 
 
-The source’s generation example asks a model trained through 2023 for total H-1B filing cost in 2026. The correct pages are present, but the model lists base, training, and fraud-prevention fees without summing them. If all components occupy one chunk, a prompt instruction to sum adds zero modules and zero retrieval latency. Decomposition is justified only when the components are spread across documents. Advanced RAG fills a pre-retrieval slot and a post-retrieval slot. Modular RAG turns the modules into a graph that may route, branch, judge, and loop. Naive RAG is already the small module graph $`retrieve -> read`$. Advanced RAG adds a rewriter and reranker to the same graph. The right design is the least connected graph that closes a measured failure.
+The source’s generation example asks a model trained through 2023 for total H-1B filing cost in 2026. The correct pages are present, but the model lists base, training, and fraud-prevention fees without summing them. If all components occupy one chunk, a prompt instruction to sum adds zero modules and zero retrieval latency. Decomposition is justified only when the components are spread across documents. Advanced RAG fills a pre-retrieval slot and a post-retrieval slot. Modular RAG turns the modules into a graph that may route, branch, judge, and loop. Naive RAG is already the small module graph $`retrieve -\gt  read`$. Advanced RAG adds a rewriter and reranker to the same graph. The right design is the least connected graph that closes a measured failure.
 #### Additive and multiplicative latency
 Let $`L_r`$ be retrieval latency, $`L_g`$ final generation, $`L_c`$ one control call, $`L_k`$ reranking, $`L_{g'}`$ an intermediate generation, and $`T`$ the number of sequential retrieve-reason rounds. The simplified serial budgets are:
 
@@ -336,7 +336,7 @@ For $`400`$ customers requiring independently refreshed adapters every hour, a n
 #### The three numbers
 The opening design interview lasts 45 minutes. The weak candidate names HNSW, a 768-dimensional bi-encoder, and a top-20 cross-encoder by 90 seconds, then learns at minute 30 that the corpus has only $`200{,}000`$ articles.
 Ask first for chunk count $`N`$, peak query rate $`\lambda`$, and end-to-end latency budget $`L`$. Index family, quantization, shards, replicas, and reranker depth follow from them.
-Document count alone is misleading. Let document $`i`$ contain $`t_i>0`$ tokens, chunk length be $`c`$, and positive stride be $`s=c(1-\rho)`$ with $`0\le\rho<1`$. For fixed-stride chunks that stay inside each document and retain the final partial chunk, the exact count is:
+Document count alone is misleading. Let document $`i`$ contain $`t_i\gt 0`$ tokens, chunk length be $`c`$, and positive stride be $`s=c(1-\rho)`$ with $`0\le\rho\lt 1`$. For fixed-stride chunks that stay inside each document and retain the final partial chunk, the exact count is:
 
 ```math
 \begin{aligned}
@@ -418,7 +418,7 @@ D = A^{*} - A_{\text{fix}} \ge 0
 ```
 
 The adaptivity dividend $`D`$ is zero exactly when one configuration is at least as good as every other configuration on each segment with positive weight.
-Let $`\rho`$ be the probability of choosing a row-optimal branch, and let $`L_{\mathrm{loss}}`$ be mean accuracy loss conditional on a misroute. Then $`A(\rho)=A^\star-(1-\rho)L_{\mathrm{loss}}`$. The conditional loss depends on the router's actual confusion pattern; a single aggregate route-accuracy value does not determine it. For $`L_{\mathrm{loss}}>0`$, beating the best fixed column requires:
+Let $`\rho`$ be the probability of choosing a row-optimal branch, and let $`L_{\mathrm{loss}}`$ be mean accuracy loss conditional on a misroute. Then $`A(\rho)=A^\star-(1-\rho)L_{\mathrm{loss}}`$. The conditional loss depends on the router's actual confusion pattern; a single aggregate route-accuracy value does not determine it. For $`L_{\mathrm{loss}}\gt 0`$, beating the best fixed column requires:
 
 ```math
 A(\rho) = A^{*} - (1-\rho)L_{\text{loss}}

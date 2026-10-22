@@ -64,7 +64,7 @@ The final invoice includes identifiers, graph slots, centroids, codebooks, optio
 | Precomputed table | Optional stored cell-dependent residual terms | Saves full-dimensional per-cell work, not all query table operations |
 | Scalar quantization (SQ) | Per-dimension integer encoding | Reconstructs component values |
 | SQ8 and SQ4 | Eight-bit and four-bit scalar codes | Use $`768\ \mathrm{B}`$ and $`384\ \mathrm{B}`$ at $`d = 768`$ |
-| $`\alpha_j, \beta_j`$ | Calibrated lower and upper endpoints, $`\beta_j>\alpha_j`$ | Saturation is needed; clipped errors can exceed half a bin |
+| $`\alpha_j, \beta_j`$ | Calibrated lower and upper endpoints, $`\beta_j\gt \alpha_j`$ | Saturation is needed; clipped errors can exceed half a bin |
 | $`\Delta_j`$ and $`\sigma_e`$ | Bin step and modeled rounding deviation | $`\Delta_j^2/12`$ requires a uniform-bin approximation |
 | Binary quantization | Sign-bit code | Raw signs, independent hyperplanes and learned rotations have different guarantees |
 | $`\theta`$, $`H`$, and $`\hat{\theta}`$ | Pair angle, Hamming count and angle estimate | Binomial variance uses $`n_b`$ independent isotropic hyperplanes |
@@ -178,7 +178,7 @@ There are $`mk`$ entries and $`kd`$ coordinate accumulations. Direct squared-dis
 For $`d=768,m=96,k=256`$, the table has $`24{,}576`$ entries, $`98{,}304\,\mathrm B=96\,\mathrm{KiB}`$ at float32. The nominal dot-product portion is $`196{,}608`$ MACs, or $`393{,}216`$ FLOPs. If one ignores table loads, norm terms, selection and bandwidth, a proxy comparing $`2kd+nm`$ with $`2dn`$ gives:
 
 ```math
-n>\frac{2kd}{2d-m}=\frac{393{,}216}{1{,}440}\approx273.0667\quad\Longrightarrow\quad n\ge274.
+n\gt \frac{2kd}{2d-m}=\frac{393{,}216}{1{,}440}\approx273.0667\quad\Longrightarrow\quad n\ge274.
 ```
 
 SDC also quantizes the query. It saves no database-code bytes, but can exploit a query code and precomputed symmetric code distances in some workflows. Neither ADC nor SDC has a universal additive positive-bias formula for deterministic centroid quantization; the error algebra and assumptions are given below.
@@ -223,7 +223,7 @@ Then $`\mathbb E[X-q_c(X)\mid q_c(X)]=0`$, so the cross term vanishes. With $`\s
 \underbrace{\mathbb E\lVert X-\mu\rVert^2}_{\sigma^2}=\mathbb E\lVert q_c(X)-\mu\rVert^2+\underbrace{\mathbb E\lVert X-q_c(X)\rVert^2}_{\rho\sigma^2},\qquad 0\le\rho\le1.
 ```
 
-Training centroids need not satisfy that identity for a shifted serving population. For a high-rate model with intrinsic dimension $`d^*>0`$, comparable source shapes and the stated common prefactors, use the schematic approximations:
+Training centroids need not satisfy that identity for a shifted serving population. For a high-rate model with intrinsic dimension $`d^*\gt 0`$, comparable source shapes and the stated common prefactors, use the schematic approximations:
 
 ```math
 \rho\approx K_c^{-2/d^*},\qquad D_{\mathrm{raw}}(R_b)\approx A\sigma^2 2^{-2R_b/d^*},\qquad D_{\mathrm{res}}(R_b)\approx A\rho\sigma^2 2^{-2R_b/d^*}.
@@ -251,7 +251,7 @@ The coarse level can remove between-cell variation before PQ encodes residuals. 
 The estimate $`\Delta R_b\approx\log_2 K_c`$ is not a high-rate lower bound. Different source shapes, cell quality, rates and product-block correlations can change the gain in either direction. Likewise, the often-quoted ADC mean distance $`\lVert y-x\rVert^2+\xi`$ requires conditionally zero-mean error with $`\mathbb E\lVert e_x\rVert^2=\xi`$; SDC adds $`2\xi`$ only with suitable zero means, equal error energy and zero cross covariance. Deterministic centroid errors do not generally satisfy these assumptions. For example, $`X\in\{-1,1\}`$ equally likely, $`\widehat X=0`$ and $`y=0`$ give exact distance $`1`$ but ADC distance $`0`$, not $`2`$.
 #### Failure without it
 Without residuals, a shared raw-vector codebook covers the full distribution rather than each centered cell's residual distribution. Residuals can improve that allocation, but do not automatically reduce every query error or improve every rank.
-When measured $`\rho`$ is near $`1`$, centering may offer little distortion benefit while still costing work. The suggested warning $`\rho>0.8`$ is a workload heuristic, not a theorem. OPQ and centering can interact; measure their joint effect rather than adding their gains.
+When measured $`\rho`$ is near $`1`$, centering may offer little distortion benefit while still costing work. The suggested warning $`\rho\gt 0.8`$ is a workload heuristic, not a theorem. OPQ and centering can interact; measure their joint effect rather than adding their gains.
 #### Cost and complexity
 Without precomputation, residual scoring forms $`y-c_i`$ for each probed cell and builds a cell-dependent table. For balanced or representative probed lists, the following counts use one coordinate accumulation for table work and one addition for scan work; they are not calibrated equal-time operations:
 
@@ -298,7 +298,7 @@ The exact expansion, including the cell-dependent offset needed when comparing c
 
 For PQ64, this optional table uses $`268{,}435{,}456\,\mathrm B=268.435456\,\mathrm{MB}=256\,\mathrm{MiB}`$ at $`K_c=4{,}096`$, or $`36.6030\%`$ of the scoped $`733.369344\,\mathrm{MB}`$ index before adding it. The combined total becomes $`1.0018048\,\mathrm{GB}`$. At $`K_c=65{,}536`$ the table is $`4.294967296\,\mathrm{GB}=4\,\mathrm{GiB}`$. Precomputed terms remove repeated full-dimensional work, not every query operation: a shared query-dot table still costs nominal $`kd`$ MACs, cell-table combinations cost $`O(wmk)`$, and list scans, coarse search and selection remain.
 #### Worked numbers and decisions
-- Compare raw PQ, residual PQ and precomputed residual PQ at matched code bytes, recall, load and memory. Disable or alter residual encoding when the measured benefit does not justify its real query and storage cost; $`\rho>0.8`$ or a half-scan build share are heuristics to test, not universal thresholds.
+- Compare raw PQ, residual PQ and precomputed residual PQ at matched code bytes, recall, load and memory. Disable or alter residual encoding when the measured benefit does not justify its real query and storage cost; $`\rho\gt 0.8`$ or a half-scan build share are heuristics to test, not universal thresholds.
 - ADC keeps the original query; SDC may be useful for already coded queries. Additive positive-distance bias is not a general guarantee for either method.
 - At $`K_c=65{,}536,w=32`$, mean scan work is $`312{,}500`$ additions while naive residual build work stays $`6{,}291{,}456`$ nominal MACs: a count ratio $`20.1326592`$, or nominal dot-work FLOP ratio $`40.2653184`$.
 - The balanced scanned corpus fraction is $`0.78125\%`$ at $`4{,}096`$ cells and $`0.048828125\%`$ at $`65{,}536`$. Restoring that fraction takes $`w=512`$, not a promise of restored recall.
@@ -306,7 +306,7 @@ For PQ64, this optional table uses $`268{,}435{,}456\,\mathrm B=268.435456\,\mat
 - Rerank a measured shortlist when original vectors are available. Exact float32 candidate scoring is not global exact search; increasing code bits and increasing candidate coverage address different failure modes.
 ### 16.3 Scalar and binary quantization
 #### What
-Float32 payload is $`4d`$ bytes, or $`3{,}072`$ bytes at $`d=768`$. For $`b\ge1`$ bits and a calibrated range $`\beta_j>\alpha_j`$, a clipped nearest-level scalar quantizer is:
+Float32 payload is $`4d`$ bytes, or $`3{,}072`$ bytes at $`d=768`$. For $`b\ge1`$ bits and a calibrated range $`\beta_j\gt \alpha_j`$, a clipped nearest-level scalar quantizer is:
 
 ```math
 c_j=\mathop{\mathrm{clip}}\nolimits_{[0,2^b-1]}\!\left(\left\lfloor\frac{x_j-\alpha_j}{\beta_j-\alpha_j}(2^b-1)+\frac12\right\rfloor\right).
@@ -394,7 +394,7 @@ Two float32 calibration endpoints per coordinate use $`2(768)(4)=6{,}144\,\mathr
 \sigma_{\mathrm{diff}}=\sqrt2\,\sigma_e\approx6.40389\times10^{-4},\qquad\frac{0.05}{\sigma_{\mathrm{diff}}}\approx78.08.
 ```
 
-The $`78`$-deviation number is a scale comparison, not a justified Gaussian tail estimate. There is a stronger statement for this particular unclipped equal-step raw-dot model: $`\lvert q^{\mathsf T}(e_1-e_2)\rvert\le\Delta\lVert q\rVert_1\le\Delta\sqrt{768}\approx0.04347<0.05`$, so a $`0.05`$ gap cannot flip under those bounds. Clipping, non-unit queries, other scoring rules or changed ranges invalidate that conclusion.
+The $`78`$-deviation number is a scale comparison, not a justified Gaussian tail estimate. There is a stronger statement for this particular unclipped equal-step raw-dot model: $`\lvert q^{\mathsf T}(e_1-e_2)\rvert\le\Delta\lVert q\rVert_1\le\Delta\sqrt{768}\approx0.04347\lt 0.05`$, so a $`0.05`$ gap cannot flip under those bounds. Clipping, non-unit queries, other scoring rules or changed ranges invalidate that conclusion.
 For binary scores, an independent, equal-local-variance Gaussian surrogate at cosine $`0.8`$ gives the illustrative calculation below. The real scores share hash planes and a query, so their errors need not be independent:
 
 ```math
@@ -525,7 +525,7 @@ IVF entries in these examples add an eight-byte ID. The HNSW example assumes imp
 HNSW levels follow:
 
 ```math
-\ell=\left\lfloor-\frac{\ln U}{\ln M}\right\rfloor,\qquad U\sim\mathop{\mathrm{Uniform}}\nolimits(0,1),\quad M>1.
+\ell=\left\lfloor-\frac{\ln U}{\ln M}\right\rfloor,\qquad U\sim\mathop{\mathrm{Uniform}}\nolimits(0,1),\quad M\gt 1.
 ```
 
 For an integer layer $`j\ge0`$, $`\Pr(\ell\ge j)=M^{-j}`$. Under the stated allocation convention, base layer zero reserves $`2M`$ four-byte neighbor slots and each occupied upper layer reserves $`M`$. Actual populated degree is not the same as reserved capacity, and implementations may allocate differently.
@@ -758,7 +758,7 @@ No. Adding float16 refinement changes $`1.09111808\,\mathrm{GB}`$ to $`16.451118
 | Residual build-to-scan ratio | $`1.2582912`$ MAC/addition count ratio; nominal dot-work FLOP ratio $`2.5165824`$ |
 | Residual high-rate increase | $`12/512=2.34375\%`$ bit-gain estimate under equal-prefactor high-rate assumptions, not a floor |
 | FAISS list range at $`N = 10^{7}`$ | Heuristic $`4\sqrt N`$ to $`16\sqrt N\approx12{,}649.11`$ to $`50{,}596.44`$; tune integer list count and recall |
-| Residual warning threshold | $`\rho>0.8`$ is a source workflow heuristic; measure total distortion and query cost |
+| Residual warning threshold | $`\rho\gt 0.8`$ is a source workflow heuristic; measure total distortion and query cost |
 | Large-list fixed probe | $`312{,}500`$ scan additions; build/scan count ratio $`20.1326592`$, nominal FLOP ratio $`40.2653184`$ |
 | Large-list restored probe | $`w=512`$ restores balanced scanned fraction, not guaranteed recall; naive build $`100{,}663{,}296`$ nominal MACs |
 | Isotropic component scale | $`1/\sqrt{768}\approx0.0360844`$ for isotropic unit-vector RMS, not every coordinate value |

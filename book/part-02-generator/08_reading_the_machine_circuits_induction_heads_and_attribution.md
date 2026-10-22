@@ -676,7 +676,7 @@ No, because a circuit fixes a weight-level transformation across inputs but does
 | All-head eigendecomposition | $`\mathcal O(LHd_h^3)`$, about $`2.15\times10^9`$ before constants | Omits forming the reduced products and eigensolver workspace |
 | Random $`\kappa`$ mean | $`0`$ only under a sign-symmetric ensemble | Not a universal model-initialization guarantee |
 | Kappa noise floor | $`1/\sqrt{2d_h}=0.0625`$ | Independent-angle heuristic, not a calibrated deployed null |
-| Copying-score screen | $`\kappa>0.19`$ as a heuristic flag | Not a multiple-comparison-corrected significance test |
+| Copying-score screen | $`\kappa\gt 0.19`$ as a heuristic flag | Not a multiple-comparison-corrected significance test |
 | Probe monitoring example | $`0.90`$ area under the curve (AUC) | Decodability without proof of use |
 | Saliency triage | First $`10`$ candidates when $`n`$ is in the hundreds | Rank candidates before causal ablation |
 | Random-repeat sequence | $`256`$ tokens repeated | $`512`$-token context |

@@ -186,7 +186,7 @@ Metadata stripping can avoid a credential check, but benign workflows and legacy
 #### Failure without it
 Neither missing metadata nor an unusual edit count proves forgery. A professional editor may trigger the anomaly heuristic, and an attacker may avoid it. Keep cryptographic failures, status-policy exclusions and review flags separate in logs and user explanations. Do not blocklist a signer merely because one benign history looked unusual; use independently validated compromise evidence and an appeal/review policy.
 #### Cost, complexity, and decisions
-Stipulate $`N=200`$ candidate images partitioned into $`120`$ accepted, $`50`$ with no discovered manifest, $`18`$ with hard-binding mismatches consistent with possible re-encoding, and $`12`$ requiring status/anomaly review. The counts sum to $`200`$; neither the eighteen nor the twelve are automatically proven fraudulent. For this ranking toy only, require $`u(d)\in[0,1]`$ after a declared normalization and use nonnegative $`p(d)\in[0,1]`$. A raw unbounded dot product or signed cosine score would not justify the following cap. If accepted documents have $`p=1`$ and $`u\ge u_{\mathrm{floor}}=0.3`$, then $`p_{\min}<0.3`$ keeps any unknown item’s weighted score strictly below any such accepted item. Choose $`p_{\min}=0.2`$. Excluding unknowns from an entire top-twenty list additionally requires at least twenty eligible accepted comparators or a hard exclusion rule.
+Stipulate $`N=200`$ candidate images partitioned into $`120`$ accepted, $`50`$ with no discovered manifest, $`18`$ with hard-binding mismatches consistent with possible re-encoding, and $`12`$ requiring status/anomaly review. The counts sum to $`200`$; neither the eighteen nor the twelve are automatically proven fraudulent. For this ranking toy only, require $`u(d)\in[0,1]`$ after a declared normalization and use nonnegative $`p(d)\in[0,1]`$. A raw unbounded dot product or signed cosine score would not justify the following cap. If accepted documents have $`p=1`$ and $`u\ge u_{\mathrm{floor}}=0.3`$, then $`p_{\min}\lt 0.3`$ keeps any unknown item’s weighted score strictly below any such accepted item. Choose $`p_{\min}=0.2`$. Excluding unknowns from an entire top-twenty list additionally requires at least twenty eligible accepted comparators or a hard exclusion rule.
 As a stipulated corroboration policy, assign $`p_{\mathrm{corr}}=2/3`$ when two of three independently assessed trusted sources support the relevant claim; that fraction is not a calibrated asset-authenticity probability. Let the twentieth accepted comparator have $`u=0.55`$. Use:
 
 ```math
@@ -223,13 +223,13 @@ At $`k=50`$:
 E(50)=1-0.9995^{50}\approx0.024696185672=2.469618567\%.
 ```
 
-For small $`kp`$, $`E(k)\approx kp`$; the union bound $`E(k)\le kp`$ also holds without independence if each selected position has marginal probability at most $`p`$. Corpus prevalence alone does not establish those marginals. Under the IID model, requiring $`E(k)<0.001`$ yields the strict inequality below because $`\ln(1-p)<0`$:
+For small $`kp`$, $`E(k)\approx kp`$; the union bound $`E(k)\le kp`$ also holds without independence if each selected position has marginal probability at most $`p`$. Corpus prevalence alone does not establish those marginals. Under the IID model, requiring $`E(k)\lt 0.001`$ yields the strict inequality below because $`\ln(1-p)\lt 0`$:
 
 ```math
-k<\frac{\ln(0.999)}{\ln(0.9995)}\approx2.000500375,\qquad k\in\mathbb Z_{\ge0}.
+k\lt \frac{\ln(0.999)}{\ln(0.9995)}\approx2.000500375,\qquad k\in\mathbb Z_{\ge0}.
 ```
 
-Thus $`k\le2`$ in this toy: $`E(2)=0.099975\%<0.1\%`$, while $`E(3)\approx0.1499250125\%`$. Do not round the strict threshold to two before deciding integer feasibility. A targeted nearest-neighbor query can retrieve only attack passages even when their global fraction is $`0.05\%`$; correlated draws and finite-population sampling require their own models. The hidden-preprint investigation gives no representative rate from which a “five times smaller” corpus prevalence or conservative risk floor can be derived. Exposure also differs from attack execution/success.
+Thus $`k\le2`$ in this toy: $`E(2)=0.099975\%\lt 0.1\%`$, while $`E(3)\approx0.1499250125\%`$. Do not round the strict threshold to two before deciding integer feasibility. A targeted nearest-neighbor query can retrieve only attack passages even when their global fraction is $`0.05\%`$; correlated draws and finite-population sampling require their own models. The hidden-preprint investigation gives no representative rate from which a “five times smaller” corpus prevalence or conservative risk floor can be derived. Exposure also differs from attack execution/success.
 Treat retrieved content as lower-trust data, keep roles/delimiters explicit and use hierarchy-aware models where evaluated. Scan the actual contexts supplied to generation, including reranked/expanded text, but do not call a passed classifier proof of safety. Keep tool privileges, data authorization, output handling and human approval for consequential actions outside solely model-generated decisions. Select retrieval depth for measured recall, latency and attack risk rather than claiming $`k=50`$ is safe after a scan. Output checks can still help prevent an action or response, though they cannot undo disclosure of restricted input already sent to a model.
 ### 36.5 Data poisoning the datastore
 #### What it is
@@ -471,7 +471,7 @@ Choose additional provenance depth, scoring, review and retraining by the stated
 | $`18`$ | Graded provenance example | Binding mismatches consistent with possible re-encoding, not established benign causes |
 | $`12`$ | Graded provenance example | Status/anomaly review; anomaly alone is not compromise or forgery |
 | $`u_{\mathrm{floor}}=0.3`$ | Provenance ranking | Requires a declared normalized nonnegative relevance score |
-| $`p_{\min}<0.3`$ | Missing-source rule | Pairwise ordering versus accepted floor-clearing items; not unconditional top-k exclusion |
+| $`p_{\min}\lt 0.3`$ | Missing-source rule | Pairwise ordering versus accepted floor-clearing items; not unconditional top-k exclusion |
 | $`p_{\min}=0.2`$ | Worked policy | Stipulated policy value, not an estimated falsehood probability |
 | $`p_{\mathrm{corr}}=2/3`$ | Corroboration | Exact toy corroboration fraction; keep full precision |
 | $`k=20`$ | Provenance selection | Final membership depends on all eligible comparators and tie policies |
@@ -491,8 +491,8 @@ Choose additional provenance depth, scoring, review and retraining by the stated
 | $`p=0.0005=0.05\%`$ | Injection derivation | Stipulated IID selected-draw injection probability, not measured corpus prevalence |
 | $`E(10)\approx0.498876499\%`$ | Injection derivation | At least one injected draw under the stated IID model |
 | $`E(50)\approx2.469618567\%`$ | Injection derivation | Exposure, not successful execution or compromise |
-| $`E(k)<0.1\%`$ | Injection target | Toy per-retrieval exposure target |
-| $`k<2.000500375`$; integer $`k\le2`$ | Injection constraint | Strict bound uses the unrounded threshold; k=2 gives $`0.099975`$ percent |
+| $`E(k)\lt 0.1\%`$ | Injection target | Toy per-retrieval exposure target |
+| $`k\lt 2.000500375`$; integer $`k\le2`$ | Injection constraint | Strict bound uses the unrounded threshold; k=2 gives $`0.099975`$ percent |
 | Five pages/blogs, nine days; eight domains/two weeks | Poisoning examples | Illustrative coordinated-source scenarios, not verified workload outcomes |
 | $`97\%`$ ASR example | PoisonedRAG | Black-box PaLM 2/NQ result; five poison texts per target question |
 | $`2{,}681{,}468`$ clean texts | PoisonedRAG | NQ example; corpus size alone does not determine targeted local attack risk |

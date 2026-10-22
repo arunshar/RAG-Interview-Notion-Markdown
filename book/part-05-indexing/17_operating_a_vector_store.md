@@ -150,7 +150,7 @@ A reader may ask for last quarter's board deck without filling out a catalog for
 | Referential validity | Whether a predicate names values that actually exist | Syntax alone does not provide it |
 | Detectable extraction error $`e_d`$ | Probability of an actual extraction error caught by validation | The fallback has its own conditional recall; dropping a predicate alone need not recover the baseline |
 | Undetectable extraction error $`e_u`$ | Probability of an error that passes implemented validation | Real but wrong values require labeled intent tests; monitoring alone is not a recall guarantee |
-| $`p`$ | Probability of correct extraction on the target workload | The $`p>R_0/R_f`$ break-even holds only in the zero-recall-wrong-branch toy model |
+| $`p`$ | Probability of correct extraction on the target workload | The $`p\gt R_0/R_f`$ break-even holds only in the zero-recall-wrong-branch toy model |
 | $`R_f`$ and $`R_0`$ | Correct-branch retrieval score and ordinary authorized baseline in the toy example | Baseline performance on the validation-triggering subset may differ from its global average |
 | $`\mathbb{E}[R]`$ | Outcome-weighted expected retrieval score | Use actual conditional branch scores; $`pR_f+e_dR_0`$ needs restored-query and zero-undetected-recall assumptions |
 | $`f_{\mathrm{session}}`$ and $`f_{\mathrm{extracted}}`$ | System authorization and model-extracted predicates | Their conjunction lets the model narrow access but never widen it |
@@ -166,7 +166,7 @@ A reader may ask for last quarter's board deck without filling out a catalog for
 Storage is decimal unless a binary unit is named: $`1\,\mathrm{kB}=10^3\,\mathrm B`$, $`1\,\mathrm{MB}=10^6\,\mathrm B`$, $`1\,\mathrm{GB}=10^9\,\mathrm B`$, $`1\,\mathrm{TB}=10^{12}\,\mathrm B`$, and $`1\,\mathrm{KiB}=2^{10}\,\mathrm B`$. A configuration label written as KB needs its implementation-specific unit checked. Retain full precision until reporting; round required integer resources upward, but round a capacity limit downward.
 In the lifecycle model, $`N`$ is the fixed live population, $`c`$ is its replacement fraction per day, $`T`$ is in days, and $`\lambda`$ is queries per day. Resident population can exceed $`N`$. $`\mathrm{efConstruction}`$ and $`\mathrm{efSearch}`$ control retained candidate widths; neither equals a guaranteed expansion count or a distance-evaluation cap. Products of beam width and degree below are explicitly stipulated work proxies, not HNSW complexity identities. Build and query work must be converted to a common cost currency before comparing them economically.
 For HNSW memory, use the chapter-16 allocation model: four-byte neighbor identifiers, $`2M`$ base-layer slots, $`M`$ upper-layer slots, and $`\Pr(\ell\ge j)=M^{-j}`$ for $`j\ge1`$. Expected allocated link bytes are $`\mathbb E[b_{\mathrm{link}}]=4(2M+M/(M-1))\,\mathrm B`$. At $`M=16`$ this is approximately $`132.266667\,\mathrm{B/vector}`$. These are expected slot budgets, not populated degree counts or complete resident-memory measurements; identifiers, level records, allocators, payloads, caches and build scratch space are additional.
-$`S_{\mathrm{sh}}`$ counts shards, $`R_{\mathrm{rep}}`$ counts replicas per shard, $`P_{\mathrm{part}}`$ counts key partitions, and $`S_{\mathrm{surv}}`$ counts post-filter survivors. $`R`$ denotes a retrieval score, not a replication factor. For gold set $`G_q`$ and returned set $`A_k(q)`$, $`\mathop{\mathrm{Recall}}\nolimits@k(q)=|G_q\cap A_k(q)|/|G_q|`$ when $`|G_q|>0`$, whereas $`\mathop{\mathrm{Hit}}\nolimits@k(q)=\mathbf1[G_q\cap A_k(q)\ne\varnothing]`$. They coincide for one gold item. Metadata bounds and extraction examples state which population and metric they use.
+$`S_{\mathrm{sh}}`$ counts shards, $`R_{\mathrm{rep}}`$ counts replicas per shard, $`P_{\mathrm{part}}`$ counts key partitions, and $`S_{\mathrm{surv}}`$ counts post-filter survivors. $`R`$ denotes a retrieval score, not a replication factor. For gold set $`G_q`$ and returned set $`A_k(q)`$, $`\mathop{\mathrm{Recall}}\nolimits@k(q)=|G_q\cap A_k(q)|/|G_q|`$ when $`|G_q|\gt 0`$, whereas $`\mathop{\mathrm{Hit}}\nolimits@k(q)=\mathbf1[G_q\cap A_k(q)\ne\varnothing]`$. They coincide for one gold item. Metadata bounds and extraction examples state which population and metric they use.
 A multiply-accumulate (MAC) counts as two nominal FLOPs here. Bandwidth and FLOP calculations omit filtering, gathers, heaps, memory hierarchy, network, contention and queueing unless stated. Component estimates do not add up to an end-to-end $`p_{99}`$ guarantee. Empirical source results remain reported inputs, not results proved by the arithmetic.
 ### 17.1 Static index, dynamic corpus: tombstones and re-indexing
 #### Static assumptions and online insertion
@@ -213,7 +213,7 @@ T^*&=\sqrt{\frac{2B}{\lambda Q_0c}}.
 \end{aligned}
 ```
 
-- For $`B,\lambda,Q_0,c>0`$, $`g''(T)=2B/T^3>0`$, so this is the unique continuous optimum. If $`c=0`$ or $`\lambda=0`$, this stale-query term supplies no finite economic optimum. Different per-evaluation costs require conversion to a common currency first.
+- For $`B,\lambda,Q_0,c\gt 0`$, $`g''(T)=2B/T^3\gt 0`$, so this is the unique continuous optimum. If $`c=0`$ or $`\lambda=0`$, this stale-query term supplies no finite economic optimum. Different per-evaluation costs require conversion to a common currency first.
 - At $`10\,\mathrm{QPS}`$, $`\lambda=864{,}000\,\mathrm{day^{-1}}`$ and $`T^*=\sqrt{3{,}616.898148\ldots}\,\mathrm{days}\approx60.140653\,\mathrm{days}`$. At that optimum $`cT^*\approx1.202813`$ and $`\phi\approx54.6035\%`$.
 - At $`1{,}000\,\mathrm{QPS}`$, $`\lambda=86{,}400{,}000\,\mathrm{day^{-1}}`$ and $`T^*\approx6.014065\,\mathrm{days}`$. A hundredfold traffic increase shortens this modeled optimum tenfold.
 - Continuous work cap: $`Q(T)/Q_0\le1.2`$ gives $`T\le10\,\mathrm{days}`$ and $`\phi\le1/6\approx16.6667\%`$. The boundary work is $`2{,}457.6`$, not a certified integer operation count or latency percentile.
@@ -283,7 +283,7 @@ T^*&=\sqrt{\frac{2B}{\lambda Q_0c}}.
 - With vacuum light speed $`c_0=299{,}792{,}458\,\mathrm{m/s}`$ and refractive index $`n=1.47`$, propagation speed is approximately $`2.039404\times10^8\,\mathrm{m/s}`$. A $`5{,}500\,\mathrm{km}`$ one-way path gives a round-trip propagation time of approximately $`53.9373\,\mathrm{ms}`$; multiplying distance by $`1.4`$ gives approximately $`75.5122\,\mathrm{ms}`$. Actual route, equipment and queueing determine measured RTT.
 - Use a separately stipulated $`1\,\mathrm{ms}`$ same-region hop or $`75\,\mathrm{ms}`$ cross-region hop. The unrounded serial proxies are $`20+1+0.42+112.64=134.06\,\mathrm{ms}`$ and $`20+75+0.42+112.64=208.06\,\mathrm{ms}`$. The second proxy exceeds the target, but neither sum establishes a measured $`p_{99}`$.
 - ANN is approximately $`0.3133\%`$ of the same-region proxy. Doubling its speed saves $`0.21\,\mathrm{ms}`$, or $`0.105\%`$ of the $`200\,\mathrm{ms}`$ target. Moving from the $`1`$ to the $`75\,\mathrm{ms}`$ hop adds $`74\,\mathrm{ms}`$, or $`37\%`$ of that target; a $`75\,\mathrm{ms}`$ hop alone does not exceed $`200\,\mathrm{ms}`$.
-- Tail-budget discipline: choose component bounds $`b_i`$ with $`\Pr(L_i>b_i)\le\epsilon_i`$ and $`\sum_i\epsilon_i\le0.01`$. Then $`\Pr(\sum_iL_i>\sum_i b_i)\le0.01`$ by a union bound, without an independence assumption. Include queueing, retries, network and merge work. Summing several component $`p_{99}`$ values does not supply this guarantee.
+- Tail-budget discipline: choose component bounds $`b_i`$ with $`\Pr(L_i\gt b_i)\le\epsilon_i`$ and $`\sum_i\epsilon_i\le0.01`$. Then $`\Pr(\sum_iL_i\gt \sum_i b_i)\le0.01`$ by a union bound, without an independence assumption. Include queueing, retries, network and merge work. Summing several component $`p_{99}`$ values does not supply this guarantee.
 #### Trade-offs and Pareto comparisons
 - Durability can add logging and synchronization; group commit and storage design change the latency trade-off.
 - Horizontal scaling adds distributed routing and coordination. It does not inherently prevent exact global top-$`k`$; the local-exact merge conditions above are sufficient.
@@ -323,7 +323,7 @@ T^*&=\sqrt{\frac{2B}{\lambda Q_0c}}.
 ```math
 \mathop{\mathrm{Recall}}\nolimits@k(q)
 \le \frac{|G_q\cap A_q|}{|G_q|},
-\qquad |G_q|>0.
+\qquad |G_q|\gt 0.
 ```
 
 - This is a set-recall bound. For multi-gold queries, $`\mathop{\mathrm{Hit}}\nolimits@k`$ can still equal $`1`$ when only one of several relevant chunks survives. Do not substitute query hit rate for the fraction of gold chunks admitted.
@@ -381,7 +381,7 @@ T^*&=\sqrt{\frac{2B}{\lambda Q_0c}}.
 - At $`N=10^7`$, this means $`s\le3.255\times10^{-4}`$ for the stated payload-read bound. Rounding that upward to $`3.3\times10^{-4}`$ would admit counts that exceed it.
 - These are necessary read-budget checks under the stated streaming/fair-share model, not sufficient latency guarantees. Predicate evaluation, scattered gathers, scoring, top-$`k`$ selection and contention also need time.
 #### The filter-aware middle
-- Under the stated payload and IID survivor models, $`3.255\times10^{-4}<s<s_\star\approx0.036336078`$ is a useful planning gap between two particular budget checks. It is not a universal optimality interval for filtered ANN.
+- Under the stated payload and IID survivor models, $`3.255\times10^{-4}\lt s\lt s_\star\approx0.036336078`$ is a useful planning gap between two particular budget checks. It is not a universal optimality interval for filtered ANN.
 - Naively refusing to traverse every nonmatching HNSW node restricts the search to an induced subgraph. That subgraph can be disconnected even when the original graph had useful routes.
 - Filter-aware designs may use category-aware links, traversal through ineligible nodes, or multi-hop expansion to improve reachability while checking result eligibility separately.
 - The source cites Filtered-DiskANN from Gollapudi et al. (2023), ACORN from Patel et al. (2024), and Qdrant payload-aware links as different construction/traversal patterns. Their precise algorithms and guarantees have conditions; do not infer navigability for every arbitrary predicate.
@@ -428,7 +428,7 @@ T^*&=\sqrt{\frac{2B}{\lambda Q_0c}}.
 ```
 
 - In a deliberately pessimistic toy model, correct extraction gives $`R_f`$ and every executed wrong predicate gives zero. Blind execution then has $`\mathbb E[R]=pR_f`$. Wrong predicates need not give zero in reality.
-- If the ordinary authorized baseline is $`R_0`$ and $`R_f>R_0>0`$, this toy model beats that baseline only when $`p>R_0/R_f`$. For $`R_f=0.95`$ and $`R_0=0.62`$, the boundary is $`p>0.652631579\ldots`$, approximately $`65.2632\%`$, not a universal extraction requirement.
+- If the ordinary authorized baseline is $`R_0`$ and $`R_f\gt R_0\gt 0`$, this toy model beats that baseline only when $`p\gt R_0/R_f`$. For $`R_f=0.95`$ and $`R_0=0.62`$, the boundary is $`p\gt 0.652631579\ldots`$, approximately $`65.2632\%`$, not a universal extraction requirement.
 - A validated fallback gives $`\mathbb E[R]=pR_f+e_d r_d+e_u r_u`$, where $`r_d`$ and $`r_u`$ are the conditional recalls of the actual fallback and undetected-error paths. The overall baseline $`R_0`$ need not equal $`r_d`$ on the harder subset that triggers validation.
 - Only if fallback restores the original-query authorized search with conditional score $`r_d=R_0`$, and undetected errors still have $`r_u=0`$, does this simplify to $`pR_f+e_dR_0`$.
 - Validation can route detectable failures to a safer path; it does not improve extraction intelligence or guarantee baseline recovery. Real but wrong values and legitimate empty constraints require labeled intent tests and appropriate clarification.
@@ -574,7 +574,7 @@ Panel (a):
 | Selectivity $`s`$ | Matching count $`sN`$ when $`N = 10^{7}`$ | Strategy |
 | --- | --- | --- |
 | $`s\le3.255\times10^{-4}`$ | Up to $`3{,}255`$ | Exact scan passes only the stated ten-way payload-read budget check; measure remaining costs |
-| $`3.255\times10^{-4}<s<s_\star`$ | Above $`3{,}255`$ and below approximately $`363{,}361`$ | Compare filter-aware ANN or another supported plan; the two budget models leave a planning gap |
+| $`3.255\times10^{-4}\lt s\lt s_\star`$ | Above $`3{,}255`$ and below approximately $`363{,}361`$ | Compare filter-aware ANN or another supported plan; the two budget models leave a planning gap |
 | $`s\ge s_\star`$, $`s_\star\approx0.036336078`$ | At least $`363{,}361`$ for integer matching counts | Post-filtering can meet the IID survivor target with $`K=512`$; ranked survival and recall still need validation |
 
 
@@ -763,7 +763,7 @@ Authorization fails closed whenever it cannot be enforced. An ordinary unresolve
 | Board-deck share | $`0.4\%`$ gives $`8{,}000`$ chunks | Stipulated fraction |
 | Quarter subset | $`8{,}000/20=400`$ chunks, $`s=2\times10^{-4}`$ | Assumes board decks uniform over $`20`$ quarters |
 | Quarter scan | $`1.2288\,\mathrm{MB}`$ at isolated $`50\,\mathrm{GB/s}`$ gives $`24.576\,\mu\mathrm s`$ | Payload-read proxy, not total exact-search time |
-| Blind break-even | $`p>R_0/R_f=0.62/0.95\approx0.652631579`$ | Correct branch fixed at $`R_f`$, all wrong executed branches zero; not a general theorem about extraction |
+| Blind break-even | $`p\gt R_0/R_f=0.62/0.95\approx0.652631579`$ | Correct branch fixed at $`R_f`$, all wrong executed branches zero; not a general theorem about extraction |
 | Labeled outcomes | $`200`$ queries: $`172`$ correct, $`20`$ detected errors, $`8`$ undetected errors | Finite-sample estimates $`0.86`$, $`0.10`$, $`0.04`$ |
 | Blind expected recall | $`0.86(0.95)=0.817`$ | Modeled branch-weighted score, not a measured evaluation result |
 | Validated expected recall | $`0.817+0.10(0.62)=0.879`$ | Needs restored-query fallback with conditional recall $`0.62`$ and zero undetected-branch recall |

@@ -57,7 +57,7 @@ The checkout counter records each stage latency $`t_i`$ and query cost $`C_q`$ .
 | Evaluation: $`P@k,R@k`$ | Precision and recall at k | Set metrics. They are order-insensitive. |
 | Evaluation: $`P_k,\mathop{\mathrm{WindowDiff}}\nolimits`$ | Text-segmentation error metrics | Used to evaluate a chunker. |
 | Evaluation: $`\mathop{\mathrm{IoU}}\nolimits`$ | Intersection over union of chunk spans | Used to evaluate a chunker. |
-| Evaluation: $`F_1`$ | $`2PR/(P+R)`$ for $`P+R>0`$ | State zero-denominator and macro/micro policies; not equivalent to accuracy |
+| Evaluation: $`F_1`$ | $`2PR/(P+R)`$ for $`P+R\gt 0`$ | State zero-denominator and macro/micro policies; not equivalent to accuracy |
 | Training the RAG System: $`D'`$ | Retrieved subset used for a training step | Normalization is over $`D'`$, not $`D`$. |
 | Training the RAG System: $`\lambda(d,x)`$ | Normalized retrieval weight in an output ensemble | REPLUG. |
 | Training the RAG System: $`P_R(d\mid x)`$ | Retriever’s distribution over the top k | Defined over the same k as the generator preference. |

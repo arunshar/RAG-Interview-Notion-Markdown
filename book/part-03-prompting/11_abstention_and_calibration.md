@@ -139,15 +139,15 @@ Use natural logarithms and nats. Correctness, answerability, support and agreeme
 Answering has expected value $`p-(1-p)c_w`$. Abstaining has value $`-c_a`$. Answer when:
 
 ```math
-p - (1-p)c_w > -c_a
+p - (1-p)c_w \gt  -c_a
 \Longleftrightarrow
-p(1+c_w) > c_w-c_a
+p(1+c_w) \gt  c_w-c_a
 \Longleftrightarrow
-p > \tau = \frac{c_w-c_a}{1+c_w}
+p \gt  \tau = \frac{c_w-c_a}{1+c_w}
 ```
 
 At $`c_w = 2`$ and $`c_a = 0.5`$, $`\tau = \frac{1.5}{3} = 0.500`$. At $`c_w=200`$ with the same $`c_a`$, $`\tau=199.5/201\approx0.992537`$.
-If $`c_a > c_w`$, then $`\tau \lt 0`$. The cost-optimal policy never refuses because abstention costs more than a wrong answer.
+If $`c_a \gt  c_w`$, then $`\tau \lt 0`$. The cost-optimal policy never refuses because abstention costs more than a wrong answer.
 Abstention happens after retrieval and generation. A retrieve-or-not reflection token acts before evidence exists. A system can retrieve often and still refuse often.
 #### Citations change cost, not confidence
 - **What:** For this illustrative cost model, let $`q`$ be the probability, conditional on a wrong answer, that verification catches it before the modeled harm. Let $`c_v`$ be the replacement cost on that caught-wrong branch. Correct-answer verification costs and residual harm are omitted; adding them changes the decision utility. The effective wrong-answer cost is:
@@ -349,7 +349,7 @@ For one correct and one wrong draw:
 
 ```math
 \mathop{\mathrm{AUROC}}\nolimits
-= \Pr(s_{\mathrm{correct}}>s_{\mathrm{wrong}})
+= \Pr(s_{\mathrm{correct}}\gt s_{\mathrm{wrong}})
 + \frac{1}{2}\Pr(s_{\mathrm{correct}}=s_{\mathrm{wrong}})
 ```
 
@@ -433,13 +433,13 @@ For $`k`$ distributed binomially:
 Adjacent levels are $`\frac{1}{m}`$ apart. Requiring one level gap to exceed one standard error gives:
 
 ```math
-\frac{c(1-c)}{m} < \frac{1}{m^2}
+\frac{c(1-c)}{m} \lt  \frac{1}{m^2}
 \Longleftrightarrow
-m < \frac{1}{c(1-c)}
+m \lt  \frac{1}{c(1-c)}
 ```
 
-For $`m=8`$, comparing nominal spacing with one population standard error gives $`c(1-c)<1/8`$, equivalently $`c<(1-\sqrt{1/2})/2\approx0.146447`$ or $`c>(1+\sqrt{1/2})/2\approx0.853553`$. This is a heuristic scale comparison in terms of unknown $`c`$, not a confidence guarantee that adjacent observed scores are distinguishable. In particular, observing eight agreements in eight probes gives a one-sided exact $`95\%`$ lower bound of only $`0.05^{1/8}\approx0.687656`$ on agreement probability, not $`0.929`$ on correctness.
-For a fixed interior $`c`$, spacing shrinks as $`1/m`$ while SE shrinks as $`1/\sqrt m`$, so sufficiently fine score levels become closer than one SE; at $`c=1/2`$ this occurs for $`m>4`$, with equality at $`m=4`$. Near endpoints the condition differs. More probes still improve estimation at a fixed meaningful precision. Use interval estimates and held-out correctness calibration rather than treating nominal granularity as statistical resolution.
+For $`m=8`$, comparing nominal spacing with one population standard error gives $`c(1-c)\lt 1/8`$, equivalently $`c\lt (1-\sqrt{1/2})/2\approx0.146447`$ or $`c\gt (1+\sqrt{1/2})/2\approx0.853553`$. This is a heuristic scale comparison in terms of unknown $`c`$, not a confidence guarantee that adjacent observed scores are distinguishable. In particular, observing eight agreements in eight probes gives a one-sided exact $`95\%`$ lower bound of only $`0.05^{1/8}\approx0.687656`$ on agreement probability, not $`0.929`$ on correctness.
+For a fixed interior $`c`$, spacing shrinks as $`1/m`$ while SE shrinks as $`1/\sqrt m`$, so sufficiently fine score levels become closer than one SE; at $`c=1/2`$ this occurs for $`m\gt 4`$, with equality at $`m=4`$. Near endpoints the condition differs. More probes still improve estimation at a fixed meaningful precision. Use interval estimates and held-out correctness calibration rather than treating nominal granularity as statistical resolution.
 #### Conditioning strategy
 - **What:** Vanilla scoring stays in the original session. Self-probing uses a fresh session. Multi-step scoring attaches confidence to sub-claims. Top-$`k`$ elicitation forces alternatives. Sampling aggregates consistency, average confidence, or pairwise rankings.
 - **Why:** A fresh scorer removes the original conversation history; the candidate answer can still anchor the new judge, so no numerical commitment bonus is guaranteed to be zero.
@@ -706,7 +706,7 @@ Do not use $`m = 8`$ when generation cost or the $`p_{99}`$ tail cannot support 
 | Parallel vote limit | IID multinomial with four equiprobable wrong values and random tie breaking: $`98.7701\%`$ correct plurality. Eight votes cost $`2{,}000`$ output tokens; ideal parallelism is not a latency guarantee |
 | Calibration | Base $`a=0.738`$, $`\mathrm{UNC}=0.193356`$. Verbal ECE $`0.212`$, AUROC $`0.532582387`$; agreement ECE $`0.06075`$, AUROC $`0.795879104`$. No-merge isotonic fit has zero fit-data ECE, not guaranteed test calibration |
 | Brier decomposition table | Verbalized REL $`0.04528`$, RES $`0.000636`$, BS $`0.238`$; fitted map REL $`0`$, BS $`0.19272`$. Agreement last score $`3/8`$ gives REL about $`0.00450708`$, RES $`0.04476933`$, BS $`0.15309375`$. Raw coverages $`70\%,0\%,35\%`$ respectively |
-| Agreement resolution | Eight new probes yield nine nominal levels; $`c<0.146447`$ or $`c>0.853553`$ only compares spacing with one population SE. Eight agreements give one-sided $`95\%`$ lower agreement bound $`0.687656`$, not a correctness guarantee |
+| Agreement resolution | Eight new probes yield nine nominal levels; $`c\lt 0.146447`$ or $`c\gt 0.853553`$ only compares spacing with one population SE. Eight agreements give one-sided $`95\%`$ lower agreement bound $`0.687656`$, not a correctness guarantee |
 | Elicitation cost | Base call $`\$0.00945`$; verbalized $`\$9.60`$/day; self-probing $`\$17.25`$/day. Original answer plus eight new probes costs $`\$85.05`$/day, increment $`\$75.45`$ over verbalized |
 | Decision value | Stipulated top group: $`350`$ answers at $`94\%`$ correctness yields $`84`$ utility units/day. Incremental break-even about $`\$0.898214`$/unit or $`53.89`$ seconds at $`\$60`$/hour |
 | Long-form threshold | Use $`\tau=19.5/21`$. Under equal independent support, $`n=12`$ requires $`0.9938434`$, $`n=30`$ requires $`0.9975328`$, and $`n=4`$ requires $`0.9816436`$ |

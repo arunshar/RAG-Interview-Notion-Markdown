@@ -37,7 +37,7 @@ In short: diagnose the production slices, choose an implementable learning objec
 | $`L,L_q,L_d,\mathcal L`$ | Output-token count or local input-length notation; script L is loss | Output words and tokens differ; refresh separates query and document lengths |
 | $`z,\tilde z`$ | Kept-state count, hard/relaxed mask or a latent block, depending on section | Decode locally; a categorical unit-sum mask is not a multi-hot depth-k mask |
 | $`D^{\prime},\mathcal C,\mathcal Z_k`$ | Explicit retrieved support or declared candidate set | Normalization on that support defines a truncated objective, not proof that all corpus mass is included |
-| Sequence symbols $`y_t`$, $`y_{<t}`$, and $`d \circ x`$ | Current output token, decoded prefix, and a document prepended to a query | They define REPLUG’s repeated next-token mixture. |
+| Sequence symbols $`y_t`$, $`y_{\lt t}`$, and $`d \circ x`$ | Current output token, decoded prefix, and a document prepended to a query | They define REPLUG’s repeated next-token mixture. |
 | $`U_i,G_i,\tilde z_i,\delta_{ij}`$ | Uniform draws, Gumbel noise, relaxed categorical weight and identity indicator | The Jacobian applies to one-choice relaxation with positive temperature |
 | Distillation symbols $`u_i`$, $`\ell_i`$, $`\beta`$, and $`\gamma`$ | Teacher utility, log probability ratio and teacher/student temperatures | Scaled logit a equals raw score divided by gamma; score gradients include the inverse temperature |
 | $`\phi_{jK},K,D,K_{\min},\rho`$ | Document snapshot, interval, build duration, capacity floor and relative arithmetic rate | General asynchronous age is build duration through build duration plus interval; inline age is different |
@@ -105,7 +105,7 @@ Expose both parameter sets.
 The datastore contains $`N`$ chunks and the retriever returns $`k`$; an approximate index need not explicitly score every chunk per query. Freeze/train decisions apply separately to retrieval and generation. Run a verified gold-context intervention and production evidence/reader ablations on representative held-out questions, including failures and successes.
 - An oracle-context gain suggests that changed evidence or context helped. Investigate retrieval coverage, context formatting and distracting text; it is not unique causal attribution to the retriever.
 - A flat oracle result suggests residual reader, reasoning, label or task limitations, but can also arise from an invalid oracle construction or ceiling effects. It does not prove retrieval is already sound.
-- With sufficient-evidence rate $`R=0.6`$, $`A=0.6g+0.4b`$. Only under an additional zero-correctness-on-misses assumption is accuracy bounded by $`0.6`$; prior knowledge, alternate evidence and learned facts can make $`b>0`$.
+- With sufficient-evidence rate $`R=0.6`$, $`A=0.6g+0.4b`$. Only under an additional zero-correctness-on-misses assumption is accuracy bounded by $`0.6`$; prior knowledge, alternate evidence and learned facts can make $`b\gt 0`$.
 #### Why
 The four choices carry different signals and obligations.
 - Quadrant I makes no parameter updates to the declared retriever and generator; changes to prompts, chunking or an additional trained reranker are separate interventions.
@@ -267,7 +267,7 @@ The maximum-CDF identity identifies a shifted Gumbel. The categorical argmax law
 The categorical continuous relaxation, also called Concrete/Gumbel-Softmax, and its Jacobian are
 
 ```math
-\tilde z_i=\frac{\exp((s_i+G_i)/\tau)}{\sum_j\exp((s_j+G_j)/\tau)},\qquad\frac{\partial\tilde z_i}{\partial s_j}=\frac1\tau\tilde z_i(\delta_{ij}-\tilde z_j),\quad\tau>0.
+\tilde z_i=\frac{\exp((s_i+G_i)/\tau)}{\sum_j\exp((s_j+G_j)/\tau)},\qquad\frac{\partial\tilde z_i}{\partial s_j}=\frac1\tau\tilde z_i(\delta_{ij}-\tilde z_j),\quad\tau\gt 0.
 ```
 
 Gumbel-top-$`k`$ gives the ordered Plackett–Luce sample without replacement from the exponentiated scores; it is not $`k`$ independent categorical draws. A categorical softmax sums to one, whereas a $`k`$-hot mask sums to $`k`$, so top-$`k`$ needs a compatible soft-top-$`k`$ or iterative surrogate rather than blindly reusing the single-choice Jacobian. A straight-through mask uses $`z_{\mathrm{ST}}=\mathop{\mathrm{stopgrad}}\nolimits(z_{\mathrm{hard}}-\tilde z)+\tilde z`$. It is hard forward and surrogate-soft backward only if the reader/representation provides a differentiable path through that mask; arbitrary raw strings do not. The noisy hard forward choice is also not the same as deterministic serving top-$`k`$.
@@ -303,7 +303,7 @@ Compare the same Jacobian entry, not different coordinates: $`J_{22}\approx0.189
 The current score margin $`0.5`$ gives pairwise win probability $`0.622459331`$, requiring an additional $`1.697224577`$ logits for this two-candidate ninety-percent comparison. It does not imply ninety-percent top-one probability among all five. In a separate workload comparison, let $`k=8`$, passage length $`200`$, query length $`50`$ and target length $`30`$.
 - Eight single-passage likelihood branches process $`2{,}000`$ prompt and $`240`$ target positions, total $`2{,}240`$.
 - One sampled top-one branch processes $`250`$ prompt and $`30`$ target positions, total $`280`$.
-- The eight-fold position ratio is exact for those branch lengths, not an end-to-end compute or latency guarantee. Retriever scoring, gradient estimation, sequential scheduling and quality differ; a hard top-$`k`$ reader with $`k>1`$ has another workload.
+- The eight-fold position ratio is exact for those branch lengths, not an end-to-end compute or latency guarantee. Retriever scoring, gradient estimation, sequential scheduling and quality differ; a hard top-$`k`$ reader with $`k\gt 1`$ has another workload.
 The source’s small-$`k`$ marginalization and large-$`k`$ straight-through preferences are heuristics, contingent on architecture, probability access and quality. Anneal temperature only with measured gradient/quality behavior; $`\tau=1`$ is a starting point, not a guarantee. Track categorical score entropy on a clearly defined candidate set separately from relaxed-sample entropy. Nearly concentrated mass makes noise less influential, not absent; entropy near $`\ln M`$ indicates near-uniform candidate weights, not necessarily no useful retrieval. A top-one mass above $`0.9`$ does not by itself prove a surrogate is unnecessary.
 ### 28.4 REPLUG: black-box LLM, ensembled output distributions
 #### What
@@ -315,13 +315,13 @@ s(d,x)=\cos(E(d),E(x)).
 
 
 ```math
-\lambda(d,x)=\frac{\exp(s(d,x)/\tau)}{\sum_{d^{\prime}\in D^{\prime}}\exp(s(d^{\prime},x)/\tau)},\qquad\tau>0.
+\lambda(d,x)=\frac{\exp(s(d,x)/\tau)}{\sum_{d^{\prime}\in D^{\prime}}\exp(s(d^{\prime},x)/\tau)},\qquad\tau\gt 0.
 ```
 
 At each generation step, each passage-conditioned branch uses the same selected output prefix. Mix normalized next-token distributions:
 
 ```math
-p(y_t\mid x,y_{<t})=\sum_{d\in D^{\prime}}\lambda(d,x)\,p_{\mathrm{LM}}(y_t\mid d\circ x,y_{<t}).
+p(y_t\mid x,y_{\lt t})=\sum_{d\in D^{\prime}}\lambda(d,x)\,p_{\mathrm{LM}}(y_t\mid d\circ x,y_{\lt t}).
 ```
 
 Select or sample one token from that mixture, append that same token to every branch, and repeat. Greedy argmax is one decoding policy, not a required part of the probabilistic model.
@@ -333,8 +333,8 @@ Concatenation normally does not enforce an explicit retrieval-weighted vocabular
 Use scores $`0.82`$, $`0.79`$ and eight copies of $`0.70`$. For a fully normalized two-token example, gold assigns $`(0.85,0.15)`$ to (correct, wrong), while each other passage assigns $`(0.10,0.90)`$.
 - At $`\tau=1`$, gold weight is $`0.110304552`$ and each low-scoring passage has $`0.097831361`$; correct-token mixture probability is $`0.182728414`$.
 - At $`\tau=0.05`$, gold, the second passage and each remaining passage have weights $`0.439646386`$, $`0.241283052`$ and $`0.039883820`$. Correct mass is $`0.429734789`$ and wrong mass $`0.570265211`$; they sum to one.
-- Gold-only conditioning gives correct mass $`0.85`$. The mixture flips to the correct token only if $`0.10+0.75\lambda_{\mathrm{gold}}>0.5`$, hence $`\lambda_{\mathrm{gold}}>8/15\approx0.533333333`$.
-- For these scores, numerical solution gives $`\tau<0.040111905`$ for a strict correct-token win. As temperature falls, the unique highest-score branch dominates, but if that document is wrong concentration can hurt.
+- Gold-only conditioning gives correct mass $`0.85`$. The mixture flips to the correct token only if $`0.10+0.75\lambda_{\mathrm{gold}}\gt 0.5`$, hence $`\lambda_{\mathrm{gold}}\gt 8/15\approx0.533333333`$.
+- For these scores, numerical solution gives $`\tau\lt 0.040111905`$ for a strict correct-token win. As temperature falls, the unique highest-score branch dominates, but if that document is wrong concentration can hurt.
 - The prior wrong-token value $`0.504`$ and threshold $`0.514`$ did not follow one specified normalized pair of token distributions. A different gold wrong-token mass changes the threshold; it must be declared.
 The billing scenario uses ten $`128`$-token chunks, a $`100`$-token question/instruction and a $`64`$-token answer, priced at $`\$3`$ per million charged input tokens and $`\$15`$ per million charged output positions. It assumes the required probability/continuation interface bills one output position per branch step at those rates; actual endpoints may not offer this interface or pricing.
 - Concatenation prefills $`1{,}380`$ tokens once and decodes sixty-four: $`\$0.00510`$ per query under these hypothetical rates.
@@ -353,13 +353,13 @@ u_i=\log P_{\mathrm{LM}}(y\mid d_i\oplus x).
 Normalize utility over the retrieved set with LM temperature $`\beta`$.
 
 ```math
-Q_i=\frac{\exp(u_i/\beta)}{\sum_{j=1}^{k}\exp(u_j/\beta)},\qquad\beta>0.
+Q_i=\frac{\exp(u_i/\beta)}{\sum_{j=1}^{k}\exp(u_j/\beta)},\qquad\beta\gt 0.
 ```
 
 Normalize retriever scores on the same support with temperature $`\gamma`$.
 
 ```math
-P_i=\frac{\exp(s_i/\gamma)}{\sum_{j=1}^{k}\exp(s_j/\gamma)},\qquad a_i=s_i/\gamma,\quad\gamma>0.
+P_i=\frac{\exp(s_i/\gamma)}{\sum_{j=1}^{k}\exp(s_j/\gamma)},\qquad a_i=s_i/\gamma,\quad\gamma\gt 0.
 ```
 
 For the explicitly analyzed reverse-teacher-direction variant, hold the candidate set and teacher probabilities fixed locally and minimize
@@ -371,7 +371,7 @@ For the explicitly analyzed reverse-teacher-direction variant, hold the candidat
 Let:
 
 ```math
-\ell_i=\ln(P_i/Q_i),\qquad P_i,Q_i>0.
+\ell_i=\ln(P_i/Q_i),\qquad P_i,Q_i\gt 0.
 ```
 
 Then:
@@ -721,7 +721,7 @@ Answer: The finite-support gradient is posterior retrieval mass minus prior mass
 | Gumbel compute | Eight passage branches: $`2{,}000`$ prompt plus $`240`$ target positions versus top-one $`250`$ plus $`30`$. Eight-fold token-position ratio, not a general end-to-end cost guarantee. |
 | REPLUG weights | Gold weight $`0.110304552`$ at $`\tau=1`$ and $`0.439646386`$ at $`\tau=0.05`$ for the specified ten scores. |
 | REPLUG correct-token mass | Normalized two-token example: correct mass $`0.182728414`$ at $`\tau=1`$ and $`0.429734789`$ at $`\tau=0.05`$; gold-only correct mass $`0.85`$. |
-| REPLUG wrong majority | Wrong mass $`0.570265211`$ at $`\tau=0.05`$. Correct wins only above gold weight $`8/15\approx0.533333333`$, requiring $`\tau<0.040111905`$ for these scores. Token distributions must be declared consistently. |
+| REPLUG wrong majority | Wrong mass $`0.570265211`$ at $`\tau=0.05`$. Correct wins only above gold weight $`8/15\approx0.533333333`$, requiring $`\tau\lt 0.040111905`$ for these scores. Token distributions must be declared consistently. |
 | REPLUG bills | Hypothetical bill: concatenation $`\$0.00510`$; uncached branch input $`166{,}080`$ tokens costing $`\$0.49824`$, output $`\$0.00960`$, total $`\$0.50784`$, ratio $`99.576471`$. Persistent-KV billing scenario $`\$0.01644`$, ratio $`3.223529`$; actual endpoint support/pricing must be checked. |
 | REPLUG reported gains | Chapter-reported gains $`6.3\%`$ for GPT-3 language modeling and $`5.1\%`$ for Codex five-shot MMLU; preserve their source metrics and denominators, not a verified production effect. |
 | LM-supervised $`P_R`$ | Reported opening: $`40{,}000`$ labeled pairs, six weeks and four recall points with flat exact match. Worked student probabilities: $`P_1\approx0.430981`$, $`P_2\approx0.319279`$, $`P_3\approx0.143461`$, $`P_4\approx0.106279`$. |

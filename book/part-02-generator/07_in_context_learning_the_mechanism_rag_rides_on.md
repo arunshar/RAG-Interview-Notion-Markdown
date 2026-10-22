@@ -131,7 +131,7 @@ A cheap baseline embeds the live input and every candidate, then takes the neare
 For one observed $`m`$-token test input $`x`$ after candidate $`c`$, compute mean negative log likelihood. The source calls this a conditional-entropy (ConE) score; mathematically it is empirical cross-entropy or surprisal on that fixed input, not the full entropy of the model's conditional distribution.
 
 ```math
-H_\theta(x \mid c) = -\frac{1}{m}\sum_{t=1}^{m}\log p_\theta(x_t \mid c, x_{<t})
+H_\theta(x \mid c) = -\frac{1}{m}\sum_{t=1}^{m}\log p_\theta(x_t \mid c, x_{\lt t})
 ```
 
 Compare it with the empty-prefix value:
@@ -381,7 +381,7 @@ Keep a house template for maintainability unless a per-model override clears sam
 | Topic | Number, formula, or threshold | Meaning |
 | --- | --- | --- |
 | InstructGPT SFT scale | order $`10^{4}`$ prompts | Approximate size of the labeler-written supervised split |
-| SFT objective | $`\max_\theta \sum_i \sum_t \log p_\theta(y_{i,t} \mid x_i, y_{i,<t})`$ | Maximum-likelihood update over labeled pairs |
+| SFT objective | $`\max_\theta \sum_i \sum_t \log p_\theta(y_{i,t} \mid x_i, y_{i,\lt t})`$ | Maximum-likelihood update over labeled pairs |
 | ICL prediction | $`\hat y = \arg\max_y p_\theta\!\left(y \mid (x_i,y_i)_{i=1}^{k}, x\right)`$ | Frozen-weight conditioning rule |
 | SFT compute | about $`6ND_{\mathrm{SFT}}`$ FLOPs | One-time training cost |
 | Serving compute | about $`2N`$ FLOPs per token | Approximate prefill and decode cost |
@@ -419,8 +419,8 @@ Keep a house template for maintainability unless a per-model override clears sam
 | Selection story | 3 examples from $`20{,}000`$ tickets | Initial triage example |
 | Embedding gain | half a point | Change described as inside the noise band |
 | Test-input probe | 1 shot and 3 shots | Both degrade as shuffled-word fraction rises |
-| ConE zero-shot gate | $`\min_c\Delta(c)<0`$ | Input-likelihood policy heuristic; validate against answer quality |
-| Conditional entropy | $`\widehat H_\theta(x\mid c)=-m^{-1}\sum_{t=1}^m\log p_\theta(x_t\mid c,x_{<t})`$ | Empirical cross-entropy on a fixed input, not a distributional entropy |
+| ConE zero-shot gate | $`\min_c\Delta(c)\lt 0`$ | Input-likelihood policy heuristic; validate against answer quality |
+| Conditional entropy | $`\widehat H_\theta(x\mid c)=-m^{-1}\sum_{t=1}^m\log p_\theta(x_t\mid c,x_{\lt t})`$ | Empirical cross-entropy on a fixed input, not a distributional entropy |
 | ConE score | $`\Delta(c) = H_\theta(x \mid c) - H_\theta(x \mid \varnothing)`$ | Candidate ranking and zero-shot gate |
 | Figure $`7.2`$ funnel | $`20{,}000`$ to 50 to 3 | Pool size, candidate count, and selected count |
 | Selection input lengths | 120-token test, 180-token demonstration, 40-token answer | Worked ConE sizes |

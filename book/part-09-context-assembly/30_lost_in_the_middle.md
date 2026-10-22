@@ -134,7 +134,7 @@ The final lesson is operational. Do not grade the clerk only on whether the deci
 ## Core mechanics
 ### Mathematical conventions
 Accuracy symbols are fractions in $`[0,1]`$; multiplying their difference by $`100`$ gives percentage points, not a relative percent change. Keep full precision until reporting. The worked zone accuracies, gold-rank probabilities, equal chunk lengths and uniform placement laws are stipulated scenarios, not measurements from the cited papers. Their expected-accuracy model assumes one gold item and stationary zone accuracies; real tasks can require multiple pieces of evidence and have content-dependent position effects.
-Here $`k`$ is the number of retained documents, $`n`$ is token length when discussing attention, $`p`$ is a final prompt position, and $`\pi_r`$ is the probability that the gold item has reranker rank $`r`$. Document slots are not token distances: variable chunk lengths, query placement and prompt overhead change the physical positions. In the two-slot-per-edge model, the first $`\min(k,2)`$ slots receive primacy; among the remaining slots, the last at most two receive recency. This precedence resolves edge-zone overlap for $`k<4`$. Descending rank order and outside-in order are separate policies throughout.
+Here $`k`$ is the number of retained documents, $`n`$ is token length when discussing attention, $`p`$ is a final prompt position, and $`\pi_r`$ is the probability that the gold item has reranker rank $`r`$. Document slots are not token distances: variable chunk lengths, query placement and prompt overhead change the physical positions. In the two-slot-per-edge model, the first $`\min(k,2)`$ slots receive primacy; among the remaining slots, the last at most two receive recency. This precedence resolves edge-zone overlap for $`k\lt 4`$. Descending rank order and outside-in order are separate policies throughout.
 Approximate study-era labels such as $`4\mathrm{k}`$ mean about four thousand tokens, not an exact equality to $`4{,}096`$. Dense quadratic attention is a leading arithmetic component, not a measured total latency, invoice or memory allocation. Reported behavioral patterns and proposed training mechanisms are not universal architectural theorems.
 ### 30.1 The U-curve and the serial position effect
 #### What
@@ -346,7 +346,7 @@ For a fixed descending list, increasing depth from $`k`$ to $`k+1`$ after both e
 \bar A(k+1)-\bar A(k)=\pi_{k+1}(A_{\mathrm{recency}}-A_{\mathrm{miss}})-\pi_{k-w_r+1}(A_{\mathrm{recency}}-A_{\mathrm{trough}}),\quad k\ge w_p+w_r.
 ```
 
-If gold-rank probabilities are nonincreasing, accuracies are stationary, and $`A_{\mathrm{primacy}}\ge A_{\mathrm{recency}}>A_{\mathrm{miss}}>A_{\mathrm{trough}}`$, this increment is nonpositive. Before the edges fill, adding a positive-probability candidate improves the model expectation under the overlap convention. Thus $`w_p+w_r`$ is an optimum for this descending policy, possibly tied when relevant probabilities vanish. The running example has its maximum at $`k=4`$.
+If gold-rank probabilities are nonincreasing, accuracies are stationary, and $`A_{\mathrm{primacy}}\ge A_{\mathrm{recency}}\gt A_{\mathrm{miss}}\gt A_{\mathrm{trough}}`$, this increment is nonpositive. Before the edges fill, adding a positive-probability candidate improves the model expectation under the overlap convention. Thus $`w_p+w_r`$ is an optimum for this descending policy, possibly tied when relevant probabilities vanish. The running example has its maximum at $`k=4`$.
 The accuracy ordering alone is insufficient: probabilities $`(0.30,0.30,0.01,0.19,0.20)`$ give $`\bar A(4)=0.6700`$ and $`\bar A(5)=0.6785`$ with the same zone accuracies. Outside-in is a different policy; with two slots per edge and $`k\ge4`$, its top four retain their edge assignments and each new low rank enters the trough. Its marginal change is then $`\pi_{k+1}(A_{\mathrm{trough}}-A_{\mathrm{miss}})`$. Do not conflate these mechanisms or their small-depth results.
 #### Practical score-cliff rule
 - A reranker score cliff is a candidate truncation heuristic, not a calibrated probability threshold or a universal recommendation to stop at rank two.
@@ -357,7 +357,7 @@ The accuracy ordering alone is insufficient: probabilities $`(0.30,0.30,0.01,0.1
 - With the specified outside-in policy those top-four edge assignments instead persist; added tail evidence enters the trough.
 - Higher recall can coexist with lower accuracy under either policy, but for different marginal reasons. Reevaluate both ordering and depth after a reranker or prompt-template change.
 #### Claim limit
-- The safe-width result is conditional on rank masses, stationary zone accuracies, the ordering policy and the missing-evidence condition, not just $`A_{\mathrm{miss}}>A_{\mathrm{trough}}`$.
+- The safe-width result is conditional on rank masses, stationary zone accuracies, the ordering policy and the missing-evidence condition, not just $`A_{\mathrm{miss}}\gt A_{\mathrm{trough}}`$.
 - If missing evidence is worse than trough evidence, admitting a tail item into an outside-in trough can help; a descending list still has a moving recency boundary whose net effect must be calculated.
 - Measure $`A_{\mathrm{miss}}`$ separately from $`A_0`$. A different abstention policy, query population or distractor set changes the comparison.
 #### Worked arithmetic
@@ -390,7 +390,7 @@ The accuracy ordering alone is insufficient: probabilities $`(0.30,0.30,0.01,0.1
 #### Stated cost and complexity
 - With equal $`200`$-token chunks, depth four supplies $`800`$ retrieved tokens and depth twenty supplies $`4{,}000`$: five times as many retrieved tokens.
 - Ignoring all other prompt tokens, the leading quadratic attention-work ratio is $`(4{,}000/800)^2=25`$.
-- With fixed positive instruction/query overhead $`n_0`$, that component’s ratio is $`[(n_0+4{,}000)/(n_0+800)]^2<25`$; for an illustrative $`n_0=300`$ it is about $`15.280992`$.
+- With fixed positive instruction/query overhead $`n_0`$, that component’s ratio is $`[(n_0+4{,}000)/(n_0+800)]^2\lt 25`$; for an illustrative $`n_0=300`$ it is about $`15.280992`$.
 - Length-linear layers, generation, caching, retrieval, fixed capacity and hardware utilization prevent equating this ratio to total latency or cost. Accuracy and attention arithmetic favor truncation in this toy example, but production depth must be measured.
 ### 30.7 Positional encoding and attention calibration
 #### What RoPE contributes
@@ -411,10 +411,10 @@ Hsieh et al. (2024) estimate a document-level reference attention pattern using 
 \widehat r_k=\mathop{\mathrm{Attn}}\nolimits(d_k,k)-\mathop{\mathrm{Attn}}\nolimits(d_{\mathrm{dum}},k).
 ```
 
-They then redistribute token attention within documents, rather than simply subtracting an average positional term from every raw query-key logit. If $`a_{ki}`$ is original token attention, $`A_k=\sum_i a_{ki}>0`$, and $`C=\sum_k A_k`$ is the document portion of attention mass, the redistribution can be written
+They then redistribute token attention within documents, rather than simply subtracting an average positional term from every raw query-key logit. If $`a_{ki}`$ is original token attention, $`A_k=\sum_i a_{ki}\gt 0`$, and $`C=\sum_k A_k`$ is the document portion of attention mass, the redistribution can be written
 
 ```math
-\alpha_k=\frac{\exp(\widehat r_k/t)}{\sum_j\exp(\widehat r_j/t)},\qquad a'_{ki}=C\frac{\alpha_k}{A_k}a_{ki},\qquad t>0.
+\alpha_k=\frac{\exp(\widehat r_k/t)}{\sum_j\exp(\widehat r_j/t)},\qquad a'_{ki}=C\frac{\alpha_k}{A_k}a_{ki},\qquad t\gt 0.
 ```
 
 Hence $`\sum_i a'_{ki}=C\alpha_k`$ and total document attention stays $`C`$. Masked or zero-mass cases need an explicit implementation policy. The reference subtraction relies on the approximate relevance/bias model; residual interactions and estimation errors need not cancel. The raw-logit arithmetic below is a separate pedagogical toy, not a reproduction of this algorithm.[\[2\]](https://arxiv.org/html/2406.16008)
@@ -526,7 +526,7 @@ low  |          \\______/
        Delta(p) < 0 through the trough
        gold-document position in a 20-document context
 ```
-Figure $`30.2`$: Schematic of a reported possibility: $`A(p)<A_0`$ in the trough on a matched query population. Neither this diagram nor the cited result establishes that every model’s curve crosses the closed-book line.
+Figure $`30.2`$: Schematic of a reported possibility: $`A(p)\lt A_0`$ in the trough on a matched query population. Neither this diagram nor the cited result establishes that every model’s curve crosses the closed-book line.
 ### Figure 30.3
 ```plain text
 retrieval accuracy
@@ -624,7 +624,7 @@ Lost in the middle means the model can receive relevant evidence yet perform wor
 ### 1. Why does the U-curve establish a position effect rather than a harder-middle benchmark artifact?
 The reported controls move the same gold content while holding its relevance fixed and include random key-value lookup as well as QA. That reduces semantic and question-difficulty confounds and supports a position effect in that protocol. It does not eliminate format following, tokenization, other context interactions or sampling uncertainty, and it does not identify a unique attention mechanism.
 ### 2. How can RAG be worse than closed-book, and when would you avoid a no-retrieval path?
-On the matched population, $`A(p)<A_0`$ means the retrieved condition is worse on average. Comparing paired outcomes identifies cases where a correct closed-book answer became wrong; distractor attention is a possible mechanism, not a proof from the inequality. Validate a no-retrieval route for known facts, and use evidence or abstention for facts absent from weights. A no-retrieval branch can still use information in the request; it cannot conjure a missing private or future source.
+On the matched population, $`A(p)\lt A_0`$ means the retrieved condition is worse on average. Comparing paired outcomes identifies cases where a correct closed-book answer became wrong; distractor attention is a possible mechanism, not a proof from the inequality. Validate a no-retrieval route for known facts, and use evidence or abstention for facts absent from weights. A no-retrieval branch can still use information in the request; it cannot conjure a missing private or future source.
 ### 3. Why does a longer context window fail to solve the problem?
 Accepted length is admission capacity, not demonstrated uniform use. The chapter’s reported comparisons retain position effects after extension, but that does not prove every extension fails. Increasing about $`4\mathrm{k}`$ to $`16\mathrm{k}`$ gives about sixteen times the leading quadratic attention arithmetic, not sixteen times total latency or every FLOP. Probe only lengths the service actually admits and distinguish its training distribution from its inference limit.
 ### 4. What mechanism and serving fixes would you propose before retraining?

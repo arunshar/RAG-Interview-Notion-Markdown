@@ -109,7 +109,7 @@ A safe pilot can rebuild every reading when a constraint changes. Memorizing the
 ## Core mechanics
 ### Mathematical conventions
 Use decimal units $`1\,\mathrm{GB}=10^9\,\mathrm B`$ and $`1\,\mathrm{TB}=10^{12}\,\mathrm B`$; binary units are explicitly $`1\,\mathrm{KiB}=2^{10}\,\mathrm B`$ and $`1\,\mathrm{MiB}=2^{20}\,\mathrm B`$. Keep full precision until the reported result and use $`\approx`$ for rounding or a compute/storage model. Natural logarithms are written $`\ln`$; DCG uses $`\log_2`$.
-Ranked lists have positive integer ranks and a declared tie rule, identity/deduplication policy and depth. Define missing-hit and zero-IDCG behavior. Modularity below is for an undirected unweighted graph with $`m>0`$ edges, including diagonal null-model terms; optimization is heuristic, not a global-optimum certificate.
+Ranked lists have positive integer ranks and a declared tie rule, identity/deduplication policy and depth. Define missing-hit and zero-IDCG behavior. Modularity below is for an undirected unweighted graph with $`m\gt 0`$ edges, including diagonal null-model terms; optimization is heuristic, not a global-optimum certificate.
 Compute is a dense-model FLOP proxy, not measured latency. Attention architecture, causal masking, achieved throughput, batching, memory traffic, communication and queueing matter. Storage equations are scoped byte ledgers: count only applicable index components, distinguish expected allocated link slots from realized links, and state which artifacts are replicated or rebuilt. A ceiling of aggregate bytes is a capacity lower bound, not a deployable shard/replica plan.
 ### A.1 BM25
 #### Formula and symbols
@@ -121,7 +121,7 @@ Section $`18.3`$ derives BM25, which scores one query-document pair by summing o
  \frac{f(t,D)(k_1+1)}{f(t,D)+k_1(1-b+b\lvert D\rvert/\mathop{\mathrm{avgdl}}\nolimits)}.
 ```
 
-Here $`\mathcal T(q)`$ is the set of distinct analyzed query terms; repeated-query weighting is omitted. Require $`N\ge1`$, $`0\le n_t\le N`$, $`\mathop{\mathrm{avgdl}}\nolimits>0`$, $`k_1>0`$ and $`0\le b\le1`$. This shifted natural-log IDF is positive even for a term in every document; it is not the unshifted Robertson IDF.
+Here $`\mathcal T(q)`$ is the set of distinct analyzed query terms; repeated-query weighting is omitted. Require $`N\ge1`$, $`0\le n_t\le N`$, $`\mathop{\mathrm{avgdl}}\nolimits\gt 0`$, $`k_1\gt 0`$ and $`0\le b\le1`$. This shifted natural-log IDF is positive even for a term in every document; it is not the unshifted Robertson IDF.
 The source defaults are:
 
 ```math
@@ -203,11 +203,11 @@ r=k+2
 For $`L`$ equal-weight lists and $`k\ge0`$, assume a document is present at the same rank $`r`$ in every list. Compare it with a competitor present only at rank $`1`$ in one list:
 
 ```math
-\frac{L}{k+r}>\frac{1}{k+1} \quad\Longleftrightarrow\quad r < L(k+1)-k
+\frac{L}{k+r}\gt \frac{1}{k+1} \quad\Longleftrightarrow\quad r \lt  L(k+1)-k
 ```
 
 #### Plain-language mechanics
-RRF combines ranks rather than claiming comparable raw scores. Require $`k+r>0`$ and consistent document identity. Raising $`k`$ flattens within-list weights; it does not establish that agreement is independent or correct. Correlated lists can repeat the same error. Unequal list weights or different ranks need their actual sums, not the equal-rank shortcut.
+RRF combines ranks rather than claiming comparable raw scores. Require $`k+r\gt 0`$ and consistent document identity. Raising $`k`$ flattens within-list weights; it does not establish that agreement is independent or correct. Correlated lists can repeat the same error. Unequal list weights or different ranks need their actual sums, not the equal-rank shortcut.
 #### Worked crossover cases
 With two lists and $`k=60`$:
 
@@ -300,7 +300,7 @@ Discounted Cumulative Gain divides each grade by a log-rank term.
 Normalize by IDCG computed from the same nonnegative gain function, cutoff and judgment universe. For positive IDCG:
 
 ```math
-\mathop{\mathrm{nDCG}}\nolimits@k=\frac{\mathop{\mathrm{DCG}}\nolimits@k}{\mathop{\mathrm{IDCG}}\nolimits@k},\qquad \mathop{\mathrm{IDCG}}\nolimits@k>0.
+\mathop{\mathrm{nDCG}}\nolimits@k=\frac{\mathop{\mathrm{DCG}}\nolimits@k}{\mathop{\mathrm{IDCG}}\nolimits@k},\qquad \mathop{\mathrm{IDCG}}\nolimits@k\gt 0.
 ```
 
 Under those conditions, and with the ideal ordering formed from the same candidate/judgment universe:
@@ -337,7 +337,7 @@ Exponential gain emphasizes higher grades more strongly, but does not make ordin
 - nDCG can penalize missing judged relevant documents as well as poor ordering. Recomputing IDCG only from returned hits can conceal retrieval failure.
 ### A.5 Modularity
 #### Formula and symbols
-For an undirected unweighted graph with $`m>0`$, the following is standard modularity at resolution $`1`$. Louvain and Leiden are optimization heuristics; neither name alone guarantees a global maximum.
+For an undirected unweighted graph with $`m\gt 0`$, the following is standard modularity at resolution $`1`$. Louvain and Leiden are optimization heuristics; neither name alone guarantees a global maximum.
 
 ```math
 Q=\frac{1}{2m}
@@ -399,10 +399,10 @@ For these two partitions, adding the dangling edge changes a tie into a $`0.0312
 
 ```math
 \Delta Q_{A,B}=\frac{e_{AB}}m-\frac{K_AK_B}{2m^2};\qquad
-\Delta Q_{A,B}>0\ \Longleftrightarrow\ 2me_{AB}>K_AK_B.
+\Delta Q_{A,B}\gt 0\ \Longleftrightarrow\ 2me_{AB}\gt K_AK_B.
 ```
 
-Here $`e_{AB}`$ counts edges between two communities and $`K_A,K_B`$ are their degree sums. For a single bridge and equal degree sums, merging is favorable when $`K_A=K_B<\sqrt{2m}`$. Translating that into internal-edge counts depends on external degrees; the classic symmetric examples have a $`\sqrt{m/2}`$ scale. Resolution and hierarchy choices can change the outcome.[\[2\]](https://arxiv.org/abs/physics/0607100)
+Here $`e_{AB}`$ counts edges between two communities and $`K_A,K_B`$ are their degree sums. For a single bridge and equal degree sums, merging is favorable when $`K_A=K_B\lt \sqrt{2m}`$. Translating that into internal-edge counts depends on external degrees; the classic symmetric examples have a $`\sqrt{m/2}`$ scale. Resolution and hierarchy choices can change the outcome.[\[2\]](https://arxiv.org/abs/physics/0607100)
 ### A.6 Product Quantization sizing
 #### Formula and symbols
 Section $`16.1`$ derives Product Quantization. Split a $`d`$-dimensional vector into $`m`$ subvectors, each with width:
@@ -443,7 +443,7 @@ In a deliberately simplified operation count, building the query lookup table co
 N^{*}=\frac{2kd}{2d-m}
 ```
 
-candidate distances, provided $`2d>m`$. Strict savings require more candidates than $`N^*`$. Cache behavior, SIMD, residual/coarse-distance tables and actual kernels can change the measured break-even.
+candidate distances, provided $`2d\gt m`$. Strict savings require more candidates than $`N^*`$. Cache behavior, SIMD, residual/coarse-distance tables and actual kernels can change the measured break-even.
 #### Why the mechanism compresses
 Representable combinations grow as $`k^m`$. Stored centroids grow only as $`k\times m`$. This asymmetry is the compression mechanism.
 #### Worked 768-dimensional design
@@ -658,7 +658,7 @@ b_{id}=4\text{ to }8\text{ bytes}
 Under independent geometric HNSW layer allocation $`\Pr(\ell\ge j)=M^{-j}`$, four-byte neighbor slots, $`2M`$ base slots and $`M`$ slots per allocated upper layer, the expected slot payload is:
 
 ```math
-\mathbb E[b_{\mathrm{link}}]=4\left(2M+\frac{M}{M-1}\right)\,\mathrm B,\qquad M>1.
+\mathbb E[b_{\mathrm{link}}]=4\left(2M+\frac{M}{M-1}\right)\,\mathrm B,\qquad M\gt 1.
 ```
 
 This graph term is zero for a plain IVF index, but not necessarily for an IVF coarse quantizer that itself uses HNSW. Layer counters, offsets, actual containers and unused slot capacity are not covered by the expression.
@@ -791,7 +791,7 @@ The RRF constant is a convention, not an optimum. nDCG needs positive IDCG or an
 | nDCG discount grid | Log values $`1.000`$, $`1.585`$, $`2.000`$, $`2.585`$, $`3.459`$ and weights $`1.000`$, $`0.631`$, $`0.500`$, $`0.387`$, $`0.289`$ | Ranks 1, 2, 3, 5, and 10 |
 | nDCG range and grades | $`[0,1]`$ for nonnegative gains and positive IDCG | State gain, judgment universe, cutoff and zero-IDCG policy |
 | Modularity toy | $`m=4`$, $`2m=8`$, contributions $`-0.125`$ and $`-0.125`$, $`Q_A=-0.03125`$, $`Q_B=0`$ | Merge gain is $`0.03125`$ |
-| Modularity resolution | $`2me_{AB}>K_AK_B`$ favors merging | No universal internal-edge cutoff or every-level absorption guarantee |
+| Modularity resolution | $`2me_{AB}\gt K_AK_B`$ favors merging | No universal internal-edge cutoff or every-level absorption guarantee |
 | PQ design | $`d=768`$, $`m=96`$, $`k=256`$ | Eight dimensions and one byte per subvector |
 | PQ compression | $`3{,}072`$ bytes to 96 bytes, 32 times | Vector-only compression |
 | PQ combinations | $`2^{768}\approx1.55251809\times10^{231}`$ | $`24{,}576`$ stored centroids; not materialized combinations |

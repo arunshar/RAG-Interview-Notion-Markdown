@@ -3,7 +3,7 @@
 ## Math rendering compatibility
 
 - Fixed unsupported operator macros throughout the complete book without changing equation meanings.
-- Protected display equations against paragraph, list, link, emphasis, and HTML parsing; fixed table-bar delimiter ambiguity.
+- Protected display equations against paragraph, list, link, and emphasis parsing; normalized comparison signs to avoid HTML interpretation and fixed table-bar delimiter ambiguity.
 - Added a live-rendered math compatibility page and dependency-free regression checks in CI.
 - Rebuilt the complete import ZIP with native Notion display equations and refreshed book and archive checksums.
 

@@ -62,7 +62,7 @@ The library’s rule is practical. Use declared structure first. Buy overlap whe
 | Mean pooling | Averaging or summing unit vectors and normalizing the result | It can dilute an exact fact or create a length-dependent floor |
 | Background similarity $`b`$ | Similarity between a query and non-answering sentences on the same topic | It sets the long-chunk score floor |
 | Internal coherence $`\rho`$ | Mean pairwise similarity among sentences or propositions in one unit | It controls dilution and length effects |
-| Crossover condition | The limiting toy inequality $`b>a\sqrt\rho`$ for $`\rho>0`$ | Finite-length crossover has an $`n`$-dependent threshold; geometric feasibility also matters |
+| Crossover condition | The limiting toy inequality $`b\gt a\sqrt\rho`$ for $`\rho\gt 0`$ | Finite-length crossover has an $`n`$-dependent threshold; geometric feasibility also matters |
 | Small-to-big retrieval | Retrieving a fine unit and expanding it to its parent | It avoids cross-level score mixing and restores context |
 | Reciprocal rank fusion (RRF) | Combining ranked lists using rank instead of raw score | It is scale-free when router labels are unavailable |
 | Sparse retrieval | Retrieval based on explicit term matches | Its length bias differs from dense mean pooling |
@@ -129,7 +129,7 @@ The library’s rule is practical. Use declared structure first. Buy overlap whe
 
 ## Core mechanics
 ### Mathematical conventions
-Token counts and span lengths are integers. For fixed overlapping windows use $`1\le L`$, $`0\le o<L`$, retain the final partial chunk, and stop as soon as the document is covered. Counts and billed unpadded tokens are computed per document, not by pooling unrelated documents into one stream. Long-document overlap multipliers are approximations; finite vector counts and padded compute can differ. A split span can still be recovered by retrieving neighboring chunks or expanding to a parent: failure of a single chunk is not a proof that all RAG systems must fail. Vector-pooling and Gaussian examples are explicitly idealized, not laws of learned encoders. Natural logarithms use nats; storage is decimal. HNSW budgets include vector payload and base-layer neighbor slots only. FLOP estimates use stated sustained throughput and omit attention-length effects, bandwidth, padding unless specified, scheduling, graph work, and I/O. Extent metrics use unique source positions keyed by document, not repeated prompt tokens. Keep full precision until reporting; $`\approx`$ denotes rounding or a model approximation.
+Token counts and span lengths are integers. For fixed overlapping windows use $`1\le L`$, $`0\le o\lt L`$, retain the final partial chunk, and stop as soon as the document is covered. Counts and billed unpadded tokens are computed per document, not by pooling unrelated documents into one stream. Long-document overlap multipliers are approximations; finite vector counts and padded compute can differ. A split span can still be recovered by retrieving neighboring chunks or expanding to a parent: failure of a single chunk is not a proof that all RAG systems must fail. Vector-pooling and Gaussian examples are explicitly idealized, not laws of learned encoders. Natural logarithms use nats; storage is decimal. HNSW budgets include vector payload and base-layer neighbor slots only. FLOP estimates use stated sustained throughput and omit attention-length effects, bandwidth, padding unless specified, scheduling, graph work, and I/O. Extent metrics use unique source positions keyed by document, not repeated prompt tokens. Keep full precision until reporting; $`\approx`$ denotes rounding or a model approximation.
 ### 13.1 Five levels of splitting
 #### The index-time retrieval contract
 - **What:** Splitting chooses searchable units before retrieval runs; the text itself need not be compressed or discarded.
@@ -141,12 +141,12 @@ The resulting count is
 
 ```math
 n(T;L,o)=1+\left\lceil\frac{\max(0,T-L)}{L-o}\right\rceil
-=\max\!\left(1,\left\lceil\frac{T-o}{L-o}\right\rceil\right),\qquad T>0.
+=\max\!\left(1,\left\lceil\frac{T-o}{L-o}\right\rceil\right),\qquad T\gt 0.
 ```
 
 Set $`n=0`$ for an empty document.
-With an unpadded final chunk and no extra windows after coverage, the exact embedded-token count is $`T+(n-1)o`$ for $`T>0`$. The long-document approximation is $`T\,L/(L-o)`$; padding every call to $`L`$ instead processes $`nL`$ slots.
-If span starts are uniform modulo the stride, ignoring document-edge effects, the probability that no one window contains an $`s`$-token span is $`\min(1,\max(0,(s-o-1)/(L-o)))`$ for $`1\le s\le L`$; it is $`1`$ for $`s>L`$. At $`o=0`$ this becomes $`(s-1)/L`$ for a fitting span.
+With an unpadded final chunk and no extra windows after coverage, the exact embedded-token count is $`T+(n-1)o`$ for $`T\gt 0`$. The long-document approximation is $`T\,L/(L-o)`$; padding every call to $`L`$ instead processes $`nL`$ slots.
+If span starts are uniform modulo the stride, ignoring document-edge effects, the probability that no one window contains an $`s`$-token span is $`\min(1,\max(0,(s-o-1)/(L-o)))`$ for $`1\le s\le L`$; it is $`1`$ for $`s\gt L`$. At $`o=0`$ this becomes $`(s-1)/L`$ for a fitting span.
 At $`s=40`$, $`L=512`$, and $`o=0`$, modeled severance is $`39/512=0.076171875\approx7.62\%`$.
 Any span with $`s\le\min(L,o+1)`$ is contained in at least one window under this discrete coverage convention. Thus $`o\ge39`$ is sufficient for every $`40`$-token span; $`o\ge40`$ is a conservative alternative.
 The long-document multiplier $`L/(L-o)`$ approximates token and vector inflation. Exact token count is $`T+(n-1)o`$, exact vector count is $`n`$, and graph allocation follows that integer count. These need not share exactly one multiplier on short documents.
@@ -224,13 +224,13 @@ Let $`S`$ be the sum of unit sentence vectors. When $`S\ne0`$, define the normal
 The sum over sentences of $`\cos\!\bigl(e(s_i),\mathop{\mathrm{centroid}}\nolimits\bigr)`$ equals $`\lVert S\rVert`$.
 The mean centroid score is $`\frac{\lVert S\rVert}{n}`$. It measures document homogeneity, not document intent.
 The reported ablations replace the true summary with another document’s summary, a random document sentence, or the average embedding. All three degrade retrieval. The claim limit is that the published evaluation is general-domain. A specialist query distribution may emphasize an attribute no summarizer includes.
-The mean threshold always creates at least one cut when scores are not identical. Since $`\min_i r_i < r_{\mathrm{mean}}\le \max_i r_i`$, a single-topic page can split on noise.
+The mean threshold always creates at least one cut when scores are not identical. Since $`\min_i r_i \lt  r_{\mathrm{mean}}\le \max_i r_i`$, a single-topic page can split on noise.
 Guard with $`\max_i r_i-\min_i r_i`$. Emit one chunk when the spread is below a threshold calibrated on a held-out set.
 #### Worked policy example
 The corpus has $`200{,}000`$ policy documents. Each has 40 sentences at 22 tokens each, or 880 tokens.
 Twelve sentences contain policy. Twenty-eight contain preamble, revision history, and footer material.
 The toy geometry takes $`u,v,w,\{\epsilon_i\},\{\delta_j\}`$ to be mutually orthonormal directions. Each policy sentence has vector $`0.8u+0.6\epsilon_i`$; each boilerplate sentence has $`0.8v+0.6\delta_j`$. The query is $`q=u`$. A unit summary direction $`g=0.9u+0.2v+\sqrt{0.15}\,w`$ gives policy similarity $`0.72`$ and boilerplate similarity $`0.16`$. Assume all $`12`$ policy sentences form one contiguous run. For the mixed-chunk comparison, take a $`20`$-sentence, $`440`$-token unit under a $`512`$-token cap; it is not an exact blind $`512`$-token window.
-For the general version, write each policy vector as $`\alpha u+\sqrt{1-\alpha^2}\epsilon_i`$ and each boilerplate vector as $`\beta v+\sqrt{1-\beta^2}\delta_j`$, with $`0\le\alpha,\beta\le1`$. Here $`\alpha=\beta=0.8`$. A normalized sum of $`a`$ policy and $`b`$ boilerplate vectors, for $`a+b>0`$, has
+For the general version, write each policy vector as $`\alpha u+\sqrt{1-\alpha^2}\epsilon_i`$ and each boilerplate vector as $`\beta v+\sqrt{1-\beta^2}\delta_j`$, with $`0\le\alpha,\beta\le1`$. Here $`\alpha=\beta=0.8`$. A normalized sum of $`a`$ policy and $`b`$ boilerplate vectors, for $`a+b\gt 0`$, has
 
 ```math
 \cos(q,c) = \frac{a\alpha}{\sqrt{a^2\alpha^2 + a(1-\alpha^2) + b^2\beta^2 + b(1-\beta^2)}}.
@@ -269,8 +269,8 @@ Index nested sentence, paragraph, and section units. Let $`a`$ be query similari
 s(n) = \frac{a+(n-1)b}{\sqrt{n\bigl(1+(n-1)\rho\bigr)}}.
 ```
 
-For $`\rho>0`$ and a feasible family of unit-vector geometries, $`s(n)\to b/\sqrt\rho`$ as $`n\to\infty`$. Feasibility constrains the parameters; in the limit $`b^2\le\rho`$. The expression is not a law for arbitrary contextual embeddings or for $`\rho=0`$.
-For $`n>1`$, a coarse chunk beats the answer sentence when $`b>a[\sqrt{n(1+(n-1)\rho)}-1]/(n-1)`$. The simpler $`b>a\sqrt\rho`$ compares the limiting score with $`a`$, not every finite chunk.
+For $`\rho\gt 0`$ and a feasible family of unit-vector geometries, $`s(n)\to b/\sqrt\rho`$ as $`n\to\infty`$. Feasibility constrains the parameters; in the limit $`b^2\le\rho`$. The expression is not a law for arbitrary contextual embeddings or for $`\rho=0`$.
+For $`n\gt 1`$, a coarse chunk beats the answer sentence when $`b\gt a[\sqrt{n(1+(n-1)\rho)}-1]/(n-1)`$. The simpler $`b\gt a\sqrt\rho`$ compares the limiting score with $`a`$, not every finite chunk.
 With $`a=0.62`$, $`b=0.50`$, and $`\rho=0.5`$:
 
 
@@ -346,7 +346,7 @@ For a distractor with eight propositions, each at query similarity $`\gamma=0.6`
 The distractor wins whenever
 
 ```math
-\gamma > \frac{1+(m-1)\rho}{m}.
+\gamma \gt  \frac{1+(m-1)\rho}{m}.
 ```
 
 That threshold is the square of the gold passage score. It is $`0.5625`$ in this example.
@@ -427,7 +427,7 @@ P_q = \frac{\lvert E_q\cap T_q\rvert}{\lvert T_q\rvert}.
 \mathop{\mathrm{IoU}}\nolimits_q = \frac{\lvert E_q\cap T_q\rvert}{\lvert E_q\cup T_q\rvert}.
 ```
 
-For nonempty gold and retrieved sets with positive intersection, let $`a=\lvert E\cap T\rvert`$, $`e=\lvert E\rvert`$, $`t=\lvert T\rvert`$. The reciprocal identity below needs $`a>0`$; the direct $`F_1`$ identity also extends to zero overlap when $`e+t>0`$.
+For nonempty gold and retrieved sets with positive intersection, let $`a=\lvert E\cap T\rvert`$, $`e=\lvert E\rvert`$, $`t=\lvert T\rvert`$. The reciprocal identity below needs $`a\gt 0`$; the direct $`F_1`$ identity also extends to zero overlap when $`e+t\gt 0`$.
 
 ```math
 \frac{1}{\mathop{\mathrm{IoU}}\nolimits} = \frac{1}{R}+\frac{1}{P}-1.
@@ -461,7 +461,7 @@ $`\mathop{\mathrm{IoU}}\nolimits`$ cannot distinguish the direction of error by 
 - **Cost and complexity:** $`P_k`$ can treat missing and extra nearby boundaries differently; WindowDiff instead checks boundary counts. Both depend on window conventions and reference segment lengths.
 WindowDiff compares the number of boundaries inside the window rather than a same-segment bit.
 For uniform reference segments of length $`\ell`$, the conventional window is $`k=\frac{\ell}{2}`$.
-For long uniform reference segments of even length $`\ell`$, $`k=\ell/2`$ gives an approximately $`0.5`$ no-boundary baseline for both metrics. The all-boundary baseline is approximately $`0.5`$ for $`P_k`$, but approximately $`1`$ for WindowDiff when $`k>1`$ and every predicted window has more boundaries than the reference. Finite endpoints and rounding affect the values; compute both baselines on the actual reference.
+For long uniform reference segments of even length $`\ell`$, $`k=\ell/2`$ gives an approximately $`0.5`$ no-boundary baseline for both metrics. The all-boundary baseline is approximately $`0.5`$ for $`P_k`$, but approximately $`1`$ for WindowDiff when $`k\gt 1`$ and every predicted window has more boundaries than the reference. Finite endpoints and rounding affect the values; compute both baselines on the actual reference.
 The chapter traces element-level precision, recall, and overlap to Extensible Markup Language (XML) retrieval, where systems had to return the correct section, paragraph, or span from a nested document.
 #### Worked chunk-size comparison
 The illustrative evaluation has $`200`$ queries with exactly $`60`$ gold tokens each, not merely a mean of $`60`$. Starts are uniform modulo the chunk length. Assume an oracle returns the one chunk with greatest gold overlap; these are idealized top-one extent metrics, not measured retriever performance.
@@ -545,7 +545,7 @@ Qu, Tu, and Bao (2024) report no consistent performance gains justifying semanti
 For answer span length $`L = 80`$, chunk length $`C = 512`$, and stride $`S = C-o`$, intact probability is
 
 ```math
-p_{\mathrm{intact}}=\min\!\left(1,\frac{C-L+1}{C-o}\right),\quad 1\le L\le C;\qquad p_{\mathrm{intact}}=0\ \text{for }L>C.
+p_{\mathrm{intact}}=\min\!\left(1,\frac{C-L+1}{C-o}\right),\quad 1\le L\le C;\qquad p_{\mathrm{intact}}=0\ \text{for }L\gt C.
 ```
 
 At $`o=0`$, intact probability is $`\frac{433}{512}=84.6\%`$. Split rate is $`15.4\%`$.
@@ -570,7 +570,7 @@ Including final embeddings on both sides, the agentic proxy is about $`33.9314`$
 A random detector placing 10 cuts among 199 gaps with 8 true boundaries has expected precision $`\frac{8}{199}=4\%`$. The modeled $`24\%`$ is six times better than chance and still puts three cuts in four inside a topic.
 #### Shipping rule
 - Measure boundary distributions and precision–recall on real held-out documents before building; the source suggests $`30`$ documents and $`200`$ labeled adjacent pairs as a starting audit, not a universal sufficient sample.
-- Treat $`\Delta<2`$ as a cautionary heuristic, not a theorem that recall cannot exceed one third. With $`\mu_w=0.25`$, $`\mu_b=0.402`$, $`\sigma=0.08`$, the same population top-$`5\%`$ rule has $`\Delta=1.9`$ and approximately $`51.15\%`$ recall at $`41.13\%`$ precision. Prevalence and threshold matter.
+- Treat $`\Delta\lt 2`$ as a cautionary heuristic, not a theorem that recall cannot exceed one third. With $`\mu_w=0.25`$, $`\mu_b=0.402`$, $`\sigma=0.08`$, the same population top-$`5\%`$ rule has $`\Delta=1.9`$ and approximately $`51.15\%`$ recall at $`41.13\%`$ precision. Prevalence and threshold matter.
 - Prefer headings, HTML sections, PDF outlines, speaker turns and ticket IDs when they match the task’s units.
 - On low-separability corpora, benchmark overlap and explicit neighbor recovery against the semantic detector.
 - Choose overlap from required span lengths and measured costs; chunk length above $`2{,}000`$ alone does not imply overlap must grow proportionally.
@@ -647,7 +647,7 @@ flowchart TB
 ```
 
 For a thematic query, the router emits weights $`(0.10,0.20,0.70)`$. The section wins at $`0.70\times0.617=0.432`$. Raw scores from different levels never compete directly.
-**Figure **$`13.3`$**:** In the stated positive-coherence pooling toy, the wrong section scores about $`0.686`$ above the answer sentence’s $`0.620`$. A feasible long-chunk family approaches $`b/\sqrt\rho`$ when $`\rho>0`$. The displayed router weights restore this example’s ordering, not a universal guarantee.
+**Figure **$`13.3`$**:** In the stated positive-coherence pooling toy, the wrong section scores about $`0.686`$ above the answer sentence’s $`0.620`$. A feasible long-chunk family approaches $`b/\sqrt\rho`$ when $`\rho\gt 0`$. The displayed router weights restore this example’s ordering, not a universal guarantee.
 ### Figure 13.4
 ```mermaid
 flowchart TB
@@ -745,7 +745,7 @@ It may not pay when boundary gaps resemble within-topic gaps. At the example’s
 ### 3. When does fine granularity not pay?
 It may not pay when passages are coherent, several facts must be jointly retrieved, or parent expansion overruns the budget. At $`m=8,\rho=0.9`$, toy cosine headroom is only about $`0.04475`$; the example’s proposition payload-plus-base-layer budget is $`53.248\,\mathrm{GB}`$ before other overhead.
 ### 4. Why is one global top-$`k`$ across chunk sizes wrong?
-Raw cross-length scores can be biased. In the stated feasible unit-vector model with $`\rho>0`$, the limiting pooled cosine is $`b/\sqrt\rho`$; the worked no-answer section scores about $`0.686`$ above the answer sentence’s $`0.620`$. This is an example to validate, not a theorem that a pooled index always fails.
+Raw cross-length scores can be biased. In the stated feasible unit-vector model with $`\rho\gt 0`$, the limiting pooled cosine is $`b/\sqrt\rho`$; the worked no-answer section scores about $`0.686`$ above the answer sentence’s $`0.620`$. This is an example to validate, not a theorem that a pooled index always fails.
 ### 5. Did $`\mathop{\mathrm{recall}}\nolimits@5`$ improve because the new chunker is better?
 Not necessarily. Recall can be purchased by returning more text, so compare at a fixed token budget and report precision plus $`\mathop{\mathrm{IoU}}\nolimits`$. A rise from $`0.71`$ to $`0.79`$ with mean chunk length rising from 220 to 610 tokens is confounded by $`2.8\times`$ more retrieved text.
 ## Key numbers
@@ -755,7 +755,7 @@ Not necessarily. Recall can be purchased by returning more text, so compare at a
 | --- | --- | --- |
 | Opening failure | 3 months, about 12 lines of splitter code, 900-token clause, cut at 512 | An old index-time choice can sever a fact permanently |
 | Splitting ladder | 5 levels, about $`45\times`$ cost range, only levels 4 and 5 read meaning | More expensive is not automatically better |
-| Chunk count | $`n=1+\lceil\max(0,T-L)/(L-o)\rceil`$ for $`T>0`$; $`n=0`$ for $`T=0`$ | Retain the final partial chunk and stop at first coverage |
+| Chunk count | $`n=1+\lceil\max(0,T-L)/(L-o)\rceil`$ for $`T\gt 0`$; $`n=0`$ for $`T=0`$ | Retain the final partial chunk and stop at first coverage |
 | Embedded tokens | $`T+(n-1)o`$ exactly for nonempty unpadded documents; $`TL/(L-o)`$ asymptotically | Finite token, vector and graph inflation need not match |
 | Blind severance | $`p_{\mathrm{split}}=\min(1,\max(0,(s-o-1)/(L-o)))`$ for $`1\le s\le L`$ | Uniform stride phase; an oversized span never fits one chunk |
 | Severance example | $`s=40`$, $`L=512`$, $`\frac{39}{512}=7.6\%`$ | Fixed boundaries cut the 40-token unit at this rate |
@@ -798,7 +798,7 @@ Not necessarily. Recall can be purchased by returning more text, so compare at a
 | Retrieval and prefill | Assumed $`4\,\mathrm{ms}`$ extra serial search work; section/sentence prefill proxies $`186.667/11.667\,\mathrm{ms}`$ | $`175\,\mathrm{ms}`$ difference; $`43.75`$ is avoided-prefill/extra-search work, not system speedup |
 | Generator assumption | 7 billion parameters, $`2.8\times10^{13}`$ FLOPs, A100 sustained $`1.5\times10^{14}`$ bfloat16 $`\mathrm{FLOP}/\mathrm{s}`$ | Sustained rate is about half the stated $`312\,\mathrm{TFLOP}/\mathrm{s}`$ peak |
 | Multi-level memory choice | $`11.3152\,\mathrm{GB}`$ extra payload-plus-base-layer capacity over paragraphs | Sentence payload $`9.8304\,\mathrm{GB}`$, section payload $`0.6144\,\mathrm{GB}`$; other overhead excluded |
-| Router sampling | Source suggests $`200`$ sentence pairs and $`200`$ query–background pairs | $`b>a\sqrt\rho`$ is a limiting toy crossover, not a finite-level or workload guarantee |
+| Router sampling | Source suggests $`200`$ sentence pairs and $`200`$ query–background pairs | $`b\gt a\sqrt\rho`$ is a limiting toy crossover, not a finite-level or workload guarantee |
 | Staff routing case | $`60\%\times9`$ factoid recall points = $`5.4`$ traffic-weighted recall points under unchanged other strata | Not automatically $`5.4`$ end-to-end answer-accuracy points; serving and retrieval gains differ |
 | Proposition dilution | $`m=8`$, $`\rho=0.5`$, gold $`0.75`$, distractor $`0.80`$, threshold $`0.5625`$ | Proposition comparison restores $`1.00`$ versus $`0.60`$ |
 | Proposition evidence | 5 open-domain datasets and 6 dense retrievers | Reported comparison favors propositions, especially at small $`k`$ |
@@ -826,7 +826,7 @@ Not necessarily. Recall can be purchased by returning more text, so compare at a
 | Semantic ingestion | $`4.608\times10^9`$ detection slots plus $`3.6\times10^9`$ final tokens | $`88.5176`$ minutes and $`\$3.6882`$, $`107.273\%`$ extra compute |
 | Clustering add-on | $`7{,}140`$ dot products/document; $`1.3160448\times10^{13}`$ corpus FLOPs | $`0.0387072\,\mathrm s`$ arithmetic proxy, excluding actual clustering and orchestration |
 | Agentic ingestion | $`3{,}000+150`$ tokens/article: $`6.048\times10^{19}`$ generation FLOPs | With final embeddings: $`50.0588`$ GPU-hours, $`\$125.15`$, $`33.9314`$ times semantic compute |
-| Semantic calibration | $`30`$ documents and $`200`$ adjacent-pair labels are starting-audit heuristics | $`\Delta<2`$ does not imply recall below one third; prevalence and cutoff jointly determine performance |
+| Semantic calibration | $`30`$ documents and $`200`$ adjacent-pair labels are starting-audit heuristics | $`\Delta\lt 2`$ does not imply recall below one third; prevalence and cutoff jointly determine performance |
 | Length caps | Roughly $`2{,}000`$ tokens changes overlap economics. An 8,000-token encoder shifts the cap to generator context | Monitor the tail, not only the mean |
 
 

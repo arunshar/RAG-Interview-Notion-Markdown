@@ -89,7 +89,7 @@ The source’s motivating project compares reranking with fine-tuning a $`7`$-bi
 SFT minimizes negative log-likelihood over labeled input-output pairs.
 
 ```math
-\mathcal L_{\mathrm{SFT}}(\theta)=-\sum_{(x,y)\in\mathcal D}\sum_{t=1}^{|y|}\log p_\theta(y_t\mid y_{<t},x).
+\mathcal L_{\mathrm{SFT}}(\theta)=-\sum_{(x,y)\in\mathcal D}\sum_{t=1}^{|y|}\log p_\theta(y_t\mid y_{\lt t},x).
 ```
 
 Here the supervised input is $`x`$ and loss is applied to target positions in $`y`$, not automatically to every prompt token. The trainable object may be all parameters or an adapter subset. A fixed-generator retrieval update changes the conditioning information while leaving $`\theta`$ unchanged:
@@ -325,7 +325,7 @@ One supporting chunk may suffice to predict the target, but the other chunks are
 This fixed target is appropriate only when $`y`$ should remain valid for every sampled view, with sufficient task conditioning. It asks for target predictability under context variation; it does not establish that context is irrelevant to every part of the response. For $`k\ge1`$ and positive target-sequence probabilities, define
 
 ```math
-p_i=p_\theta(y\mid c_i\oplus x)>0.
+p_i=p_\theta(y\mid c_i\oplus x)\gt 0.
 ```
 
 

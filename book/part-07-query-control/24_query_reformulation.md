@@ -47,7 +47,7 @@ The reference desk succeeds when it chooses the smallest repair that matches the
 | Inverse document frequency (IDF) | A log rarity weight | Rarity is not relevance or proved semantic information |
 | Term frequency | The count of a term inside one document | BM25 saturates its contribution |
 | BM25: $`N`$, $`n_t`$, $`f_{t,d}`$, $`k_1`$, $`b`$, $`\vertd\vert`$, and $`\bar L`$ | Corpus size, document frequency, term frequency, saturation, length control and average length | Use positive lengths and a declared term/boost policy |
-| Recall | Relevant returned documents divided by all relevant documents | At a filled cutoff, recall cannot exceed $`\min(k,\vertR\vert)/\vertR\vert`$ for $`\vertR\vert>0`$ |
+| Recall | Relevant returned documents divided by all relevant documents | At a filled cutoff, recall cannot exceed $`\min(k,\vertR\vert)/\vertR\vert`$ for $`\vertR\vert\gt 0`$ |
 | Precision | Relevant returned documents divided by returned documents | Undefined for an empty result without a stated convention; pool purity is not a top-k ceiling |
 | Recall at $`k`$ | Recall measured within the first $`k`$ results | Expansion has no monotone guarantee at a fixed cutoff |
 | Precision at $`k`$ | Relevant fraction in a declared top result list | Preservation at fixed size compares entrants with evictees, not necessarily with old mean precision |
@@ -169,7 +169,7 @@ Searching only that form admits set $`D_f`$. For nonempty relevant and matching 
 Bayes connects the conditionals, but it does not make them move together.
 
 ```math
-\Pr(C\mid F)=\frac{\Pr(F\mid C)\Pr(C)}{\Pr(F)},\qquad \Pr(F)>0.
+\Pr(C\mid F)=\frac{\Pr(F\mid C)\Pr(C)}{\Pr(F)},\qquad \Pr(F)\gt 0.
 ```
 
 The marginal $`\Pr(F)`$ is not independent of the other quantities, but can vary across corpora and forms. A common form can have broad concept coverage and low pool purity. The source uses “single” as a bed-related example: other senses can dominate its matching pool, while a contextual ranker can still select a high-precision subset.
@@ -200,7 +200,7 @@ BM25’s term-frequency factor is:
 F(f,\ell_d)=\frac{f(k_1+1)}{f+k_1(1-b+b\ell_d)},\qquad \ell_d=\frac{|d|}{\bar L}.
 ```
 
-Take $`k_1=1.2`$, $`0\le b\le1`$, positive document lengths and positive average length. For $`f>0`$ and positive length factor, $`F(f,\ell_d)<2.2`$ and tends to $`2.2`$ as $`f`$ grows. A bed-only document therefore has score below $`10.131363629`$. An average-length document with each of bed and twin once scores $`11.512870666`$, about $`13.635944\%`$ above that supremum. In this declared two-term example, stuffing bed alone **cannot** overtake that reference document. Different lengths, boosts or extra query terms require a new comparison.
+Take $`k_1=1.2`$, $`0\le b\le1`$, positive document lengths and positive average length. For $`f\gt 0`$ and positive length factor, $`F(f,\ell_d)\lt 2.2`$ and tends to $`2.2`$ as $`f`$ grows. A bed-only document therefore has score below $`10.131363629`$. An average-length document with each of bed and twin once scores $`11.512870666`$, about $`13.635944\%`$ above that supremum. In this declared two-term example, stuffing bed alone **cannot** overtake that reference document. Different lengths, boosts or extra query terms require a new comparison.
 #### Worked lodging example
 The index has $`N = 10^{7}`$ chunks. Posting counts are $`n(\mathrm{bed}) = 10^{5}`$, $`n(\mathrm{twin}) = 10^{4}`$, $`n(\mathrm{single}) = 3 \times 10^{5}`$, and $`n(\mathrm{cot}) = 9 \times 10^{4}`$.
 The relevant set contains $`1{,}000`$ chunks: $`550`$ use twin bed, $`300`$ use single bed without twin, and $`150`$ use cot without bed or twin. These are assumed relevance groups. For the next OR-scoring comparison, additionally suppose all $`10{,}000`$ twin documents also contain bed, and every twin-bed document has average length with each query term once. Document frequencies alone do not imply these intersections or term frequencies.
@@ -220,7 +220,7 @@ For a stable corpus, doc2query-style document expansion from Nogueira et al. (2
 Route polysemy to disambiguation. Distinct result clusters can motivate diversification or a clarifying question. When interaction is unavailable, use available metadata, an intent model, abstention or diversification; diversification is not the only remaining option and has no universal precision guarantee.
 An illustrative twelve-token RAG question supplies more context than a one-word query, but its effect on sense resolution and typo sensitivity must be tested. Adding low-IDF function words does not divide or reduce the original terms' raw BM25 contributions. It can change a normalized weight share, matching, query processing or truncation; these are separate mechanisms.
 ### 24.2 Expansion: lexical, semantic, signal-based
-**What it is.** Let $`q`$ be the original term set and $`E`$ a set of $`m`$ additional distinct terms not already in its $`n`$ terms. Write $`q^\prime=q\cup E`$. Define $`D(q)=\{d:s(q,d)>0\}`$ before cutoffs, filters or approximate pruning, and let $`R`$ be the fixed, nonempty relevance set. Bag weights and repeated query terms need an explicit scoring policy.
+**What it is.** Let $`q`$ be the original term set and $`E`$ a set of $`m`$ additional distinct terms not already in its $`n`$ terms. Write $`q^\prime=q\cup E`$. Define $`D(q)=\{d:s(q,d)\gt 0\}`$ before cutoffs, filters or approximate pruning, and let $`R`$ be the fixed, nonempty relevance set. Bag weights and repeated query terms need an explicit scoring policy.
 Lexical expansion conditions $`E`$ on word form. It includes thesaurus synonyms, morphology, acronyms, and spelling corrections.
 Semantic expansion conditions $`E`$ on query meaning. It includes entity links, ontology neighbors, and generated subqueries.
 Signal-based expansion uses observed behavior such as co-clicked or same-session queries. Metadata filtering is a distinct narrowing operation, not an add-only expansion arm.
@@ -235,8 +235,8 @@ D(q) \subseteq D(q^\prime)
 \lvert D(q^\prime)\cap R\rvert \ge \lvert D(q)\cap R\rvert
 ```
 
-These inclusions prove only unpruned admitted-set recall monotonicity for $`|R|>0`$. They do not imply fixed-cutoff or dense-retrieval monotonicity.
-**Failure without precision accounting.** Let $`a=|D(q)\cap R|`$ and $`n_D=|D(q)|>0`$, so $`P=a/n_D`$. For a genuine add-only expansion, let $`\Delta=|D(q^\prime)\setminus D(q)|>0`$ and let $`\rho`$ be the newly admitted cohort's relevant fraction. This denominator excludes overlaps with old candidates.
+These inclusions prove only unpruned admitted-set recall monotonicity for $`|R|\gt 0`$. They do not imply fixed-cutoff or dense-retrieval monotonicity.
+**Failure without precision accounting.** Let $`a=|D(q)\cap R|`$ and $`n_D=|D(q)|\gt 0`$, so $`P=a/n_D`$. For a genuine add-only expansion, let $`\Delta=|D(q^\prime)\setminus D(q)|\gt 0`$ and let $`\rho`$ be the newly admitted cohort's relevant fraction. This denominator excludes overlaps with old candidates.
 
 ```math
 P^\prime = \frac{a+\rho\Delta}{n_D+\Delta}
@@ -245,14 +245,14 @@ P^\prime = \frac{a+\rho\Delta}{n_D+\Delta}
 The precision break-even is:
 
 ```math
-P^\prime-P=\frac{\Delta(\rho-P)}{n_D+\Delta},\qquad P^\prime\ge P\ \Longleftrightarrow\ \rho\ge P\quad(n_D>0,\ \Delta>0).
+P^\prime-P=\frac{\Delta(\rho-P)}{n_D+\Delta},\qquad P^\prime\ge P\ \Longleftrightarrow\ \rho\ge P\quad(n_D\gt 0,\ \Delta\gt 0).
 ```
 
 The sign test is independent of the positive expansion size, although the magnitude of the precision change is not. If $`\Delta=0`$, precision is unchanged and the relevance fraction of an empty added cohort is undefined. If the baseline pool is empty, its precision needs a declared convention; this derivation does not divide by zero.
 Lexical, semantic and behavioral expansion can have different relevance rates, but no universal ordering follows from their names. Click relevance needs evaluation for position, exposure and selection bias. For a filter, precision improves only when the removed cohort is less relevant than the original pool; a perfectly targeted filter can remove only irrelevant items and lose no recall.
 Global query-independent expansion often admits the wrong sense with $`\rho`$ approximately zero. Voorhees (1994) found WordNet relations helped only the shortest Text Retrieval Conference (TREC) topics and degraded the rest. Xu and Croft (1996) found locally drawn expansion terms beat global corpus terms. The source limits these claims to the reported settings.
 **Cost and complexity.** With equal mean IDF, equal term weights and a common term-frequency factor, the original terms have fraction $`n/(n+m)`$ of the total IDF-weight budget. More generally use the ratio of weighted IDF sums. A common BM25 saturation factor cancels in that ratio, but the budget is neither a confidence nor each document's actual score. Added terms do not reduce the old terms' raw contributions; they can change relative ranks.
-Down-weight additions with $`0\le\alpha_E<1`$, or retrieve variants separately and fuse their lists with RRF. Fusion avoids directly summing incomparable variant scores but does not guarantee preserved top-$`k`$ quality. Appending dense-query text can move its embedding in either a useful or harmful direction; fusion is an option, not a mathematical requirement.
+Down-weight additions with $`0\le\alpha_E\lt 1`$, or retrieve variants separately and fuse their lists with RRF. Fusion avoids directly summing incomparable variant scores but does not guarantee preserved top-$`k`$ quality. Appending dense-query text can move its embedding in either a useful or harmful direction; fusion is an option, not a mathematical requirement.
 The admitted-set guarantee does not imply recall at $`k`$. With filled lists of the same size and fixed relevance set, let $`g`$ be relevant entrants and $`\ell`$ relevant evictees. Then
 
 ```math
@@ -284,7 +284,7 @@ Rocchio’s 1971 algorithm moves a query vector using judged documents.
 
 ```math
 \begin{aligned}
-\bar d_A&=\begin{cases}|A|^{-1}\sum_{d\in A}\vec d,&|A|>0,\\0,&|A|=0,\end{cases}\\
+\bar d_A&=\begin{cases}|A|^{-1}\sum_{d\in A}\vec d,&|A|\gt 0,\\0,&|A|=0,\end{cases}\\
 \vec q_m&=\alpha_R\vec q_0+\beta_R\bar d_{D_r}-\gamma_R\bar d_{D_{nr}}.
 \end{aligned}
 ```
@@ -295,7 +295,7 @@ Their contextual variant concatenated feedback documents into the generation pro
 The supervised token objective is:
 
 ```math
-L = -\sum_t \log p_\theta(q_t^* \mid q_{<t}^*,q_0)
+L = -\sum_t \log p_\theta(q_t^* \mid q_{\lt t}^*,q_0)
 ```
 
 The shipped metric is $`R(q^\prime) = \mathrm{Recall}@k`$ for the rewritten query. Similar token loss can hide large recall differences because one discriminative term moves documents across the cutoff.
@@ -307,7 +307,7 @@ REINFORCE treats the rewriter as policy $`p_\theta(q^\prime\mid q_0)`$ and uses 
 J(\theta)&=\mathbb E_{q^\prime\sim p_\theta(\cdot\mid q_0)}[R(q^\prime)],\\
 \nabla_\theta J&=\mathbb E\!\left[(R(q^\prime)-b(q_0))\nabla_\theta\log p_\theta(q^\prime\mid q_0)\right],\\
 \hat g&=\frac1m\sum_{i=1}^m(R(q_i^\prime)-b(q_0))\nabla_\theta\log p_\theta(q_i^\prime\mid q_0),\\
-\theta&\leftarrow\theta+\eta\hat g,\qquad \eta>0.
+\theta&\leftarrow\theta+\eta\hat g,\qquad \eta\gt 0.
 \end{aligned}
 ```
 
@@ -466,7 +466,7 @@ An additive one-second target with $`120\,\mathrm{ms}`$ retrieval and $`600\,\ma
 All $`263`$ output tokens take $`375.714286\,\mathrm{ms}`$ in that weight-stream model, already above the rewrite allowance. Dropping the final one-hundred-token pseudo-response call leaves $`163`$ outputs and, retaining the other prompt budgets, $`1{,}470`$ prompt tokens. Decode takes $`232.857143\,\mathrm{ms}`$. At the same $`10^4\,\mathrm{prompt\ tokens/s}`$, prefill adds $`147\,\mathrm{ms}`$, so the total is $`379.857143\,\mathrm{ms}`$ and **does not fit**.
 To fit before other overhead, prefill must take at most $`47.142857\,\mathrm{ms}`$, requiring at least approximately $`31{,}181.82\,\mathrm{prompt\ tokens/s}`$ for those prompts. If a measured smaller-model implementation instead achieves the source's separately assumed $`18\,\mathrm{ms}`$ prefill, total becomes $`250.857143\,\mathrm{ms}`$; that implies about $`81{,}666.67\,\mathrm{prompt\ tokens/s}`$ and is an added assumption, not derived from the weight size. The trimmed twenty-three-output, $`950`$-prompt path on this small model is $`127.857143\,\mathrm{ms}`$ at the original prompt rate, before omitted costs.
 ### 24.6 HyDE: searching with a hypothetical answer
-**What it is.** The source motivates HyDE with a document-crop-trained encoder. As a conditional geometry toy, take unit vectors $`q`$, $`u`$ and $`n`$, with $`u\perp n`$ and $`0<\gamma\le1`$, and decompose the query into a topical direction and a residual:
+**What it is.** The source motivates HyDE with a document-crop-trained encoder. As a conditional geometry toy, take unit vectors $`q`$, $`u`$ and $`n`$, with $`u\perp n`$ and $`0\lt \gamma\le1`$, and decompose the query into a topical direction and a residual:
 
 ```math
 q = \gamma u + \sqrt{1-\gamma^2}\,n
@@ -486,13 +486,13 @@ Positive uniform scaling preserves ranks only when the compared documents have i
 ```
 
 Treat the source's one-thousand query-gold and one-thousand document-pair counts as the stated illustration, not a reproduced experiment. No uncertainty interval follows without the scores or their variance and dependence. Under the matched toy, a document-space margin of $`0.06`$ becomes approximately $`0.035492958`$.
-A question-shaped distractor can instead have $`n^{\mathsf T}d^-=\phi>0`$. If the relevant document has zero residual alignment, this adds a distractor-only bonus:
+A question-shaped distractor can instead have $`n^{\mathsf T}d^-=\phi\gt 0`$. If the relevant document has zero residual alignment, this adds a distractor-only bonus:
 
 ```math
 \cos(q,d^-)=\gamma\cos(u,d^-)+\sqrt{1-\gamma^2}\,\phi.
 ```
 
-At $`\phi=0.05`$, the bonus is about $`0.040313442`$, greater than the $`0.035492958`$ topical margin. In this matched toy the distractor wins by $`0.004820484`$; the inversion threshold is $`\phi>\gamma(0.06)/\sqrt{1-\gamma^2}\approx0.044021245`$. If both candidates have residual alignment, use their difference instead.
+At $`\phi=0.05`$, the bonus is about $`0.040313442`$, greater than the $`0.035492958`$ topical margin. In this matched toy the distractor wins by $`0.004820484`$; the inversion threshold is $`\phi\gt \gamma(0.06)/\sqrt{1-\gamma^2}\approx0.044021245`$. If both candidates have residual alignment, use their difference instead.
 HyDE generates an answer-like passage, embeds it and searches with that probe. It may better match document register and vocabulary, but there is no guarantee that its topical coefficient becomes one or that all register effects disappear. A fluent wrong passage can point at the wrong topic.
 **Why it exists.** The method aligns the probe with the comparison the encoder learned. It does not merely improve query wording. It changes a question-shaped object into a document-shaped object.
 **Failure without it.** A rewrite can remain interrogative or can be instructed to use document style; its register is not fixed by definition. The chapter reports LameR comparisons favoring richer pseudo-answer generation in its tested settings, not a proof that document generation always beats rewriting or addresses every encoder mismatch.
@@ -600,7 +600,7 @@ flowchart TB
   U --> K["fixed top-k: compare relevant entrants with relevant evictees"]
   K --> X["reranking and finite context need their own evaluation"]
 ```
-Figure $`24.2`$: For $`n_D>0`$ and $`\Delta>0`$, append-only pool precision holds iff $`\rho\ge P`$. At a fixed filled cutoff, the exact test is $`g\ge\ell`$, not an incoming-rate threshold copied from the old list average. In the constant-four example, list precisions are $`4.64\%`$ at fifty and $`24.8\%`$ at five. They are not automatically the relevance rates of documents evicted by expansion. Filters and dense displacement do not satisfy the sparse superset proof.
+Figure $`24.2`$: For $`n_D\gt 0`$ and $`\Delta\gt 0`$, append-only pool precision holds iff $`\rho\ge P`$. At a fixed filled cutoff, the exact test is $`g\ge\ell`$, not an incoming-rate threshold copied from the old list average. In the constant-four example, list precisions are $`4.64\%`$ at fifty and $`24.8\%`$ at five. They are not automatically the relevance rates of documents evicted by expansion. Filters and dense displacement do not satisfy the sparse superset proof.
 ### Figure 24.3
 ```mermaid
 flowchart LR

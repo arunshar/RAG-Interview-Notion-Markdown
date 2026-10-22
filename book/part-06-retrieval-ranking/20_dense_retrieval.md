@@ -91,7 +91,7 @@ In a multilingual hub, a vector may also carry a language direction. Under an ex
 | first-in, first-out (FIFO) queue | A buffer that removes the oldest key when adding a new one | It reuses negative vectors across steps |
 | query encoder $`E_{\theta}`$ | The branch trained by SGD with activations retained | It produces the current query representation |
 | key encoder $`E_{\theta_k}`$ | A forward-only branch whose parameters follow the query encoder by EMA | Comparability of its historical keys depends on measured embedding drift, not momentum alone |
-| exponential moving average (EMA) | Update $`\theta_k\leftarrow m\theta_k+(1-m)\theta`$ with $`0\le m<1`$ | The heuristic weight window is $`1/(1-m)`$; mean age is $`m/(1-m)`$ |
+| exponential moving average (EMA) | Update $`\theta_k\leftarrow m\theta_k+(1-m)\theta`$ with $`0\le m\lt 1`$ | The heuristic weight window is $`1/(1-m)`$; mean age is $`m/(1-m)`$ |
 | momentum $`m`$ | Weight on the previous key-encoder parameters | It changes the EMA weight distribution, not a mathematically determined maximum useful queue |
 | queue span $`\frac{K}{B}`$ | Approximate FIFO turnover span in optimizer steps | Comparing it with an EMA weight window is a drift heuristic, not a necessary or sufficient stability theorem |
 | `no_grad` | Forward computation without an autograd graph | It reduces retained activations while changing which paths receive gradients |
@@ -142,10 +142,10 @@ In a multilingual hub, a vector may also carry a language direction. Under an ex
 ### Mathematical conventions
 Let $`N`$ be corpus passage count, $`P`$ parameters per encoder, $`d`$ vector width, and $`L_q,L_p`$ tokenized input lengths. Separate towers may share weights or have $`2P`$ total parameters. The proxies $`W_{\mathrm{forward}}\approx2PT`$ and $`W_{\mathrm{train}}\approx6PT`$ for $`T`$ processed tokens omit architecture- and sequence-length-dependent work. A multiply-accumulate counts as two FLOPs. Dividing by stipulated throughput $`R`$ or bandwidth $`\mathcal B`$ gives conditional work proxies, not measured latency, throughput, invoices or a $`p_{95}`$ guarantee. Corpus encoding, index construction, graph links, text, identifiers, replicas and runtime buffers are different costs.
 Use decimal units: $`1\,\mathrm{MB}=10^6\,\mathrm B`$, $`1\,\mathrm{GB}=10^9\,\mathrm B`$, $`1\,\mathrm{TB}=10^{12}\,\mathrm B`$. fp32 is $`4\,\mathrm B`$ and fp16 $`2\,\mathrm B`$ per value. Retain full precision until reporting; $`\approx`$ marks rounding or a model approximation. Logarithms are natural, in nats, unless explicitly $`\log_2`$ for bits. Logits are dimensionless; a raw dot-product gap is not information measured in nats merely because it appears in an exponential.
-For gold passage set $`G_q`$ and returned set $`S_{q,k}`$, $`\mathop{\mathrm{Recall}}\nolimits@k=\lvert G_q\cap S_{q,k}\rvert/\lvert G_q\rvert`$ when $`\lvert G_q\rvert>0`$. Answer-hit accuracy instead averages $`\mathbf1[G_q\cap S_{q,k}\ne\varnothing]`$ over questions, using the declared answer-matching rule. DPR's cited top-$`k`$ accuracy is this question-level measure, not automatically passage recall. ANN neighbor recall compares approximate results with exact top neighbors and is a third metric. A reranker cannot return an excluded item; its gain-dependent NDCG ceiling is not numerically its input's recall.
-For the contrastive loss, let $`M`$ be the number of eligible negatives, $`\Delta_j=s^+-s_j^-`$ the score margin, and $`Z=1+\sum_j e^{-\Delta_j}`$. If a temperature is used, margins in this expression are divided by $`\tau>0`$ and derivatives gain $`1/\tau`$. Positive score-softmax weights do not by themselves specify parameter-gradient norms. Importance-sampling arguments below condition on a fixed full objective and its normalizer; sampled-softmax or truncated mining generally changes that objective.
+For gold passage set $`G_q`$ and returned set $`S_{q,k}`$, $`\mathop{\mathrm{Recall}}\nolimits@k=\lvert G_q\cap S_{q,k}\rvert/\lvert G_q\rvert`$ when $`\lvert G_q\rvert\gt 0`$. Answer-hit accuracy instead averages $`\mathbf1[G_q\cap S_{q,k}\ne\varnothing]`$ over questions, using the declared answer-matching rule. DPR's cited top-$`k`$ accuracy is this question-level measure, not automatically passage recall. ANN neighbor recall compares approximate results with exact top neighbors and is a third metric. A reranker cannot return an excluded item; its gain-dependent NDCG ceiling is not numerically its input's recall.
+For the contrastive loss, let $`M`$ be the number of eligible negatives, $`\Delta_j=s^+-s_j^-`$ the score margin, and $`Z=1+\sum_j e^{-\Delta_j}`$. If a temperature is used, margins in this expression are divided by $`\tau\gt 0`$ and derivatives gain $`1/\tau`$. Positive score-softmax weights do not by themselves specify parameter-gradient norms. Importance-sampling arguments below condition on a fixed full objective and its normalizer; sampled-softmax or truncated mining generally changes that objective.
 For in-batch reuse, $`B`$ counts query-positive examples; a two-passage-per-example pool has $`2B-1`$ eligible negatives per query only before duplicate and false-negative masking. For MoCo, $`K`$ counts queued negatives, so there are $`K+1`$ logits. The queue-turnover/EMA comparison is a design heuristic, not a hard stability theorem. Match sequence lengths, trainable branches and processed anchors when comparing costs.
-The language-centroid toy model assumes unit centroid directions, orthogonal unit semantic residuals, a common amplitude $`0\le\alpha<1`$, and zero within-language residual mean. Language identity occupies squared norm share $`\alpha^2`$, not $`\alpha`$. Empirical means, topic mixtures, language distributions and optional renormalization can violate this toy geometry; centering needs validation rather than an unconditional production prescription. Reported benchmarks, prices, hardware rates and historical claims are not independently verified here.
+The language-centroid toy model assumes unit centroid directions, orthogonal unit semantic residuals, a common amplitude $`0\le\alpha\lt 1`$, and zero within-language residual mean. Language identity occupies squared norm share $`\alpha^2`$, not $`\alpha`$. Empirical means, topic mixtures, language distributions and optional renormalization can violate this toy geometry; centering needs validation rather than an unconditional production prescription. Reported benchmarks, prices, hardware rates and historical claims are not independently verified here.
 ### 20.1 Bi-encoders, DPR, and the efficiency-expressiveness trade
 #### Joint scoring versus independent scoring
 **What:**
@@ -323,7 +323,7 @@ A negative's unnormalized score weight is $`e^{-\Delta_j}`$. Its parameter-compo
 For margins eight and one, unnormalized weights are $`e^{-8}\approx0.000335462628`$ and $`e^{-1}\approx0.367879441`$. Their ratio is $`e^7\approx1{,}096.633158`$. Rounding it to $`1{,}097`$ is reasonable, but it is not an unconditional ratio of parameter-gradient norms or empirical learning efficiency.
 **Failure without hard negatives:** A near-zero loss can report an easy task rather than a good retriever.
 #### Variance-optimal sampling
-Condition on parameters and a fixed complete negative pool, so $`g=\nabla f(\theta)=\sum_jg_j`$ is the exact gradient of that objective. Draw one index $`J`$ with probabilities $`p_j\ge0`$, $`\sum_jp_j=1`$, requiring $`p_j>0`$ whenever $`g_j\ne0`$. The importance estimator $`\widehat g=g_J/p_J`$ is unbiased. For an $`L_f`$-smooth objective and step $`\theta^\prime=\theta-\eta\widehat g`$, the conditional descent bound is:
+Condition on parameters and a fixed complete negative pool, so $`g=\nabla f(\theta)=\sum_jg_j`$ is the exact gradient of that objective. Draw one index $`J`$ with probabilities $`p_j\ge0`$, $`\sum_jp_j=1`$, requiring $`p_j\gt 0`$ whenever $`g_j\ne0`$. The importance estimator $`\widehat g=g_J/p_J`$ is unbiased. For an $`L_f`$-smooth objective and step $`\theta^\prime=\theta-\eta\widehat g`$, the conditional descent bound is:
 
 ```math
 \mathbb E[f(\theta^\prime)\mid\theta]\le f(\theta)-\eta\lVert g\rVert_2^2+\frac{L_f\eta^2}{2}\mathbb E[\lVert\widehat g\rVert_2^2\mid\theta].
@@ -401,13 +401,13 @@ Retaining $`65{,}536`$ passage activation graphs by this accounting uses $`3{,}4
 **Trade-off:** Queued keys carry no retained encoder graph, so gradients do not flow through the historical key computations. MoCo also uses momentum-encoder keys rather than recomputing every negative with the current query encoder. This changes the gradient and temporal objective relative to a fully differentiable fresh large batch.
 Easy negatives can individually receive small softmax weights, but many such terms can have substantial aggregate mass. Their parameter contributions also depend on Jacobians and direction. Stopping their gradients is an algorithmic choice justified by measured training behavior, not a proof that the discarded gradient is negligible.
 #### MoCo timescales: a drift heuristic, not a stability theorem
-MoCo enqueues new key vectors and evicts older ones in FIFO order. For momentum $`0\le m<1`$, the key encoder follows the query encoder by an exponential moving average:
+MoCo enqueues new key vectors and evicts older ones in FIFO order. For momentum $`0\le m\lt 1`$, the key encoder follows the query encoder by an exponential moving average:
 
 ```math
 \theta_k\leftarrow m\theta_k+(1-m)\theta.
 ```
 
-With $`B`$ new keys per step, queue turnover spans roughly $`K/B`$ steps, with an indexing-dependent one-batch difference in the oldest age. The EMA weight window $`1/(1-m)`$ is a useful heuristic. Its steady-state mean weight age is $`m/(1-m)`$ steps; for $`0<m<1`$, its exponential-decay timescale is $`-1/\ln m`$. A common design comparison is:
+With $`B`$ new keys per step, queue turnover spans roughly $`K/B`$ steps, with an indexing-dependent one-batch difference in the oldest age. The EMA weight window $`1/(1-m)`$ is a useful heuristic. Its steady-state mean weight age is $`m/(1-m)`$ steps; for $`0\lt m\lt 1`$, its exponential-decay timescale is $`-1/\ln m`$. A common design comparison is:
 
 ```math
 \frac{K}{B}\lesssim\frac{1}{1-m}\qquad\text{(heuristic only)}.
@@ -417,7 +417,7 @@ With $`B`$ new keys per step, queue turnover spans roughly $`K/B`$ steps, with a
 The timescale comparison is neither necessary nor sufficient for convergence. With constant encoder parameters, even $`m=0`$ and a long queue have no representation staleness. Conversely, a numerically long momentum window does not guarantee compatible embeddings during a rapidly changing trajectory.
 **Reported failure:** He et al. report failure to converge at $`m=0`$ in their experiment. That observation supports testing momentum and drift in comparable training conditions; it does not establish a universal impossibility theorem for zero momentum.
 #### Temperature and a bounded-cosine loss floor
-For unit-norm vectors with cosine logits divided by $`\tau>0`$, a positive-minus-negative cosine margin is at most two. With $`K`$ negatives, the per-example loss therefore obeys:
+For unit-norm vectors with cosine logits divided by $`\tau\gt 0`$, a positive-minus-negative cosine margin is at most two. With $`K`$ negatives, the per-example loss therefore obeys:
 
 ```math
 \mathcal L_{\mathrm{NCE}}\ge\ln\left(1+Ke^{-2/\tau}\right).
@@ -459,7 +459,7 @@ Keep a lexical route for native-language exact matches and language-independent 
 The following is a toy unit-norm embedding decomposition, not a claim that a real multilingual encoder has a separable language subspace. For text $`t`$ in language $`l`$:
 
 ```math
-e(t)=\alpha\mu_l+\sqrt{1-\alpha^2}\,r(t),\qquad0\le\alpha<1.
+e(t)=\alpha\mu_l+\sqrt{1-\alpha^2}\,r(t),\qquad0\le\alpha\lt 1.
 ```
 
 Assume unit language directions $`\mu_l`$, unit semantic residuals $`r(t)`$ orthogonal to every language direction, a common amplitude $`\alpha`$, and $`\mathbb E[r(t)\mid l]=0`$. Then $`\mathbb E[e(t)\mid l]=\alpha\mu_l`$, not $`\mu_l`$. The language component has norm $`\alpha`$ and squared norm share $`\alpha^2`$. For query language $`a`$ and document language $`b`$:
@@ -468,19 +468,19 @@ Assume unit language directions $`\mu_l`$, unit semantic residuals $`r(t)`$ orth
 e(q)^{\mathsf T}e(d)=\alpha^2\mu_a^{\mathsf T}\mu_b+(1-\alpha^2)s,\qquad s=r(q)^{\mathsf T}r(d).
 ```
 
-For a cross-language positive, let centroid-direction cosine $`c=\mu_a^{\mathsf T}\mu_b\in[-1,1]`$, semantic score $`s^+`$, and a same-query-language distractor have semantic score $`s^-`$. If $`\Delta s=s^+-s^->0`$, the positive outranks that distractor exactly when:
+For a cross-language positive, let centroid-direction cosine $`c=\mu_a^{\mathsf T}\mu_b\in[-1,1]`$, semantic score $`s^+`$, and a same-query-language distractor have semantic score $`s^-`$. If $`\Delta s=s^+-s^-\gt 0`$, the positive outranks that distractor exactly when:
 
 ```math
-(1-\alpha^2)\Delta s>\alpha^2(1-c).
+(1-\alpha^2)\Delta s\gt \alpha^2(1-c).
 ```
 
 Equivalently:
 
 ```math
-\alpha^2<\frac{\Delta s}{\Delta s+1-c}.
+\alpha^2\lt \frac{\Delta s}{\Delta s+1-c}.
 ```
 
-For $`s^+=0.9`$, $`s^-=0.1`$ and $`c=0.5`$, the exact squared-amplitude threshold is $`0.8/1.3\approx0.615384615`$, so $`\alpha<\sqrt{0.8/1.3}\approx0.784464541`$. At $`\alpha=0.9`$, these specified examples score $`0.81(0.5)+0.19(0.9)=0.576`$ for the cross-language answer and $`0.81+0.19(0.1)=0.829`$ for the same-language distractor. They are the given scores, not global best/worst bounds. For $`c=0`$, the amplitude threshold is exactly $`2/3\approx0.666666667`$, not an exact cutoff of $`0.67`$.
+For $`s^+=0.9`$, $`s^-=0.1`$ and $`c=0.5`$, the exact squared-amplitude threshold is $`0.8/1.3\approx0.615384615`$, so $`\alpha\lt \sqrt{0.8/1.3}\approx0.784464541`$. At $`\alpha=0.9`$, these specified examples score $`0.81(0.5)+0.19(0.9)=0.576`$ for the cross-language answer and $`0.81+0.19(0.1)=0.829`$ for the same-language distractor. They are the given scores, not global best/worst bounds. For $`c=0`$, the amplitude threshold is exactly $`2/3\approx0.666666667`$, not an exact cutoff of $`0.67`$.
 **Model-specific failure:** At $`\alpha=0.9,c=0.5`$, even a cross-language residual score of one gives at most $`0.81(0.5)+0.19=0.595`$, while a same-language residual score of minus one gives at least $`0.81-0.19=0.620`$. Thus no residual semantic gap can overcome language in this particular toy case. More generally $`\Delta s\le2`$; this is not a universal diagnosis of multilingual encoders or proof that centering fixes them.
 #### Mean-centering and sampling fixes
 Under the assumptions, the true language mean is $`\bar e_l=\alpha\mu_l`$. Its norm identifies $`\alpha`$ and, when means are nonzero, their cosine identifies $`c`$. A thousand documents per language is a source sampling heuristic, not a precision guarantee; topic mixtures, domain imbalance, sample error and drift can confound the estimates. If $`\alpha=0`$, means vanish and their cosine is undefined even though there is no language component.
@@ -539,7 +539,7 @@ flowchart TD
 
 
 ```math
-\frac{d}{dn}\ln\frac{N+1}{n+0.5}=-\frac{1}{n+0.5}<0,\qquad\frac{d}{dn}\left(\frac{Tn}{N}\right)=\frac{T}{N}>0.
+\frac{d}{dn}\ln\frac{N+1}{n+0.5}=-\frac{1}{n+0.5}\lt 0,\qquad\frac{d}{dn}\left(\frac{Tn}{N}\right)=\frac{T}{N}\gt 0.
 ```
 
 > Figure $`20.2`$: Use $`N=21{,}015{,}324`$ and $`T=58{,}880`$ uniform IID training-passage draws. Guarded IDF decreases with document frequency and expected sightings increase. Treating integer frequency as continuous gives the displayed derivatives. IDF and counts have different units: their numerical intersection near $`n\approx3{,}143.55`$ is not a dense/sparse performance boundary. These toy trends do not prove either model dominates any frequency interval, or that their error sets barely overlap.
@@ -692,7 +692,7 @@ The toy embedding uses language amplitude $`\alpha`$, squared norm share $`\alph
 | frequent BM25 term | $`n(t)=10^5`$; guarded IDF $`\approx5.347832026`$ | Same corpus and IDF variant as the rare term |
 | IDF ratio | $`\approx2.918565775`$ times | Rare/frequent guarded IDF ratio, not a retrieval-success ratio |
 | supervised set | $`5.888 \times  10^{4}`$ pairs | Filtered Natural Questions training set |
-| rare expected exposure | $`\mathbb E[C_t]\approx0.008405295`$; $`\Pr(C_t>0)\approx0.008370070`$ | Under uniform IID passage draws; seen probability corresponds to roughly one in $`119.47`$, not exactly the expected count |
+| rare expected exposure | $`\mathbb E[C_t]\approx0.008405295`$; $`\Pr(C_t\gt 0)\approx0.008370070`$ | Under uniform IID passage draws; seen probability corresponds to roughly one in $`119.47`$, not exactly the expected count |
 | frequent exposure | $`\mathbb E[C_t]\approx280.176504`$ | Toy expected sightings at document frequency one hundred thousand, not actual supervised term exposure |
 | no proved frequency crossover | $`n\approx3{,}143.55`$ is only a numerical intersection | IDF and expected-count units differ; no exact dense/BM25 performance boundary follows |
 | BEIR | $`18`$ datasets in the cited description | Reported transfer-benchmark scope; evaluate model, task and metric rather than infer a universal dense deficit |
@@ -785,8 +785,8 @@ The toy embedding uses language amplitude $`\alpha`$, squared norm share $`\alph
 | language skew | $`80\%`$ English in a toy negative pool | Language shortcut depends on the positive/query languages and labels, not this proportion alone |
 | semantic scores | $`s^+=0.9`$, $`s^-=0.1`$ | Specified semantic residual scores; not global extrema |
 | centroid cosine | $`c = 0.5`$ | Main geometric example |
-| centroid threshold | $`\alpha<\sqrt{0.8/1.3}\approx0.784464541`$ | Strict amplitude threshold for this gap and centroid cosine, squared share below $`0.615384615`$ |
-| stronger separation | $`\alpha<2/3\approx0.666666667`$ at $`c=0`$ | Exact amplitude threshold for the same $`0.8`$ residual gap |
+| centroid threshold | $`\alpha\lt \sqrt{0.8/1.3}\approx0.784464541`$ | Strict amplitude threshold for this gap and centroid cosine, squared share below $`0.615384615`$ |
+| stronger separation | $`\alpha\lt 2/3\approx0.666666667`$ at $`c=0`$ | Exact amplitude threshold for the same $`0.8`$ residual gap |
 | biased centroid | $`\alpha=0.9`$ and squared norm share $`\alpha^2=0.81`$ | Do not confuse amplitude with a 90-percent squared-norm allocation |
 | wrong distractor | $`0.829`$ | Specified same-language distractor score, not global worst score |
 | right answer | $`0.576`$ | Specified cross-language positive score, not global best score |

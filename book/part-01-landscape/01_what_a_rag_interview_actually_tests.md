@@ -344,14 +344,14 @@ y = \mathop{\text{GEN}}_{\theta}(x, o_1, \ldots, o_m)
 A simple single-retriever RAG pipeline is the special case $`\lvert T\rvert=1`$, with $`\mathop{\mathrm{RET}}\nolimits`$ as its sole tool. This is a modeling example, not a definition restricting all RAG systems to one tool: hybrid search, multiple retrievers and agents can still perform retrieval-augmented generation. The retrieval argument is the query or a reformulation; its evidence return contains passages and source identifiers. The relevant boundary here is that evidence contract, not the number of tools or the index technology.
 BM25 over web pages can satisfy the RAG contract. A search endpoint that returns only a synthesized answer string does not preserve it.
 #### What general tool use adds
-Tool selection turns a fixed retrieval pipeline into a policy. When $`\lvert T\rvert > 1`$, a classifier, router, or learned policy must choose $`t_i`$. The source names Toolformer as a self-supervised tool-selection approach. It names ReAct as an approach that interleaves reasoning and actions in the trace. It also notes that retrieval research can cast answer-versus-search as a reinforcement-learning policy.
+Tool selection turns a fixed retrieval pipeline into a policy. When $`\lvert T\rvert \gt  1`$, a classifier, router, or learned policy must choose $`t_i`$. The source names Toolformer as a self-supervised tool-selection approach. It names ReAct as an approach that interleaves reasoning and actions in the trace. It also notes that retrieval research can cast answer-versus-search as a reinforcement-learning policy.
 Argument synthesis produces a query or payload before the call runs. A weak retrieval query usually degrades into poor ranking. A malformed SQL or JSON argument can fail to parse. A syntactically valid argument with the wrong date range can return a plausible but wrong number. Effects remove cheap retries.
 Calling read-only retrieval twice adds latency but no second state change. Calling a ticket-creation tool twice can create a duplicate action.
 #### Why retrieval has a distinct contract
 The generator already knows how to read text in context, so passages require no new model capability. An answer span can be traced to a retrieved chunk and then to a source document. A human can audit the answer against those passages without trusting the model’s hidden computation. A calculator that returns 42 has a different contract. Its warrant is the calculator’s correctness, not a cited document.
 RAG returns evidence that can be cited. Other tools often return values that must be trusted. The evidence-returning, state-mutating quadrant is nearly empty. A retrieval call that logs a query or decrements a quota remains citable but is no longer free to retry. That distinction matters when a low-confidence loop re-queries.
 #### Why indexing everything fails
-A relevance index returns a few passages; an aggregate or exhaustive list can depend on every matching record. If the answer needs $`M>0`$ distinct records and retrieval returns $`k`$ records, evidence coverage is bounded above by $`\min(k,M)/M`$, and by $`k/M`$ when $`M>k`$. Equality requires every returned record to be relevant and distinct. A strong relevance ranker does not thereby certify completeness. The source calls such corpus-wide demands global or sensemaking queries.
+A relevance index returns a few passages; an aggregate or exhaustive list can depend on every matching record. If the answer needs $`M\gt 0`$ distinct records and retrieval returns $`k`$ records, evidence coverage is bounded above by $`\min(k,M)/M`$, and by $`k/M`$ when $`M\gt k`$. Equality requires every returned record to be relevant and distinct. A strong relevance ranker does not thereby certify completeness. The source calls such corpus-wide demands global or sensemaking queries.
 #### Worked example: route 1,000 production queries
 The traffic mix has $`620`$ lookups, $`180`$ aggregates, $`120`$ actions and $`80`$ closed-book queries. In this scenario, assume a retrieval-only product succeeds on every lookup and closed-book query, fails on these aggregates, and has no action execution path. Its resulting upper bound is $`(620+80)/1{,}000=70\%`$. This is a conditional workload ceiling, not a universal ceiling for RAG; a product with complete aggregation or action tools changes the assumptions.
 The aggregate example has $`3{,}200`$ Europe, Middle East, and Africa invoices, one per chunk. Even with all twenty returned invoices relevant and distinct, coverage is at most $`20/3{,}200=0.625\%`$. A sum over $`0.625\%`$ of the addends is wrong unless the omitted $`3{,}180`$ invoices cancel to zero. A routed design keeps the 620 lookups on retrieval. It sends the 180 aggregates to a text-to-SQL tool that scans all $`3{,}200`$ rows.
@@ -390,24 +390,24 @@ r(s) = p(s) + (1 - p(s))g - p(s)h
 \Delta(s) = r(s) - p(s) = (1 - p(s))g - p(s)h
 ```
 
-Retrieval helps when the rescue term exceeds the harm term. The odds form below assumes $`h>0`$ and $`p(s)<1`$. The threshold form assumes $`g+h>0`$. If $`g=h=0`$, both policies tie everywhere; if $`h=0<g`$, retrieval cannot hurt in this model.
+Retrieval helps when the rescue term exceeds the harm term. The odds form below assumes $`h\gt 0`$ and $`p(s)\lt 1`$. The threshold form assumes $`g+h\gt 0`$. If $`g=h=0`$, both policies tie everywhere; if $`h=0\lt g`$, retrieval cannot hurt in this model.
 
 ```math
-\frac{p(s)}{1 - p(s)} < \frac{g}{h}
+\frac{p(s)}{1 - p(s)} \lt  \frac{g}{h}
 ```
 
 The equivalent accuracy threshold is below.
 
 ```math
-p(s) < p^{\star} = \frac{g}{g + h}
+p(s) \lt  p^{\star} = \frac{g}{g + h}
 ```
 
 If $`g`$ and $`h`$ are constant across popularity and $`p(s)`$ is strictly increasing, the curves have at most one crossover; an actual crossing also requires the observed accuracy range to straddle $`p^\star`$. Flat segments can produce ties, and popularity-dependent $`g(s)`$ or $`h(s)`$ can create multiple crossings. The crossover is $`s^\star`$, where $`p(s^\star) = p^\star`$. Retrieval helps below $`s^\star`$ and harms above it. The threshold $`p^\star`$ is a property of the retriever and reader through $`g / h`$, not a property of one question. A small harm rate can dominate in the popular head.
 There, $`1 - p`$ is near zero and suppresses rescue, while $`p`$ is near one and preserves harm.
 #### What creates the harm rate
 On the slice where retrieval flips a correct answer, recall at 1 is significantly lower than overall recall. The first-ranked document is often topically related but does not contain the answer. A grounding prompt tells the reader to trust that supplied passage. The strongest distractor in the corpus can then override correct parametric knowledge. The harm rate is approximately rank-1 imprecision filtered through how strongly the prompt orders context use.
-Always-retrieve wins on average when $`\mathbb E[(1-p)g]-\mathbb E[ph]>0`$. It still pays the loss on the popular head, which can carry most traffic and executive scrutiny. Never-retrieve fails on the rare tail. The source again cites the $`10^{18}`$ parameter extrapolation as the infeasible scale-only alternative. Popularity is not difficulty.
-For $`g+h>0`$ and $`h>0`$, the threshold satisfies $`p^\star<1`$. A harmful region is possible near perfect closed-book accuracy, but it need not occur in a finite workload whose observed $`p(s)`$ stays below the threshold. Changing the generator, retriever or prompt can change $`p,g,h`$ together; the direction of a real crossover shift must be measured rather than inferred from only one changed quantity.
+Always-retrieve wins on average when $`\mathbb E[(1-p)g]-\mathbb E[ph]\gt 0`$. It still pays the loss on the popular head, which can carry most traffic and executive scrutiny. Never-retrieve fails on the rare tail. The source again cites the $`10^{18}`$ parameter extrapolation as the infeasible scale-only alternative. Popularity is not difficulty.
+For $`g+h\gt 0`$ and $`h\gt 0`$, the threshold satisfies $`p^\star\lt 1`$. A harmful region is possible near perfect closed-book accuracy, but it need not occur in a finite workload whose observed $`p(s)`$ stays below the threshold. Changing the generator, retriever or prompt can change $`p,g,h`$ together; the direction of a real crossover shift must be measured rather than inferred from only one changed quantity.
 A popular subject can still require fresh, ambiguous, or multi-step evidence. An obscure question can become easy once its one good page is present. The gate must estimate where the answer already lives, not whether the wording looks easy.
 #### Worked example: 100,000 daily queries
 The head has at least $`10^{5}`$ monthly page views and carries $`55\%`$ of queries. The torso spans $`10^{3}`$ to $`10^{5}`$ views and carries $`30\%`$. The tail is below $`10^{3}`$ views and carries $`15\%`$. Closed-book accuracies are $`0.90`$ for head, $`0.55`$ for torso, and $`0.20`$ for tail. The assumed rescue rate is $`g = 0.55`$.
@@ -610,7 +610,7 @@ No. Citation coverage only proves that a marker exists, so measure sentence-to-
 | Popularity traffic | $`100{,}000`$ queries per day. Head is at least $`10^{5}`$ views and $`55\%`$ of traffic. Torso is $`10^{3}`$ to $`10^{5}`$ and $`30\%`$. Tail is below $`10^{3}`$ and $`15\%`$. |
 | Closed-book bucket accuracy | Head $`0.90`$, torso $`0.55`$, tail $`0.20`$, and weighted total 0.690. |
 | Rescue and harm | $`g=0.55`$ assumed; joint flip probability $`0.10`$ assumed; $`h\approx0.144928`$ and $`p^\star\approx0.791449`$. Conditional and joint flip rates are not interchangeable. |
-| Crossover count and limit | At most one crossover only with fixed $`g,h`$, strictly increasing $`p(s)`$ and a range straddling $`p^\star`$. With $`g+h>0`$ and $`h>0`$, $`p^\star<1`$. |
+| Crossover count and limit | At most one crossover only with fixed $`g,h`$, strictly increasing $`p(s)`$ and a range straddling $`p^\star`$. With $`g+h\gt 0`$ and $`h\gt 0`$, $`p^\star\lt 1`$. |
 | Figure $`1.5`$ axes | Accuracy marks are 0, $`0.5`$, and 1.0. Popularity runs from $`10^{1}`$ through $`10^{6}`$ monthly page views on a log scale. |
 | Rescue-harm weighting | In the popular head, a harm rate of a few percent can outweigh a rescue rate of about $`50\%`$ because rescue is multiplied by $`1 - p`$ and harm by $`p`$. |
 | Retrieved bucket accuracy | Head $`0.824565`$, torso $`0.717790`$, tail $`0.611014`$, rounded only after using the full-precision harm rate. |

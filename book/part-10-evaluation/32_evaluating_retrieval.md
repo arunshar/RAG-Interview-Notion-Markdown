@@ -111,7 +111,7 @@ The evaluation is one pipeline with separate responsibilities: candidate coverag
 ## Core mechanics
 ### Mathematical conventions
 Use one declared evaluation unit: a document, passage or deduplicated evidence group. For query $`q`$, let $`U_q`$ be the evaluation universe, $`R_q\subseteq U_q`$ the binary relevant set, and $`(d_{q,1},\ldots,d_{q,k})`$ a ranked prefix of exactly $`k`$ distinct units. Let $`S_{q,k}`$ be its set and $`h_q(k)=|S_{q,k}\cap R_q|`$. In the basic formulas $`1\le k\le|U_q|`$; shorter lists require a declared denominator/padding policy. Duplicates must not earn repeated gain merely by occupying more ranks.
-Recall requires $`|R_q|>0`$. When no relevant unit is known, distinguish truly unanswerable queries from incomplete judgments; declare an exclusion/zero convention and report their count. For nDCG, fix the grade-to-gain function, logarithmic discount, judgment universe and zero-IDCG policy. For MRR, fix a binary threshold and cutoff. Treat unjudged units as unknown, not proven irrelevant.
+Recall requires $`|R_q|\gt 0`$. When no relevant unit is known, distinguish truly unanswerable queries from incomplete judgments; declare an exclusion/zero convention and report their count. For nDCG, fix the grade-to-gain function, logarithmic discount, judgment universe and zero-IDCG policy. For MRR, fix a binary threshold and cutoff. Treat unjudged units as unknown, not proven irrelevant.
 Averages below give equal weight to each eligible query, not each document pair. Query-weighted and pooled-count metrics differ. Compare systems on the same queries, relevance protocol and source versions; use paired query-level uncertainty analysis when queries are the independent sampling units. Ten thousand pair labels from five hundred queries are not ten thousand independent query outcomes.
 Keep full precision through all calculations and round only the reported result. Judge agreement, probability calibration, relevance, claim support and answer truth are distinct. Human labels have uncertainty too. Historical results and hand-constructed confusion matrices do not prove a prompted-model ceiling or an exemplar strategy’s causal effect. Cost examples exclude unspecified overhead and require their stated price, token and scheduling assumptions.
 ### 32.1 Set metrics vs rank metrics
@@ -124,7 +124,7 @@ P_q(k)=\mathrm{Precision}_q@k=\frac{h_q(k)}{k}.
 
 
 ```math
-r_q(k)=\mathrm{Recall}_q@k=\frac{h_q(k)}{|R_q|},\qquad |R_q|>0.
+r_q(k)=\mathrm{Recall}_q@k=\frac{h_q(k)}{|R_q|},\qquad |R_q|\gt 0.
 ```
 
 
@@ -132,7 +132,7 @@ r_q(k)=\mathrm{Recall}_q@k=\frac{h_q(k)}{|R_q|},\qquad |R_q|>0.
 F_{1,q}@k=\frac{2P_q(k)r_q(k)}{P_q(k)+r_q(k)}=\frac{2h_q(k)}{k+|R_q|}.
 ```
 
-For a no-hit prefix with $`k>0`$ and $`|R_q|>0`$, set $`F_{1,q}@k=0`$ using the count form; the literal harmonic-mean expression is $`0/0`$. Recall is undefined when $`|R_q|=0`$ unless an explicit reporting convention is imposed. A truly empty prediction list also has undefined ordinary precision; that is not the same situation as a nonempty prefix with zero hits. With fewer than $`k`$ results, fixed-$`k`$ precision pads missing positions as nonrelevant, whereas returned-list precision divides by the actual returned count. Name the convention.
+For a no-hit prefix with $`k\gt 0`$ and $`|R_q|\gt 0`$, set $`F_{1,q}@k=0`$ using the count form; the literal harmonic-mean expression is $`0/0`$. Recall is undefined when $`|R_q|=0`$ unless an explicit reporting convention is imposed. A truly empty prediction list also has undefined ordinary precision; that is not the same situation as a nonempty prefix with zero hits. With fewer than $`k`$ results, fixed-$`k`$ precision pads missing positions as nonrelevant, whereas returned-list precision divides by the actual returned count. Name the convention.
 Query averaging also matters. One query with one of one relevant item recovered and another with zero of one hundred gives mean query recall $`0.5`$, but pooled-count recall $`1/101\approx0.009901`$. Do not change the weighting silently.
 Plain accuracy is:
 
@@ -199,13 +199,13 @@ Once prefix labels, relevant-set size and IDCG are available, hit counts, first 
 For each query, let $`\rho_q`$ be the first rank whose grade meets the declared binary threshold, and let $`\rho_q=\infty`$ when there is no such unit. The recall function remains $`r_q(k)`$. The cutoff version is:
 
 ```math
-\mathrm{RR}_q@k=\begin{cases}1/\rho_q,&\rho_q\le k,\\0,&\rho_q>k.\end{cases}
+\mathrm{RR}_q@k=\begin{cases}1/\rho_q,&\rho_q\le k,\\0,&\rho_q\gt k.\end{cases}
 ```
 
 For a nonempty eligible query set $`Q`$, MRR@k averages one term per query, including zero-hit queries:
 
 ```math
-\mathrm{MRR}@k=\frac1{|Q|}\sum_{q\in Q}\mathrm{RR}_q@k,\qquad |Q|>0.
+\mathrm{MRR}@k=\frac1{|Q|}\sum_{q\in Q}\mathrm{RR}_q@k,\qquad |Q|\gt 0.
 ```
 
 MRR stops scoring after the first qualifying document. It ignores later hits and distinctions among grades that meet the same threshold. It also gives no credit for a hit below its cutoff. Do not average only over successful queries; that changes the metric.
@@ -240,7 +240,7 @@ Let $`\mathrm{rel}^{\star}_{q,1},\ldots`$ be grades sorted in descending order o
 If there are fewer than $`k`$ units, pad the ideal list with zero gains under the declared policy. Incomplete qrels supply an ideal over known judgments, not a certified corpus-wide optimum. Dividing by each system’s own candidate-only ideal can hide retrieval failures and make comparisons inconsistent.
 
 ```math
-\mathrm{nDCG}_q@k=\frac{\mathrm{DCG}_q@k}{\mathrm{IDCG}_q@k},\qquad \mathrm{IDCG}_q@k>0.
+\mathrm{nDCG}_q@k=\frac{\mathrm{DCG}_q@k}{\mathrm{IDCG}_q@k},\qquad \mathrm{IDCG}_q@k\gt 0.
 ```
 
 With nonnegative gains, the same discount and an ideal covering all evaluated units, the score lies in $`[0,1]`$. A value of one means optimal gain through this cutoff, possibly under many tied orders; it says nothing about later ranks or full recall. When IDCG is zero, the ratio is undefined. Choose and report a zero/exclusion convention and the affected query count, rather than silently dropping failures or asserting every query is normalizable.

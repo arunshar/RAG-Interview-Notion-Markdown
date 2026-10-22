@@ -438,7 +438,7 @@ Realized accuracy mixes the perfectly executed design with its misfire state:
 A = e p_s + (1-e) p_d
 ```
 
-For $`p_s>p_d`$, the equality with incumbent accuracy is $`e^\star=(A_0-p_d)/(p_s-p_d)`$. A target above $`p_s`$ is infeasible, a target at or below $`p_d`$ requires no execution improvement, and $`p_s=p_d`$ has no meaningful execution crossover. An architectural label does not identify these conditional accuracies.
+For $`p_s\gt p_d`$, the equality with incumbent accuracy is $`e^\star=(A_0-p_d)/(p_s-p_d)`$. A target above $`p_s`$ is infeasible, a target at or below $`p_d`$ requires no execution improvement, and $`p_s=p_d`$ has no meaningful execution crossover. An architectural label does not identify these conditional accuracies.
 
 ```math
 e^\star = \frac{A_0-p_d}{p_s-p_d}
@@ -475,7 +475,7 @@ A thirty-call tree at $`98\%`$ execution and a perfect scorer realizes $`0.668`$
 The scenario tree uses $`30`$ calls versus $`5`$ for the fan and has three dependent generate-and-score levels. At $`q=0.98`$ and perfect pruning, its accuracy $`0.66819373`$ trails the explicitly modeled fan by $`1.1042`$ percentage points; arithmetic work is not a wall-clock latency guarantee.
 If its evaluator keeps the correct branch $`90\%`$ of the time, full execution falls to $`0.398`$.
 Realized accuracy falls to $`0.609`$, seven points below the fan.
-Under this all-$`30`$-calls-required scenario, pruning survival $`r`$ per level would need $`r^3\ge(A_{\mathrm{fan}}-0.45)/(0.40\times0.98^{30})`$, hence $`r\ge1.016592>1`$. No feasible pruning reliability can make this tree beat that fan while the other assumptions stay fixed. The earlier $`83.5\%`$ threshold was incorrect. Improve execution, design/fallback accuracy or the all-calls-required design before considering evaluator gains.
+Under this all-$`30`$-calls-required scenario, pruning survival $`r`$ per level would need $`r^3\ge(A_{\mathrm{fan}}-0.45)/(0.40\times0.98^{30})`$, hence $`r\ge1.016592\gt 1`$. No feasible pruning reliability can make this tree beat that fan while the other assumptions stay fixed. The earlier $`83.5\%`$ threshold was incorrect. Improve execution, design/fallback accuracy or the all-calls-required design before considering evaluator gains.
 Measure this on 200 labeled pruning decisions before writing orchestration.
 On Game of 24, a perfect finite search has $`p_s = 1.0`$ and the self-consistency fallback is $`0.09`$.
 Within the specified mixture with $`p_s=1`$ and $`p_d=0.09`$, the observed $`0.74`$ can be represented by $`e=(0.74-0.09)/(1-0.09)=5/7\approx0.714286`$. This is an implied mixture coefficient, not an independently measured execution rate or proof that all remaining error is execution failure.
@@ -537,7 +537,7 @@ A(k) = m + (1-m) R(k) u(k)
 $`G(k)=R(k)u(k)`$ is the probability of selecting the gold passage in this scenario, not measured grounding or faithfulness. The accuracy formula further assumes correctness whenever gold is selected and constant fallback accuracy $`m`$ in every other state, including gold present but not selected. Measuring $`m`$ only after deleting gold does not establish that second conditional accuracy.
 Recall rises with $`k`$ while utilization falls.
 Karpukhin et al. (2020) reported Dense Passage Retrieval (DPR) accuracy on Natural Questions of $`78.4\%`$ at top-20 and $`85.4\%`$ at top-100.
-The reported anchors bracket $`20\le k\le100`$. Use a log-linear scenario curve there; values at $`5\le k<20`$ are extrapolations, not interpolation or reported DPR measurements:
+The reported anchors bracket $`20\le k\le100`$. Use a log-linear scenario curve there; values at $`5\le k\lt 20`$ are extrapolations, not interpolation or reported DPR measurements:
 
 ```math
 R(k)=0.784+c\ln(k/20),\qquad c=\frac{0.854-0.784}{\ln5}\approx0.04349345.
@@ -708,7 +708,7 @@ No. A larger window removes a token-capacity limit but does not remove competit
 | Cached fan | $`4{,}610`$ tokens | $`3.9`$ times cheaper than the uncached fan |
 | Cached tree | $`30`$ calls across $`3`$ generate-then-score levels | $`8{,}235`$ token-work proxy; dependencies do not establish p95 latency |
 | Tree break-even | $`98.2\%`$ per call | $`98\%`$ yields only $`54.5\%`$ end-to-end execution |
-| Pruning | $`r_{\mathrm{required}}\approx1.016592>1`$ in the full scenario | Infeasible at $`q=0.98`$; the earlier $`83.5\%`$ threshold was wrong |
+| Pruning | $`r_{\mathrm{required}}\approx1.016592\gt 1`$ in the full scenario | Infeasible at $`q=0.98`$; the earlier $`83.5\%`$ threshold was wrong |
 | DPR anchors | $`78.4\%`$ at top-$`20`$, $`85.4\%`$ at top-$`100`$ | $`c\approx0.04349345`$; below $`20`$ is extrapolation |
 | Ranker margin | $`\mu=2.5`$ and $`\mu=3`$ give different toy stationary points | Generator-selection margin is not automatically a retriever score margin |
 | Weak margin | Accuracy $`0.370`$ at top-100 | Below closed-book $`0.42`$ and crossing near 73 passages |

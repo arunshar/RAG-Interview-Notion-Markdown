@@ -136,7 +136,7 @@ The rows sharing the first chunk with the header number:
 n_{\mathrm{complete}}=\min\!\left(R,\max\!\left(0,\left\lfloor\frac{L}{wC}\right\rfloor-1\right)\right).
 ```
 
-The fully labeled-row fraction in the first window is $`n_{\mathrm{complete}}/R`$ for $`R>0`$. At $`L=512,o=64,C=6,w=5`$, a row costs $`30`$ tokens: the header and $`16`$ full rows occupy $`510`$ tokens. Thus $`16/120\approx13.333\%`$ of rows are complete and self-described in that window; $`104`$ rows are not. The header ends at token $`30`$, the second window starts at token $`449`$, and $`64`$ overlap tokens are about $`2.133`$ row-equivalents, not a repeated header. A few cells of row $`17`$ can still appear beside labels; “orphan” here means a row not wholly available with the header.
+The fully labeled-row fraction in the first window is $`n_{\mathrm{complete}}/R`$ for $`R\gt 0`$. At $`L=512,o=64,C=6,w=5`$, a row costs $`30`$ tokens: the header and $`16`$ full rows occupy $`510`$ tokens. Thus $`16/120\approx13.333\%`$ of rows are complete and self-described in that window; $`104`$ rows are not. The header ends at token $`30`$, the second window starts at token $`449`$, and $`64`$ overlap tokens are about $`2.133`$ row-equivalents, not a repeated header. A few cells of row $`17`$ can still appear beside labels; “orphan” here means a row not wholly available with the header.
 #### Retrieval fails before generation
 - **What:** The metric phrase, such as gross margin, is a column label; row key and period may occur in later rows.
 - **Why:** Separating the metric label from those values weakens or corrupts the searchable evidence.
@@ -397,7 +397,7 @@ Sort keys are local conventions, not complete page-reading algorithms. After reg
 Let $`s_0`$ be the character-weighted modal type size. A candidate heading rule can be
 
 ```math
-H_i=\mathbf1\!\left[\frac{s_i}{s_0}\ge1.10\ \ \text{or}\ \ (\mathop{\mathrm{bold}}\nolimits_i\ \text{and}\ p_{\mathrm{bold}}<0.15)\right].
+H_i=\mathbf1\!\left[\frac{s_i}{s_0}\ge1.10\ \ \text{or}\ \ (\mathop{\mathrm{bold}}\nolimits_i\ \text{and}\ p_{\mathrm{bold}}\lt 0.15)\right].
 ```
 
 The bold rule is an alternative to the size rule, not an extra condition every heading must pass. The reported detector transfer from $`95\%`$ to $`40\%`$ is an anecdote, not proved by the threshold arithmetic alone. Separately, if exactly $`12`$ of $`500`$ tokens are true heading tokens, selecting all $`15`$ bold tokens at $`p_{\mathrm{bold}}=0.03`$ has precision at most $`12/15=0.8`$. Selecting $`300`$ at $`p_{\mathrm{bold}}=0.6`$ has precision at most $`12/300=0.04`$. These are token-level ceilings; rarity alone does not guarantee relevance or correctness.
@@ -408,7 +408,7 @@ The corpus has $`20{,}000`$ documents. Journals are $`60\%`$. They use 10-point 
 | Rule | Journals | Slides | Contracts | Weighted result |
 | --- | --- | --- | --- | --- |
 | Absolute $`s \ge 14`$ points | Under the constructed template, detects $`5`$ of $`17`$ heading blocks: $`5/17\approx0.294118`$ recall | Detects all blocks, including one title among seven: recall $`1`$, block precision $`1/7\approx0.142857`$ | Recall $`0`$ for $`11`$-point headings | Document-mixture macro recall $`0.6(5/17)+0.25\approx0.426471`$, not pooled heading-level recall |
-| Relative size $`\ge1.10`$ OR bold with $`p_{\mathrm{bold}}<0.15`$ | All assumed heading size ratios $`1.2,1.4,1.8`$ pass | $`32/24=4/3`$ passes; body ratio $`1`$ fails | Same-size bold headings pass the alternative rarity branch if the assumed $`12`$ bold tokens among $`450`$ are exactly the heading tokens | Recall $`1`$ only under this constructed template and correct mode/bold assumptions |
+| Relative size $`\ge1.10`$ OR bold with $`p_{\mathrm{bold}}\lt 0.15`$ | All assumed heading size ratios $`1.2,1.4,1.8`$ pass | $`32/24=4/3`$ passes; body ratio $`1`$ fails | Same-size bold headings pass the alternative rarity branch if the assumed $`12`$ bold tokens among $`450`$ are exactly the heading tokens | Recall $`1`$ only under this constructed template and correct mode/bold assumptions |
 
 
 Assume additionally $`12`$ pages per document and $`2{,}400`$ character records per page. The histogram scan processes $`20{,}000(12)(2{,}400)=5.76\times10^8`$ records; at an assumed $`10^7`$ increments per second, the arithmetic timing proxy is $`57.6\,\mathrm s`$, excluding extraction and other work. The source’s modular type-scale examples are $`9/8=1.125`$, $`6/5=1.2`$, $`5/4=1.25`$ and $`4/3\approx1.3333`$. A $`1.10`$ rule deliberately excludes $`16/15\approx1.0667`$, but small size differences can still mark real headings when other features support them. Modal size need not be body size on every page. A larger threshold such as $`1.20`$ is a domain heuristic under OCR uncertainty, not a guaranteed robust cutoff.
@@ -618,7 +618,7 @@ Global line sorting by $`(y,x)`$ can interleave columns, and an absolute $`14`$-
 
 | Topic | Value or model estimate | Meaning or limit |
 | --- | --- | --- |
-| Table geometry and retention | $`\Delta(r)=wrC`$; $`n=\min(R,\max(0,\lfloor L/(wC)\rfloor-1))`$ | Complete rows with the header in the first aligned window; $`R>0`$ for fractions |
+| Table geometry and retention | $`\Delta(r)=wrC`$; $`n=\min(R,\max(0,\lfloor L/(wC)\rfloor-1))`$ | Complete rows with the header in the first aligned window; $`R\gt 0`$ for fractions |
 | Opening split | $`L = 512`$, $`o = 64`$, $`C = 6`$, $`w = 5`$, $`\mathrm{row} = 30`$ tokens | $`16`$ of $`120`$ rows retain labels, $`13.3\%`$ retained, $`104`$ orphaned, $`86.7\%`$ orphan rate |
 | Overlap and original size | $`3{,}630`$ unique tokens; $`8`$ windows, $`4{,}078`$ unpadded embedded tokens at stride $`448`$ | $`64`$ overlap tokens do not carry the header from tokens $`1`$–$`30`$ to the second start at $`449`$ |
 | Header repetition | $`42`$ tokens per labeled row, $`12`$ whole rows/chunk, $`10`$ chunks, $`5{,}040`$ tokens | $`38.843\%`$ serialization inflation but $`23.590\%`$ extra versus overlapped embedding; $`25\%`$ more vectors |

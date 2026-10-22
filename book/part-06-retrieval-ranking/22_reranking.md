@@ -44,7 +44,7 @@ Think of retrieval as auditions for a small theater. The casting assistant invit
 | Pairwise mode | Compare two candidates per decision | It creates ordinal judgments but may produce cycles. |
 | Listwise mode | Order or train on a same-query candidate group | A joint loss need not require a joint forward pass; prompted windows introduce schedule and order effects |
 | Serial depth | Longest dependency chain of model calls | A latency constraint in addition to total work, throughput, concurrency limits and request overhead |
-| Comparator cycle | A result such as $`A > B`$, $`B > C`$, and $`C > A`$ | A sort can hide the inconsistency and return arrival-order-dependent output. |
+| Comparator cycle | A result such as $`A \gt  B`$, $`B \gt  C`$, and $`C \gt  A`$ | A sort can hide the inconsistency and return arrival-order-dependent output. |
 | $`w`$ | Listwise window size | It controls candidates seen per listwise decision. |
 | $`s`$ (window use) | Sliding-window stride | It controls overlap and how many ranks each call freezes. |
 | $`N_{\mathrm{pointwise}},N_{\mathrm{all\text{-}pairs}},N_{\mathrm{listwise}},N_{\mathrm{calls}}`$ | Call counts under a declared algorithm and window policy | Separate call count, dependency rounds, total tokens and actual resource capacity |
@@ -394,7 +394,7 @@ For $`k=100,w=20,s=10`$, the count is nine. When $`k\le w`$, use one window over
 For aligned full windows, the top $`w-s`$ positions of a ranked window overlap the next one; its bottom $`s`$ never get revisited in this pass. A candidate initially at rank $`g`$ first enters a particular window and, if retained in every overlap, can reach the final head window after:
 
 ```math
-n(g)=\min\!\left(\left\lceil\frac gs\right\rceil,N_{\mathrm{calls}}\right),\qquad (k-w)/s\in\mathbb Z,\quad k\ge w,\quad0<s<w.
+n(g)=\min\!\left(\left\lceil\frac gs\right\rceil,N_{\mathrm{calls}}\right),\qquad (k-w)/s\in\mathbb Z,\quad k\ge w,\quad0\lt s\lt w.
 ```
 
 The default counts are nine participating calls from rank one hundred, five from fifty, two from twenty and one from ten. To finish at rank one, the required events are intermediate overlap survival and then winning the final window; merely surviving that final window is not enough. Let $`p_t`$ be each required event's probability conditional on all earlier successes. The chain rule is:
@@ -433,13 +433,13 @@ N_{\mathrm{calls}}w=2k-w\quad\text{only for aligned half-window stride }s=w/2.
 The default uses $`180`$ document slots, $`46{,}080`$ document tokens and $`1{,}278`$ preamble/output tokens, totaling $`47{,}358`$. Changing to $`w=40,s=20`$ gives four calls and $`41{,}768`$ modeled tokens: an $`11.803708\%`$ token saving. With the stipulated round trips, time-proxy saving is $`23.601803\%`$. Wider windows alter both content and the number of hand-offs. Under separate constant-conditional-success assumptions, the tail comparison is:
 
 ```math
-p_{40}^4 > p_{20}^9,
+p_{40}^4 \gt  p_{20}^9,
 ```
 
 or
 
 ```math
-p_{40} > p_{20}^{2.25}.
+p_{40} \gt  p_{20}^{2.25}.
 ```
 
 At $`p_{20}=0.9`$, break-even is $`p_{40}\approx0.788943035`$, an absolute drop about $`11.105697`$ percentage points. This is conditional arithmetic, not proof that wider windows meet that reliability. No-overlap windows save $`44.444444\%`$ of these modeled tokens but disconnect the tail-to-head path. Cutting depth to fifty with the default window/stride gives four calls and $`1{,}186.682353\,\mathrm{ms}`$ including overhead, a $`55.555556\%`$ decrease from $`2{,}670.035294\,\mathrm{ms}`$; recall below the cut is lost. In these scenarios listwise reads $`1.8`$ times the document tokens but $`1.401124`$ times the modeled total tokens of pointwise, which omits its own verdict output. Depth, window size, overlap, output lengths and real decode rates jointly determine actual costs.
@@ -521,7 +521,7 @@ E(m)=AR_1C(m)\quad\text{under the stated fixed-extraction, zero-without-gold mod
 
 Compare $`E(m+1)-E(m)`$ with $`E_{\mathrm{new}}(m)-E(m)`$ for a specific available ranker. Calling the larger document gain “document-bound” and the larger ranker gain “model-bound” is an operational label, not an intrinsic pipeline property. If the interventions have different costs, also compare gains per added latency, price or other constrained resource; raw gains alone do not identify the better investment.
 #### Why
-Use an unbounded geometric placement surrogate with $`0<p_{\mathrm{rank}}<1`$. A real candidate set has finite size $`k`$; the next equation is the surrogate, not an exactly normalized finite-pool rank law:
+Use an unbounded geometric placement surrogate with $`0\lt p_{\mathrm{rank}}\lt 1`$. A real candidate set has finite size $`k`$; the next equation is the surrogate, not an exactly normalized finite-pool rank law:
 
 ```math
 \Pr[\text{rank} = r] = (1 - p_{\text{rank}})^{r-1}p_{\text{rank}}.
@@ -542,7 +542,7 @@ The source reports $`\mathop{\mathrm{MRR}}\nolimits@10=0.365`$ in a different MS
 Upgrading from $`q`$ to the specified smaller $`q_{\mathrm{new}}`$ changes the large-pool conditional coverage by:
 
 ```math
-\Delta_{\mathrm{rank}}C(m)=q^m-(q_{\mathrm{new}})^m,\qquad0<q_{\mathrm{new}}<q<1.
+\Delta_{\mathrm{rank}}C(m)=q^m-(q_{\mathrm{new}})^m,\qquad0\lt q_{\mathrm{new}}\lt q\lt 1.
 ```
 
 Equating the two gives
@@ -696,8 +696,8 @@ m&3&4&5&6&8\\\hline
 ```math
 \begin{aligned}
 m^\star&\approx4.985422,\\
-\Delta_{\mathrm{doc}}C(m)&>\Delta_{\mathrm{rank}}C(m),&&m\in\{1,2,3,4\},\\
-\Delta_{\mathrm{doc}}C(m)&<\Delta_{\mathrm{rank}}C(m),&&m\ge5\quad\text{(integer context size, surrogate).}
+\Delta_{\mathrm{doc}}C(m)&\gt \Delta_{\mathrm{rank}}C(m),&&m\in\{1,2,3,4\},\\
+\Delta_{\mathrm{doc}}C(m)&\lt \Delta_{\mathrm{rank}}C(m),&&m\ge5\quad\text{(integer context size, surrogate).}
 \end{aligned}
 ```
 

@@ -249,14 +249,14 @@ f_R^\star&\in\mathop{\mathrm{arg\,max}}_{f\in F}A_R(f),\\
 ```math
 \mathop{\mathrm{POSIX}}\nolimits=\frac1{N(N-1)}\sum_{i=1}^N\sum_{j\ne i}
 \frac1{\lvert y_i\rvert}\left\lvert\ln\frac{P(y_i\mid x_j)}{P(y_i\mid x_i)}\right\rvert,
-\qquad N\ge2,\quad\lvert y_i\rvert>0.
+\qquad N\ge2,\quad\lvert y_i\rvert\gt 0.
 ```
 
 - A $`40`$-token response moving from total log likelihood $`-12.0`$ to $`-13.6`$ contributes $`1.6/40=0.040\,\mathrm{nats/token}`$. Probabilities must be positive or scores need an explicit zero-probability convention.
 #### Connect sensitivity to the decoding margin
 - **What:** Let $`p_1`$ and $`p_2`$ be the top two next-token probabilities.
 - Their logit gap is $`\log(p_1 / p_2)`$.
-- For top-two logit gap $`\Delta>0`$, if every logit changes by at most $`\varepsilon`$ and $`2\varepsilon<\Delta`$, the top token cannot change. A small gap permits, but does not guarantee, a flip; a third token can also overtake the original winner.
+- For top-two logit gap $`\Delta\gt 0`$, if every logit changes by at most $`\varepsilon`$ and $`2\varepsilon\lt \Delta`$, the top token cannot change. A small gap permits, but does not guarantee, a flip; a third token can also overtake the original winner.
 - **Why:** Drift and margin now share units.
 - **Failure without it:** A raw agreement bit discards how close the answer was to changing.
 - **Cost or complexity:** The logits are computed during decoding, but extracting normalized token scores can require additional access, storage and some computation. This is often cheap on an owned stack, not universally free or exposed by a hosted API.

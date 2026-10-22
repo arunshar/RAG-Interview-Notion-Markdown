@@ -108,7 +108,7 @@ The page welcomes errata and corrections at `hao.hoang.ai@gmail.com`. It calls e
 | Publishing cadence | Every day |
 | Public writing channels | 2, Substack and LinkedIn |
 | Named longer-note topics | 4, plus other high-signal topics |
-| LinkedIn followers | Source-reported $`>70{,}000`$; no as-of date |
+| LinkedIn followers | Source-reported $`\gt 70{,}000`$; no as-of date |
 | Substack readers | Source-reported $`16{,}000`$; no as-of date |
 | Public-writing roles | 3, teach, learn in public, and answer community questions |
 | Places where the questions were scattered | 3, papers, courses, and production postmortems |

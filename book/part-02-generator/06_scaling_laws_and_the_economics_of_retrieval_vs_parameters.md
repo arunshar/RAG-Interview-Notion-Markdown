@@ -187,7 +187,7 @@ Therefore:
 D_{\mathrm{inf}} = 3D_{\mathrm{tr}}
 ```
 
-With the same $`2N`$ and $`6N`$ token-work conventions and $`N>0`$, $`N`$ cancels and the two proxy work totals are equal at $`D_{\mathrm{inf}}=3D_{\mathrm{tr}}`$. Here $`D_{\mathrm{inf}}`$ counts processed input and output tokens under the proxy, not only generated tokens unless input work is negligible. For the stated Chinchilla training volume, the equality is $`4.2\times10^{12}`$ processed inference tokens. Different utilization or dollar rates can shift a monetary crossover.
+With the same $`2N`$ and $`6N`$ token-work conventions and $`N\gt 0`$, $`N`$ cancels and the two proxy work totals are equal at $`D_{\mathrm{inf}}=3D_{\mathrm{tr}}`$. Here $`D_{\mathrm{inf}}`$ counts processed input and output tokens under the proxy, not only generated tokens unless input work is negligible. For the stated Chinchilla training volume, the equality is $`4.2\times10^{12}`$ processed inference tokens. Different utilization or dollar rates can shift a monetary crossover.
 Once expected inference volume enters the objective, the optimum moves toward a smaller model trained on more tokens. The shift grows with serving demand. Llama 1 at $`7\,\mathrm{B}`$ saw $`1.0\,\mathrm{T}`$ tokens, or $`143`$ per parameter. Llama 2 at $`7\,\mathrm{B}`$ saw $`2.0\,\mathrm{T}`$ tokens, or $`286`$ per parameter. Llama 3 at $`8\,\mathrm{B}`$ saw over $`15\,\mathrm{T}`$ tokens, or $`1{,}875`$ per parameter. The last ratio is $`94`$ times Chinchilla’s ratio.
 #### Worked budget comparison
 Use $`C = 7.2 \times 10^{23}`$ FLOPs.
@@ -255,7 +255,7 @@ The omitted-to-parameter ratio is:
 \frac{s}{12d}
 ```
 
-For the body approximation, attention-to-parameter forward work is $`s/(12d)`$. The condition $`d>s/12`$ says only that this ratio is below one, not that it is negligible. At $`d=4096`$, equality occurs at $`s=49{,}152`$; at $`s=8192`$ the ratio is $`1/6`$, and at $`s=32768`$ it is $`2/3`$. Using an actual $`8`$B parameter proxy rather than the $`12Ld^2`$ body estimate changes those ratios, as in the worked prefill below.
+For the body approximation, attention-to-parameter forward work is $`s/(12d)`$. The condition $`d\gt s/12`$ says only that this ratio is below one, not that it is negligible. At $`d=4096`$, equality occurs at $`s=49{,}152`$; at $`s=8192`$ the ratio is $`1/6`$, and at $`s=32768`$ it is $`2/3`$. Using an actual $`8`$B parameter proxy rather than the $`12Ld^2`$ body estimate changes those ratios, as in the worked prefill below.
 #### The three memory tiers
 Weight payload is $`Nb`$ bytes, with nominal $`b=4`$ for fp32, $`2`$ for bf16, $`1`$ for int8 and $`0.5`$ for packed int4. Quantized formats also need scales, zero points, packing and sometimes higher-precision tensors; nominal bits alone do not give complete checkpoint or serving memory.
 A $`27\,\mathrm{B}`$ model uses $`108\,\mathrm{GB}`$ at fp32. It uses $`54\,\mathrm{GB}`$ at bf16. It uses $`27\,\mathrm{GB}`$ at int8. The fp32 weights already overflow one $`80\,\mathrm{GB}`$ card.
@@ -397,11 +397,11 @@ C_{\mathrm{query}}
 2N(T_{\mathrm{in}} + T_{\mathrm{out}})
 ```
 
-Compare complete policies, not an added training bill with an unrelated added serving bill. Let $`F_P,F_T`$ be their training costs in the same units and $`c_P,c_T`$ their per-query work or cost. Then $`F_P+Qc_P=F_T+Qc_T`$ has a positive intersection only when the intercept and slope differences have compatible signs. If $`F_P>F_T`$ and $`c_T>c_P`$, the crossover is:
+Compare complete policies, not an added training bill with an unrelated added serving bill. Let $`F_P,F_T`$ be their training costs in the same units and $`c_P,c_T`$ their per-query work or cost. Then $`F_P+Qc_P=F_T+Qc_T`$ has a positive intersection only when the intercept and slope differences have compatible signs. If $`F_P\gt F_T`$ and $`c_T\gt c_P`$, the crossover is:
 
 ```math
 Q^\star=\frac{F_P-F_T}{c_T-c_P},
-\qquad F_P>F_T,\quad c_T>c_P.
+\qquad F_P\gt F_T,\quad c_T\gt c_P.
 ```
 
 The specialized expression $`\Delta C_{\mathrm{pre}}/[(m-1)C_{\mathrm{query}}]`$ applies only if one policy's query cost is $`mC_{\mathrm{query}}`$ and the more-pretrained policy's query cost is exactly $`C_{\mathrm{query}}`$. A larger model usually changes that baseline. Quality must also be matched before cost amortization decides the better policy.

@@ -70,11 +70,11 @@ The librarian keeps both catalogs when evaluation justifies the operational cost
 | Pivoted length normalization | A tunable length correction around a pivot | It is related to the length-normalization problem; do not assume identical derivations or formulas |
 | Best Match 25 (BM25) | The twenty-fifth Best Match weighting function from the Okapi experiments | It combines rarity, TF saturation, and tunable length normalization |
 | Saturation | A reward that rises but approaches a fixed ceiling | It prevents unlimited score purchases through repetition |
-| $`k_1`$ | BM25 parameter $`k_1>0`$ | At average length it is the limiting extra TF budget after the first occurrence |
+| $`k_1`$ | BM25 parameter $`k_1\gt 0`$ | At average length it is the limiting extra TF budget after the first occurrence |
 | $`b`$ | BM25 length parameter $`b\in[0,1]`$ | It interpolates the effective saturation constant, not a direct final-score division |
-| Average document length $`\overline L`$ | Mean indexed-token length $`\overline L>0`$ | Collection, analyzer, snapshot and deletion-statistics conventions must be consistent |
+| Average document length $`\overline L`$ | Mean indexed-token length $`\overline L\gt 0`$ | Collection, analyzer, snapshot and deletion-statistics conventions must be consistent |
 | Relative length $`\ell_d`$ | $`\ell_d=L_d/\overline L`$ | The average-length reference is $`\ell_d=1`$ |
-| Document length $`L_d`$ | Indexed-token count $`L_d>0`$ | It is not automatically a word count or a model-token count |
+| Document length $`L_d`$ | Indexed-token count $`L_d\gt 0`$ | It is not automatically a word count or a model-token count |
 | Effective saturation constant $`K_d`$ | $`K_d=k_1(1-b+b\ell_d)`$ | It couples frequency with relative length |
 | Two-Poisson eliteness model | A latent high/low occurrence-rate model | It motivates approximations; a simple two-Poisson log likelihood ratio is not itself saturating |
 | Dynamic pruning | Skipping postings that cannot beat the current score threshold | A bounded per-term score supplies a safe upper bound |
@@ -129,7 +129,7 @@ The librarian keeps both catalogs when evaluation justifies the operational cost
 Let $`\mathcal V`$ be the indexed vocabulary, $`V=\lvert\mathcal V\rvert`$, $`N`$ the document count, $`T(d)`$ the terms in document $`d`$, and $`Q(q)`$ the set of distinct query terms, with $`n=\lvert Q(q)\rvert\ge1`$. Query $`q`$ and document $`d`$ also denote their vectors when a vector formula is used. Write $`d_{\mathrm{emb}}`$ for dense-vector dimension so that it is not confused with a document. Document frequency is $`n_t=\mathop{\mathrm{df}}\nolimits(t)`$ and within-document count is $`f_{t,d}\ge0`$. Counts, word lengths and model-token lengths are not interchangeable; BM25 lengths must use one consistent indexed-token convention.
 All logarithms are natural. Distinguish three weights: classical TF-IDF $`I_{\mathrm{TF}}(t)=\ln(N/n_t)`$ for $`1\le n_t\le N`$; zero-feedback raw RSJ $`w_t^{(0)}=\ln((N-n_t+0.5)/(n_t+0.5))`$; and guarded BM25 $`I_{\mathrm B}(t)=\ln(1+(N-n_t+0.5)/(n_t+0.5))`$. The last two are not equal. Log odds ratios are dimensionless, conventionally reported in nats, not probabilities.
 The clinical TF-IDF example uses the same IDF-weighted query throughout: $`q_t=I_{\mathrm{TF}}(t)\mathbf1[t\in Q(q)]`$ and $`d_t=g(f_{t,d})I_{\mathrm{TF}}(t)`$. Linear TF uses $`g(f)=f`$; sublinear TF uses $`g(0)=0`$ and $`g(f)=1+\ln f`$ for $`f\ge1`$. Thus its unnormalized dot product is $`\sum_{t\in Q(q)}g(f_{t,d})I_{\mathrm{TF}}(t)^2`$. The release-note example separately names a single-IDF linear lexical baseline with unit query indicators; it is not this symmetric TF-IDF dot product. Cosine requires nonzero vectors; define a zero-vector fallback rather than divide by zero.
-For BM25, use positive document length $`L_d`$, positive mean $`\overline L`$, relative length $`\ell_d=L_d/\overline L`$, $`k_1>0`$ and $`b\in[0,1]`$. Each distinct query term occurs once in the score sum; extra query-frequency factors, field-specific parameters and boosts are outside the displayed baseline. A TF saturation curve holds relative length and collection statistics fixed. Literally appending text can also change length and collection statistics.
+For BM25, use positive document length $`L_d`$, positive mean $`\overline L`$, relative length $`\ell_d=L_d/\overline L`$, $`k_1\gt 0`$ and $`b\in[0,1]`$. Each distinct query term occurs once in the score sum; extra query-frequency factors, field-specific parameters and boosts are outside the displayed baseline. A TF saturation curve holds relative length and collection statistics fixed. Literally appending text can also change length and collection statistics.
 Expected Boolean counts require an explicit term-occurrence model. An empty-result probability additionally needs a model across documents. Probability-ranking optimality below concerns additive expected utility; it does not require independent relevance labels across documents. BIM instead assumes term independence conditional on relevance and query. Distinguish these assumptions.
 Storage uses $`1\,\mathrm{GB}=10^9\,\mathrm B`$ and fp32 payload $`4\,\mathrm{B/dimension}`$. Posting and vector payload estimates exclude the stated index and runtime overhead. Keep full precision in calculations, round only reported values, and use $`\approx`$ for approximations. Software/version claims, source vignettes and benchmark results remain reported inputs, not outcomes proved by the arithmetic.
 ### 18.1 Boolean and extended Boolean models
@@ -156,7 +156,7 @@ For a representative document, assume the $`n`$ query-term presence events are i
 - Different rungs do not automatically share a relevance score. Explicit rung priority or a common scorer can combine them; calling the sets inherently incomparable is too strong.
 - Dropping a term guesses which part of intent is dispensable. Never relax authorization or another mandatory validity condition merely to obtain results.
 #### Extended Boolean retrieval softens the operator
-For $`n\ge1`$, equal query weights, normalized document-term weights $`w_i(d)\in[0,1]`$ and $`1\le p<\infty`$, define the following graded operators. They are scores, not authorization checks.
+For $`n\ge1`$, equal query weights, normalized document-term weights $`w_i(d)\in[0,1]`$ and $`1\le p\lt \infty`$, define the following graded operators. They are scores, not authorization checks.
 
 ```math
 S_{\mathrm{OR},p}(d)=\left(\frac1n\sum_{i=1}^{n}w_i(d)^p\right)^{1/p}.
@@ -236,7 +236,7 @@ Holding IDF fixed, the derivative of a linear-TF document coordinate is constant
 
 For integer counts these derivatives correspond to constant coordinate or dot-product increments. They do not describe the derivative of normalized cosine, whose denominator also changes. Repetition can distort a lexical relevance proxy, but the existence and severity of a rank reversal depend on the other coordinates and the chosen normalization.
 #### Failure two confuses scope with verbosity
-For fixed linear-TF weights and $`\alpha>0`$, $`\mathop{\mathrm{sim}}\nolimits(q,\alpha d)=\mathop{\mathrm{sim}}\nolimits(q,d)`$. This is invariance to rescaling the whole vector, not to repeating only one query term, and raw-text duplication under log TF is not generally a pure rescaling. To isolate breadth, let $`d=\sum_{i=1}^m c_i`$ with mutually orthogonal, equal nonzero norms and $`q^{\mathsf T}c_i=0`$ for $`i>1`$. Then:
+For fixed linear-TF weights and $`\alpha\gt 0`$, $`\mathop{\mathrm{sim}}\nolimits(q,\alpha d)=\mathop{\mathrm{sim}}\nolimits(q,d)`$. This is invariance to rescaling the whole vector, not to repeating only one query term, and raw-text duplication under log TF is not generally a pure rescaling. To isolate breadth, let $`d=\sum_{i=1}^m c_i`$ with mutually orthogonal, equal nonzero norms and $`q^{\mathsf T}c_i=0`$ for $`i\gt 1`$. Then:
 
 ```math
 \lVert d\rVert_2=\sqrt{\sum_{i=1}^m\lVert c_i\rVert_2^2}=\sqrt m\,\lVert c_1\rVert_2.
@@ -292,7 +292,7 @@ F(f,\ell_d)&=\frac{f(k_1+1)}{f+K_d},\\
 \end{aligned}
 ```
 
-Rarity and within-document evidence are separate factors. Take $`F(0,\ell)=0`$, $`k_1>0`$, $`b\in[0,1]`$ and $`\ell>0`$. The count $`n_t`$ is a document frequency, not a term occurrence total. Query boosts, repeated-query-term weights, field mixtures and engine-specific norm encodings require their own formulas and bounds.
+Rarity and within-document evidence are separate factors. Take $`F(0,\ell)=0`$, $`k_1\gt 0`$, $`b\in[0,1]`$ and $`\ell\gt 0`$. The count $`n_t`$ is a document frequency, not a term occurrence total. Query boosts, repeated-query-term weights, field mixtures and engine-specific norm encodings require their own formulas and bounds.
 #### $`k_1`$ gives a limiting repetition budget at average length
 At $`\ell=1`$, $`F(f,1)=f(k_1+1)/(f+k_1)`$, so $`F(1,1)=1`$ and $`\lim_{f\to\infty}F(f,1)=k_1+1`$. For finite counts $`f\ge1`$, the range is $`[1,k_1+1)`$, with the upper endpoint excluded. Thus later occurrences share a limiting increment $`k_1`$. At another length the first occurrence is $`(k_1+1)/(1+K_d)`$, so the same first-occurrence budget interpretation does not transfer unchanged. A curve that varies $`f`$ while holding $`\ell`$ fixed is a mathematical comparison; adding words to one real document can also alter $`\ell`$.
 #### The default curve spends its budget early
@@ -305,8 +305,8 @@ The source cites Robertson and Walker (1994) for the two-Poisson motivation. Do 
 P(f\mid R=r)
 &=a_r\mathop{\mathrm{Pois}}\nolimits(f;\mu_E)
  +(1-a_r)\mathop{\mathrm{Pois}}\nolimits(f;\mu_N),\\
-\mu_E&>\mu_N>0,
-\qquad 0<a_0<a_1<1.\\
+\mu_E&\gt \mu_N\gt 0,
+\qquad 0\lt a_0\lt a_1\lt 1.\\
 \lim_{f\to\infty}
 \ln\frac{P(f\mid R=1)}{P(f\mid R=0)}
 &=\ln\frac{a_1}{a_0}.
@@ -333,18 +333,18 @@ b=0\quad\Longrightarrow\quad K_d=k_1.
 b=1\quad\Longrightarrow\quad K_d=k_1\ell_d.
 ```
 
-For fixed $`f>0`$, compare against average length:
+For fixed $`f\gt 0`$, compare against average length:
 
 ```math
 \frac{F(f,\ell)}{F(f,1)}
 =\frac{f+k_1}{f+k_1(1-b+b\ell)}.
 ```
 
-For $`\ell>1`$ this ratio is at least $`1/\ell`$: the penalty is no stronger than direct division by length. For $`0<\ell<1`$ the ratio is at most $`1/\ell`$: the short-document bonus is no larger than direct division. At $`\ell=1`$ both equal $`1`$. Thus softer means less penalty for long documents and less bonus for short ones, not that BM25 lies below a division curve everywhere. The scorer still cannot identify scope versus verbosity from length alone.
+For $`\ell\gt 1`$ this ratio is at least $`1/\ell`$: the penalty is no stronger than direct division by length. For $`0\lt \ell\lt 1`$ the ratio is at most $`1/\ell`$: the short-document bonus is no larger than direct division. At $`\ell=1`$ both equal $`1`$. Thus softer means less penalty for long documents and less bonus for short ones, not that BM25 lies below a division curve everywhere. The scorer still cannot identify scope versus verbosity from length alone.
 #### The twice-average example shows the soft discount
 At $`k_1=1.2`$, $`b=0.75`$, $`\ell=2`$ and $`f=1`$, $`K=1.2(0.25+1.5)=2.1`$ and $`F=2.2/3.1\approx0.709677419`$. Relative to its average-length value $`1`$, the discount is approximately $`29.0323\%`$. Direct division gives $`0.5`$, a $`50\%`$ discount. This is a comparison of defined TF factors, not an empirical quality result.
 #### The IDF guard avoids negative rarity weights
-Raw zero-feedback RSJ $`w_t^{(0)}=\ln((N-n_t+0.5)/(n_t+0.5))`$ is negative for $`n_t>N/2`$. The guarded form instead uses $`I_{\mathrm B}(t)=\ln(1+\exp(w_t^{(0)}))`$, positive for $`0\le n_t\le N`$. It is a further transformation, not the identical zero-judgment limit. Rare positive weights change little, while common terms change substantially. Although this transform is monotone for a single term, applying it before summing multiple matched terms need not preserve document order.
+Raw zero-feedback RSJ $`w_t^{(0)}=\ln((N-n_t+0.5)/(n_t+0.5))`$ is negative for $`n_t\gt N/2`$. The guarded form instead uses $`I_{\mathrm B}(t)=\ln(1+\exp(w_t^{(0)}))`$, positive for $`0\le n_t\le N`$. It is a further transformation, not the identical zero-judgment limit. Rare positive weights change little, while common terms change substantially. Although this transform is monotone for a single term, applying it before summing multiple matched terms need not preserve document order.
 #### The release-note example separates the two constants
 - The source's motivating vignette puts a $`3{,}000`$-token runbook at rank $`1`$ and a $`120`$-token release note at rank $`40`$. Those ranks require the other candidates and are not deducible from this two-document calculation.
 - Take $`N=10^6`$, $`\overline L=300`$ tokens and frequencies $`(400{,}000,\,250{,}000,\,5{,}000)`$ for kubernetes, pod and eviction. Guarded IDFs are approximately $`(0.916290482,\,1.386293361,\,5.298218372)`$.
@@ -369,7 +369,7 @@ Totals use unrounded contributions. B's relative lead is approximately $`1.21795
 #### Sweeping $`b`$ isolates length sensitivity
 With $`k_1=1.2`$ fixed, at $`b=0`$ the scores are approximately $`9.587634`$ and $`15.887339`$ for A and B; at $`b=1`$ they are approximately $`12.822825`$ and $`11.062111`$. The pair ties at $`b\approx0.768972775`$ under these exact inputs. Increasing $`b`$ raises A and lowers B because their relative lengths lie on opposite sides of $`1`$; it does not make that direction correct for every query. A benchmark default is a starting point, not a diagnosis.
 #### Score bounds provide sanity checks and pruning
-- For $`f>0`$, $`\ell>0`$ and the displayed positive-weight baseline, $`F(f,\ell)<k_1+1`$ and a term contribution is below $`(k_1+1)I_{\mathrm B}(t)`$. With boosts or field combinations, derive a corresponding bound instead of using this one unchanged.
+- For $`f\gt 0`$, $`\ell\gt 0`$ and the displayed positive-weight baseline, $`F(f,\ell)\lt k_1+1`$ and a term contribution is below $`(k_1+1)I_{\mathrm B}(t)`$. With boosts or field combinations, derive a corresponding bound instead of using this one unchanged.
 - Eviction's limiting contribution here is $`2.2I_{\mathrm B}(\text{eviction})\approx11.656080`$. A contributes approximately $`8.763970`$, or $`75.187970\%`$ of that limit; B approximately $`8.495685`$, or $`72.886297\%`$.
 - These two shares differ in both count and relative length. Their difference is not an isolated causal effect of twenty-three extra occurrences.
 - The source describes Lucene versions that omit the common $`(k_1+1)`$ multiplier. If it is the same positive constant for every scored term/field, dividing these totals by $`2.2`$ gives approximately $`5.370722`$ and $`5.436134`$, preserving rank and relative margin. Different field parameters, fusion scales and absolute thresholds need separate treatment. Check the actual engine version and score explanation.
@@ -398,7 +398,7 @@ O(R\mid d,q)=\frac{\Pr(R=1\mid q)}{\Pr(R=0\mid q)}\frac{\Pr(d\mid R=1,q)}{\Pr(d\
 
 A RAG context often has non-additive value: a second copy of the same fact may add little even if each chunk is relevant. That breaks the additive objective, not necessarily independence of relevance labels. Diversification, MMR or explicit set selection addresses a different utility. Query-level prior odds in this model are constant across documents and can be dropped for within-query ranking; document-specific priors or features cannot simply be canceled.
 #### Binary independence makes document likelihood estimable
-Represent a document by $`x\in\{0,1\}^{V}`$. Assume its term incidences are independent conditional on $`(R,q)`$, and let $`p_t=\Pr(x_t=1\mid R=1,q)`$ and $`u_t=\Pr(x_t=1\mid R=0,q)`$, with $`0<p_t,u_t<1`$. Then:
+Represent a document by $`x\in\{0,1\}^{V}`$. Assume its term incidences are independent conditional on $`(R,q)`$, and let $`p_t=\Pr(x_t=1\mid R=1,q)`$ and $`u_t=\Pr(x_t=1\mid R=0,q)`$, with $`0\lt p_t,u_t\lt 1`$. Then:
 
 ```math
 \frac{\Pr(x\mid R=1,q)}{\Pr(x\mid R=0,q)}=\prod_{t:x_t=1}\frac{p_t}{u_t}\prod_{t:x_t=0}\frac{1-p_t}{1-u_t}.
@@ -544,8 +544,8 @@ Figure $`18.1`$: Panel A gives expected counts under independent term presence, 
 \begin{aligned}
 g_{\mathrm{linear}}(f)&=f,&
 g_{\log}(f)&=1+\ln f\quad(f\ge1),\\
-F_{\mathrm{BM25}}(f,1)&=\frac{2.2f}{f+1.2}<2.2,\\
-\mathop{\mathrm{sim}}\nolimits(q,\alpha d)&=\mathop{\mathrm{sim}}\nolimits(q,d)\quad(\alpha>0),\\
+F_{\mathrm{BM25}}(f,1)&=\frac{2.2f}{f+1.2}\lt 2.2,\\
+\mathop{\mathrm{sim}}\nolimits(q,\alpha d)&=\mathop{\mathrm{sim}}\nolimits(q,d)\quad(\alpha\gt 0),\\
 \mathop{\mathrm{sim}}\nolimits\!\left(q,\sum_{i=1}^m c_i\right)
 &=\frac{\mathop{\mathrm{sim}}\nolimits(q,c_1)}{\sqrt m}
 \quad\text{under the section assumptions},\\

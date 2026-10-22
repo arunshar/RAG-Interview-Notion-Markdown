@@ -86,7 +86,7 @@ The depot retrieves candidates, then reranks a limited window when evaluation ju
 | Preference set $`I`$ | Within-query pairs where one label exceeds another | It is pairwise supervision |
 | Difference vector $`x_i - x_j`$ | The feature contrast for a preferred pair | RankSVM classifies it through the origin |
 | RankSVM | A maximum-margin pairwise ranker | It makes score differences shift-invariant |
-| Regularization weight $`C_{\mathrm{SVM}}`$ | $`C_{\mathrm{SVM}}>0`$ multiplies RankSVM slack | It is distinct from the pairwise cross-entropy loss $`C`$ |
+| Regularization weight $`C_{\mathrm{SVM}}`$ | $`C_{\mathrm{SVM}}\gt 0`$ multiplies RankSVM slack | It is distinct from the pairwise cross-entropy loss $`C`$ |
 | Hinge loss | A margin penalty for an incorrect or weak preference | RankSVM uses its slack form |
 | Slack $`\xi _{ij}`$ | The amount by which a pair misses the unit margin | RankSVM sums it across preferences |
 | RankNet | A neural pairwise ranker with logistic cross-entropy | It gives smooth, equal-and-opposite pair forces |
@@ -105,14 +105,14 @@ The depot retrieves candidates, then reranks a limited window when evaluation ju
 | LambdaLoss | A family of loss-based interpretations of metric-aware ranking updates | Particular variants must be checked; arbitrary rank-reweighted forces need not form one smooth global gradient |
 | SoftRank | Gaussian-score smoothing of a ranking objective | A recurrence using unconditional comparison marginals is an approximation to the stated Gaussian rank law |
 | Gaussian score | $`Z_j=\mu_j+\varepsilon_j`$ with independent Gaussian noises | Comparisons against a shared $`Z_j`$ are dependent before conditioning |
-| Smoothing width $`\sigma_G`$ | $`\sigma_G>0`$, the Gaussian score standard deviation | It is in score units and differs from RankNet steepness $`\gamma`$ |
+| Smoothing width $`\sigma_G`$ | $`\sigma_G\gt 0`$, the Gaussian score standard deviation | It is in score units and differs from RankNet steepness $`\gamma`$ |
 | Cumulative normal function $`\Phi`$ | The smooth Gaussian probability function | It yields SoftRank’s pairwise outranking probability |
-| Outranking probability $`\pi _{ij}`$ | $`\pi_{ij}=\Pr(Z_i>Z_j)`$ | Marginal outranking probabilities alone do not determine the exact joint rank law |
+| Outranking probability $`\pi _{ij}`$ | $`\pi_{ij}=\Pr(Z_i\gt Z_j)`$ | Marginal outranking probabilities alone do not determine the exact joint rank law |
 | Rank distribution $`p_j(r)`$ | $`p_j(r)`$ for one-based rank $`r=1,\ldots,n`$ | Conditional integration gives exact Gaussian ranks; $`\widetilde p_j`$ denotes the marginal shortcut |
 | Insertion recurrence | A count-ahead update on $`u=0,\ldots,n-1`$ | It is exact conditionally on the shared score, but approximate with unconditional marginal probabilities |
 | SoftNDCG | Expected NDCG under a specified smoothed rank law | Use a positive fixed label normalizer; state whether the rank law is exact or approximated |
 | Lambda Multiple Additive Regression Trees (LambdaMART) | LambdaRank gradients fitted by boosted regression trees | It is the source’s production default for tabular features |
-| Logistic steepness $`\gamma`$ in LambdaMART | Use the same logistic steepness $`\gamma>0`$ in both lambda sections | A second symbol must not silently reverse the gradient convention |
+| Logistic steepness $`\gamma`$ in LambdaMART | Use the same logistic steepness $`\gamma\gt 0`$ in both lambda sections | A second symbol must not silently reverse the gradient convention |
 | Gradient-boosted regression tree | A sequence of trees fitted to residual targets | LambdaMART fits trees to document forces |
 | Newton leaf step | An approximate second-order leaf update with stated curvature and regularization | A positive update force goes in the numerator; zero curvature needs a guard |
 | SetRank | A multivariate set-scoring ranker | A document score may depend on competitors |
@@ -169,9 +169,9 @@ The depot retrieves candidates, then reranks a limited window when evaluation ju
 
 ## Core mechanics
 ### Mathematical conventions
-For query $`q`$, $`D_q`$ is a fixed candidate set of size $`n_q>0`$. A score-descending permutation $`\pi_q`$ uses a specified deterministic tie policy, and $`r_i\in\{1,\ldots,n_q\}`$ is candidate $`i`$'s one-based rank. Classes are instead zero-based: $`y_i\in\{0,\ldots,K-1\}`$. Use $`n`$ for a candidate count, $`K`$ for class count and a positive integer $`k`$ for the evaluation cutoff. A score can still tie; continuous output does not guarantee a total order.
-Choose a gain utility explicitly. Here $`g(y)=2^y-1`$ and $`w_k(r)=\mathbf1[r\le k]/\log_2(1+r)`$. Then $`\mathrm{DCG}@k=\sum_i g(y_i)w_k(r_i)`$ and $`Z_q=\mathrm{IDCG}@k`$ is the ideal DCG over the stated evaluation universe. Use $`\mathrm{NDCG}@k=\mathrm{DCG}@k/Z_q`$ only for $`Z_q>0`$; all-zero-gain queries need a declared skip or zero convention. Averaging queries, weighting traffic and averaging rows are different objectives. Candidate-local and fixed-universe IDCGs are not interchangeable when comparing retrievers.
-For RankNet, $`\gamma>0`$, $`I_q=\{(i,j):y_i>y_j\}`$ and $`C=\sum_{(i,j)\in I_q}C_{ij}`$. Define $`\lambda_{ij}>0`$ as the force raising the preferred document, and $`\lambda_i`$ as its aggregate signed update force. Thus $`\partial C/\partial s_i=-\lambda_i`$ for ordinary RankNet; the parameter gradient has a minus sign. Metric-weighted lambdas are pseudo-gradients with rank weights recomputed between updates. Gaussian smoothing width $`\sigma_G>0`$ is distinct from the logistic link or its steepness $`\gamma`$.
+For query $`q`$, $`D_q`$ is a fixed candidate set of size $`n_q\gt 0`$. A score-descending permutation $`\pi_q`$ uses a specified deterministic tie policy, and $`r_i\in\{1,\ldots,n_q\}`$ is candidate $`i`$'s one-based rank. Classes are instead zero-based: $`y_i\in\{0,\ldots,K-1\}`$. Use $`n`$ for a candidate count, $`K`$ for class count and a positive integer $`k`$ for the evaluation cutoff. A score can still tie; continuous output does not guarantee a total order.
+Choose a gain utility explicitly. Here $`g(y)=2^y-1`$ and $`w_k(r)=\mathbf1[r\le k]/\log_2(1+r)`$. Then $`\mathrm{DCG}@k=\sum_i g(y_i)w_k(r_i)`$ and $`Z_q=\mathrm{IDCG}@k`$ is the ideal DCG over the stated evaluation universe. Use $`\mathrm{NDCG}@k=\mathrm{DCG}@k/Z_q`$ only for $`Z_q\gt 0`$; all-zero-gain queries need a declared skip or zero convention. Averaging queries, weighting traffic and averaging rows are different objectives. Candidate-local and fixed-universe IDCGs are not interchangeable when comparing retrievers.
+For RankNet, $`\gamma\gt 0`$, $`I_q=\{(i,j):y_i\gt y_j\}`$ and $`C=\sum_{(i,j)\in I_q}C_{ij}`$. Define $`\lambda_{ij}\gt 0`$ as the force raising the preferred document, and $`\lambda_i`$ as its aggregate signed update force. Thus $`\partial C/\partial s_i=-\lambda_i`$ for ordinary RankNet; the parameter gradient has a minus sign. Metric-weighted lambdas are pseudo-gradients with rank weights recomputed between updates. Gaussian smoothing width $`\sigma_G\gt 0`$ is distinct from the logistic link or its steepness $`\gamma`$.
 An additive expected-DCG argument does not require independent document labels. Independent Gaussian scores, however, do not make all comparisons against one shared score independent. The displayed marginal-probability insertion shortcut below is an approximation; conditional integration gives the correct Gaussian rank law. One-based ranks avoid a zero discount denominator.
 A pointwise loss and a univariate scorer are separate properties. Caching, sharding and input-order stability need query/document features independent of the competing candidate set and an appropriate model/index version. Count scored examples rather than confusing them with batched forward-call counts. A pair comparator and a query–document scorer can have different throughput.
 Use decimal units, $`1\,\mathrm{GB}=10^9\,\mathrm B`$, $`1\,\mathrm{TB}=10^{12}\,\mathrm B`$, and fp32 payload $`4\,\mathrm B`$ per number. One multiply-accumulate counts as two FLOPs. Keep full precision until reporting. FLOP-time and bandwidth divisions are explicitly conditional work proxies, not measured latency, throughput, training time or a $`p_{99}`$ guarantee. Reported source experiments and software claims are not independently reproduced in this pass.
@@ -223,7 +223,7 @@ For grades $`(4,3,0,0,0)`$, A predicts $`(2,2.1,0,0,0)`$ and has squared error $
 For $`L=\sum_i(s_i-y_i)^2`$, the score-gradient $`\ell_1`$ norms are $`5.8`$ and $`13.2`$, ratio approximately $`2.275862`$. These are gradients with respect to scores, not parameter-gradient norms or guaranteed model-update sizes; parameter gradients also include $`\partial s_i/\partial\theta`$. The example shows different preferences for calibration and order, not universal inconsistency of squared loss. The source cites McRank's reported classification/regression comparison and named survey baselines as empirical context, not a proof that omitted methods cannot work.
 #### Cost, complexity, and practice choices
 The source's motivating project has $`40{,}000`$ judged rows, a quarter of work, a six-figure budget, halved training loss and only $`0.004`$ movement in held-out $`\mathop{\mathrm{NDCG}}\nolimits@10`$. Those are a vignette, not a controlled causal result. Validate the objective, features, sampling and labels instead of assuming more epochs will fix the problem. For a row-decomposed macro-query objective, weight by $`1/n_q`$ or use balanced sampling; a pair-summed loss instead needs its own query normalization, such as $`1/\lvert I_q\rvert`$ when nonzero. Explicit traffic weighting is a different choice.
-Freeze candidate generation or use a common judged evaluation universe when comparing rankers, and report retrieval coverage separately. A final set cannot include an excluded item. With gold set $`G_q`$, reranker input $`S_q`$ and final cutoff $`k`$, its recall is at most $`\min(k,\lvert G_q\cap S_q\rvert)/\lvert G_q\rvert`$ for $`\lvert G_q\rvert>0`$. An NDCG ceiling instead depends on which gains are available and their ideal attainable positions; it is not numerically the recall value.
+Freeze candidate generation or use a common judged evaluation universe when comparing rankers, and report retrieval coverage separately. A final set cannot include an excluded item. With gold set $`G_q`$, reranker input $`S_q`$ and final cutoff $`k`$, its recall is at most $`\min(k,\lvert G_q\cap S_q\rvert)/\lvert G_q\rvert`$ for $`\lvert G_q\rvert\gt 0`$. An NDCG ceiling instead depends on which gains are available and their ideal attainable positions; it is not numerically the recall value.
 Use a frozen evaluation set, query-level uncertainty and the product's final metric as release evidence. Surrogate loss also diagnoses optimization before it diverges, but raw loss levels are not calibrated quality. Collapsing grades or rewriting a noisy boundary is a source heuristic requiring validation. Binary labels remove one graded-utility issue but not exposure bias, sampling bias or metric mismatch. Dwell time is numeric, yet censoring, intent, confounding and cross-query comparability still matter; equal thirty-second durations need not mean equal usefulness.
 ### 19.2 Pointwise classification and ordinal regression
 #### What it is
@@ -242,7 +242,7 @@ For a fixed candidate set and permutation, linearity of expectation gives:
 ```
 
 Decreasing discounts and the rearrangement argument make descending $`\mathbb E[g(y_i)]`$ optimal for expected DCG if those conditional expectations are correct. Label independence is unnecessary. McRank's expected grade $`\sum_j j p_j`$ uses linear utility instead. It need not agree with exponential gain: grade three with certainty has mean grade $`3`$ and gain $`7`$, while a fifty-fifty mixture of grades four and zero has mean grade $`2`$ but expected gain $`7.5`$.
-Expected NDCG requires care. If IDCG is a fixed positive normalizer, maximizing expected DCG also maximizes the normalized objective. If the whole label vector $`Y`$ and $`Z(Y)=\mathop{\mathrm{IDCG}}\nolimits(Y)`$ are uncertain, the optimal additive terms are instead $`\mathbb E[g(Y_i)/Z(Y)]`$ under the declared zero-normalizer policy. Counterexample at cutoff one: with probability $`0.1`$ only A has gain $`15`$; with probability $`0.9`$ only B has gain $`1`$. Expected gains favor A, $`1.5>0.9`$, but expected NDCG favors B, $`0.9>0.1`$. Thus expected-gain ranking is a principled expected-DCG score, not an unconditional expected-NDCG theorem.
+Expected NDCG requires care. If IDCG is a fixed positive normalizer, maximizing expected DCG also maximizes the normalized objective. If the whole label vector $`Y`$ and $`Z(Y)=\mathop{\mathrm{IDCG}}\nolimits(Y)`$ are uncertain, the optimal additive terms are instead $`\mathbb E[g(Y_i)/Z(Y)]`$ under the declared zero-normalizer policy. Counterexample at cutoff one: with probability $`0.1`$ only A has gain $`15`$; with probability $`0.9`$ only B has gain $`1`$. Expected gains favor A, $`1.5\gt 0.9`$, but expected NDCG favors B, $`0.9\gt 0.1`$. Thus expected-gain ranking is a principled expected-DCG score, not an unconditional expected-NDCG theorem.
 #### Ordinal alternative
 For zero-based grades, an ordinal model learns latent score $`z=w^{\mathsf T}\phi`$ and $`K-1`$ ordered finite cut points. Add endpoint sentinels when using a first-boundary expression:
 
@@ -253,7 +253,7 @@ b_0=-\infty,\qquad b_1\le\cdots\le b_{K-1},\qquad b_K=+\infty.
 With equality assigned to the upper interval, the two equivalent predictions are:
 
 ```math
-\widehat y=\sum_{r=1}^{K-1}\mathbf1[z\ge b_r]=\min\{r\in\{1,\ldots,K\}:z<b_r\}-1.
+\widehat y=\sum_{r=1}^{K-1}\mathbf1[z\ge b_r]=\min\{r\in\{1,\ldots,K\}:z\lt b_r\}-1.
 ```
 
 The source attributes PRank to Crammer and Singer (2001), and a large-margin ordinal construction to Shashua and Levin (2002). Their update rules and threshold-order constraints are method-specific. The continuous latent score can rank after thresholds are discarded, but can still tie and need not equal expected metric gain. If probabilities are required, an ordered-probability model can supply a distribution for utility scoring. More than five grades or noisy adjacent labels does not mathematically guarantee an ordinal model wins.
@@ -278,10 +278,10 @@ A width-$`20`$, stride-$`10`$ window over $`100`$ candidates has $`1+(100-20)/10
 Within one query, use only strictly preferred labeled pairs; ties require a separate policy:
 
 ```math
-I_q=\{(i,j):y_i>y_j\}.
+I_q=\{(i,j):y_i\gt y_j\}.
 ```
 
-Keep every pair within its query. For a linear scorer $`s_i=w^{\mathsf T}x_i+b`$, the common intercept cancels: $`s_i-s_j=w^{\mathsf T}(x_i-x_j)`$. Thus the difference-vector preference test is through the origin; this does not forbid bias terms in all underlying scorers. A soft-margin RankSVM program, with $`C_{\mathrm{SVM}}>0`$, is:
+Keep every pair within its query. For a linear scorer $`s_i=w^{\mathsf T}x_i+b`$, the common intercept cancels: $`s_i-s_j=w^{\mathsf T}(x_i-x_j)`$. Thus the difference-vector preference test is through the origin; this does not forbid bias terms in all underlying scorers. A soft-margin RankSVM program, with $`C_{\mathrm{SVM}}\gt 0`$, is:
 
 ```math
 \min_{w,\{\xi_{ij}\}}\ \frac12\lVert w\rVert_2^2+C_{\mathrm{SVM}}\sum_{(i,j)\in I_q}\xi_{ij}.
@@ -294,7 +294,7 @@ w^{\mathsf T}(x_i-x_j)\ge1-\xi_{ij},\qquad \xi_{ij}\ge0\quad\text{for every }(i,
 
 The source attributes the method to Herbrich and colleagues (2000), with a search application by Joachims (2002). Its click example turns a click on result three after skipping results one and two into two inferred preferences. Such behavior is not a verified relevance label: exposure, position and examination bias affect which comparisons are defensible.
 #### RankNet and factorization
-RankNet, attributed to Burges and colleagues (2005), can use a univariate neural scorer. For a strictly preferred pair, set the probability target to one and use a logistic link of steepness $`\gamma>0`$:
+RankNet, attributed to Burges and colleagues (2005), can use a univariate neural scorer. For a strictly preferred pair, set the probability target to one and use a logistic link of steepness $`\gamma\gt 0`$:
 
 ```math
 P_{ij}=\frac1{1+\exp[-\gamma(s_i-s_j)]},\qquad \overline P_{ij}=1\quad ((i,j)\in I_q).
@@ -323,7 +323,7 @@ Aggregate the signed update forces over the query; then $`\sum_i\lambda_i=0`$ be
 \lambda_i=\sum_{j:(i,j)\in I_q}\lambda_{ij}-\sum_{j:(j,i)\in I_q}\lambda_{ji}.
 ```
 
-For $`C=\sum_{(i,j)\in I_q}C_{ij}`$ and differentiable scores, the chain rule therefore gives the negative sign below. A descent update is $`\theta\leftarrow\theta+\eta\sum_i\lambda_i\nabla_\theta s_i`$, for learning rate $`\eta>0`$:
+For $`C=\sum_{(i,j)\in I_q}C_{ij}`$ and differentiable scores, the chain rule therefore gives the negative sign below. A descent update is $`\theta\leftarrow\theta+\eta\sum_i\lambda_i\nabla_\theta s_i`$, for learning rate $`\eta\gt 0`$:
 
 ```math
 \nabla_\theta C=-\sum_{i=1}^{n_q}\lambda_i\nabla_\theta s_i.
@@ -334,7 +334,7 @@ Compute $`n_q`$ query–document scores and retain their computation graph; the 
 Ordinary equal-weight RankSVM and RankNet use score gaps without directly pricing positions. At equal gaps they treat preferences alike unless sampling or other weights intervene. The source attributes LambdaRank to Burges, Ragno and Le (2006). Use the chosen gain $`g_i=2^{y_i}-1`$, fixed positive normalizer $`Z_q`$ and cutoff discount $`w_k`$ to compute the swap magnitude:
 
 ```math
-\bigl|\Delta_{ij}(\mathrm{NDCG}@k)\bigr|=\frac{\lvert g_i-g_j\rvert\,\lvert w_k(r_i)-w_k(r_j)\rvert}{Z_q},\qquad Z_q>0.
+\bigl|\Delta_{ij}(\mathrm{NDCG}@k)\bigr|=\frac{\lvert g_i-g_j\rvert\,\lvert w_k(r_i)-w_k(r_j)\rvert}{Z_q},\qquad Z_q\gt 0.
 ```
 
 
@@ -363,7 +363,7 @@ For fixed labels and one-based ranks, use the same cutoff and ideal normalizer i
 
 
 ```math
-\mathrm{NDCG}@k=\frac{\mathrm{DCG}@k}{Z_q},\qquad Z_q=\mathrm{IDCG}@k>0.
+\mathrm{NDCG}@k=\frac{\mathrm{DCG}@k}{Z_q},\qquad Z_q=\mathrm{IDCG}@k\gt 0.
 ```
 
 A small score change that preserves the strict order leaves the metric fixed. A crossing may jump the metric when the swapped gains and discounts differ; equal-gain or both-below-cutoff swaps need not change it. The ordinary score gradient is zero inside strict-order regions and may be undefined at consequential boundaries. The following routes change the objective, update rule or scorer in different ways.
@@ -371,13 +371,13 @@ A small score change that preserves the strict order leaves the metric fixed. A 
 The source attributes SoftRank to Taylor and colleagues (2008). Gaussian score smoothing starts from model means $`\mu_j=f(x_j)`$ and independent noise $`\varepsilon_j`$ with a positive standard deviation $`\sigma_G`$:
 
 ```math
-Z_j=\mu_j+\varepsilon_j,\qquad \varepsilon_j\overset{\mathrm{iid}}\sim\mathcal N(0,\sigma_G^2),\qquad \sigma_G>0.
+Z_j=\mu_j+\varepsilon_j,\qquad \varepsilon_j\overset{\mathrm{iid}}\sim\mathcal N(0,\sigma_G^2),\qquad \sigma_G\gt 0.
 ```
 
 Independent score noises give the following marginal pair probability. They do not make different comparisons against the shared random score $`Z_j`$ independent:
 
 ```math
-\pi_{ij}=\Pr(Z_i>Z_j)=\Phi\!\left(\frac{\mu_i-\mu_j}{\sqrt2\,\sigma_G}\right).
+\pi_{ij}=\Pr(Z_i\gt Z_j)=\Phi\!\left(\frac{\mu_i-\mu_j}{\sqrt2\,\sigma_G}\right).
 ```
 
 Enumerate the other candidates as $`i_1,\ldots,i_{n-1}`$. A shortcut treats their outranking indicators as independent Bernoulli variables with these marginal probabilities. Writing $`u`$ for the zero-based count ahead of $`j`$, its approximate recurrence is:
@@ -392,14 +392,14 @@ Enumerate the other candidates as $`i_1,\ldots,i_{n-1}`$. A shortcut treats thei
 ```
 
 Out-of-range bin values are zero. The number ahead starts at $`u=0`$, but the corresponding rank is $`r=u+1`$, so its discount is $`1/\log_2(2+u)`$, never $`1/\log_2(1+u)`$. Smooth pair probabilities make this shortcut differentiable; they do not make it the exact Gaussian rank law. For three equal-mean iid scores, exact ranks are uniform $`(1/3,1/3,1/3)`$, whereas the marginal shortcut gives $`(1/4,1/2,1/4)`$.
-To compute the exact rank distribution under the stated independent Gaussian score model, condition on $`Z_j=z`$. Then comparisons are independent conditional on $`z`$, with $`a_i(z)=\Pr(Z_i>z)=\Phi((\mu_i-z)/\sigma_G)`$. Apply the same recurrence to $`b_{j,m}(u;z)`$ using $`a_{i_m}(z)`$ instead of $`\pi_{i_mj}`$, and integrate over $`z`$. The displayed shortcut is being qualified here; this does not assert that every algorithm or variant in the original SoftRank literature uses that approximation. With fixed labels, the exact smoothed expected NDCG is:
+To compute the exact rank distribution under the stated independent Gaussian score model, condition on $`Z_j=z`$. Then comparisons are independent conditional on $`z`$, with $`a_i(z)=\Pr(Z_i\gt z)=\Phi((\mu_i-z)/\sigma_G)`$. Apply the same recurrence to $`b_{j,m}(u;z)`$ using $`a_{i_m}(z)`$ instead of $`\pi_{i_mj}`$, and integrate over $`z`$. The displayed shortcut is being qualified here; this does not assert that every algorithm or variant in the original SoftRank literature uses that approximation. With fixed labels, the exact smoothed expected NDCG is:
 
 ```math
 \begin{aligned}
 p_j(r)&=\int_{-\infty}^{\infty}\varphi_{\sigma_G}(z-\mu_j)
  b_{j,n-1}(r-1;z)\,\mathrm dz,\\
 \mathbb E[\mathrm{NDCG}@k]
-&=\frac1{Z_q}\sum_{j=1}^{n}g(y_j)\sum_{r=1}^{n}p_j(r)w_k(r),\qquad Z_q>0.
+&=\frac1{Z_q}\sum_{j=1}^{n}g(y_j)\sum_{r=1}^{n}p_j(r)w_k(r),\qquad Z_q\gt 0.
 \end{aligned}
 ```
 
@@ -408,7 +408,7 @@ Here $`\varphi_{\sigma_G}`$ is the zero-mean Gaussian density with standard devi
 LambdaMART instead uses rank-weighted pseudo-gradients for a scorer, often a univariate tree ensemble. Retain the positive preferred-document update-force convention from Section $`19.3`$ rather than silently reversing its sign:
 
 ```math
-\lambda_{ij}^{\mathrm{LR}}=\frac{\gamma\,\lvert\Delta_{ij}(\mathrm{NDCG}@k)\rvert}{1+\exp[\gamma(s_i-s_j)]}>0\quad\text{when its swap weight is positive}.
+\lambda_{ij}^{\mathrm{LR}}=\frac{\gamma\,\lvert\Delta_{ij}(\mathrm{NDCG}@k)\rvert}{1+\exp[\gamma(s_i-s_j)]}\gt 0\quad\text{when its swap weight is positive}.
 ```
 
 Aggregate signed forces $`\lambda_i`$ as before and fit trees to those negative-score-gradient targets. With swap weights held fixed, a pair contributes curvature $`h_{ij}=\gamma^2\lvert\Delta_{ij}(\mathrm{NDCG}@k)\rvert P_{ij}(1-P_{ij})\ge0`$ to each endpoint's diagonal; let $`h_i`$ sum incident contributions. An illustrative regularized Newton leaf update is $`\Delta v=\sum_{i\in L}\lambda_i/(\sum_{i\in L}h_i+\rho)`$ for $`\rho\ge0`$, with a zero-denominator guard and a separate learning rate. Tree construction, leaf formulas and regularization vary by implementation; rank-dependent weights are not a fixed global Hessian. The source favors tree ensembles for heterogeneous numeric features such as BM25, PageRank, click-through rate and domain age. Trees can also accept dense embedding coordinates; whether they are a good use of those features is empirical.

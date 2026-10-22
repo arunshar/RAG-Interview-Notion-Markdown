@@ -160,7 +160,7 @@ A cheap shortlist can use a separately trained compatible global model, or a del
 The chapter cites a roughly six-to-tenfold ColBERTv2 text-index compression result; that is not a guaranteed visual-index compression ratio or preservation of exact values. Measure residual/PQ or lower-precision variants before declaring a memory target met. Halving numeric value precision halves vector payload only, not raw media, graph links, IDs or total resident cost. OCR can be sufficient for some prose; preserve local/raw evidence where the product requires it, and benchmark rather than imposing one encoder on every document.
 ### 39.3 CLIP’s three biases
 #### What it is
-For a batch of $`N\ge1`$ matched image-caption pairs, project both nonzero encoder outputs into a common space and normalize: $`u_i=f_{\mathrm{img}}(I_i)/\|f_{\mathrm{img}}(I_i)\|_2`$ and $`v_j=f_{\mathrm{txt}}(T_j)/\|f_{\mathrm{txt}}(T_j)\|_2`$. Let temperature $`\tau>0`$; a learned logit scale can equivalently parameterize its inverse.
+For a batch of $`N\ge1`$ matched image-caption pairs, project both nonzero encoder outputs into a common space and normalize: $`u_i=f_{\mathrm{img}}(I_i)/\|f_{\mathrm{img}}(I_i)\|_2`$ and $`v_j=f_{\mathrm{txt}}(T_j)/\|f_{\mathrm{txt}}(T_j)\|_2`$. Let temperature $`\tau\gt 0`$; a learned logit scale can equivalently parameterize its inverse.
 
 ```math
 S_{ij}=\frac{u_i^{\mathsf T}v_j}{\tau},\qquad i,j\in\{1,\ldots,N\}.

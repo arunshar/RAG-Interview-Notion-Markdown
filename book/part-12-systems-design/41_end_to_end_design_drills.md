@@ -58,7 +58,7 @@ For a retrofit, inspect what can change before promising a named method. A sourc
 | Calibrated confidence | Estimated probability aligned with observed outcomes in a defined population | Validation uncertainty, selection and shift limit its interpretation |
 | Confidence $`p`$ | Decision-relevant estimated correctness probability | Raw token likelihood is not this quantity |
 | Acceptance threshold $`p^*`$ | $`1-C_a/C_w`$ under the simplified loss model | Mandatory review and evidence eligibility remain separate |
-| Wrong-answer cost $`C_w`$ | Expected harm from an accepted error in common cost units | Assume $`C_w>0`$; heterogeneous harms may need richer losses |
+| Wrong-answer cost $`C_w`$ | Expected harm from an accepted error in common cost units | Assume $`C_w\gt 0`$; heterogeneous harms may need richer losses |
 | Escalation cost $`C_a`$ | Expected review cost, delay and residual harm | Assume $`C_a\ge0`$, not automatically the cost of evidence tracing |
 | Reject option | Choose automatic answering or escalation using expected loss | The algebra requires an appropriate probability and loss model |
 | Acceptance gate | Final eligibility and risk decision before delivery | A high score cannot repair missing required evidence |
@@ -133,9 +133,9 @@ For a retrofit, inspect what can change before promising a named method. A sourc
 ## Core mechanics
 ### Mathematical conventions
 Use decimal storage: $`1\,\mathrm{GB}=10^9\,\mathrm B`$ and $`1\,\mathrm{MB}=10^6\,\mathrm B`$. Count indexed vectors, not source files, unless one vector per document is explicitly assumed. Vector/base-link payloads omit other index, metadata, text, cache, allocator and replica storage; capacity ceilings based on them are lower bounds.
-Let $`\lambda`$ denote query rate and $`t_{\mathrm{CPU}}`$ CPU-seconds of search per query. At target utilization $`0<u<1`$, a logical shard needs approximately $`c\ge\lambda t_{\mathrm{CPU}}/u`$ search cores. With $`R`$ equally loaded replicas, replace $`\lambda`$ by $`\lambda/R`$ for each replica. Wall-clock search latency need not equal CPU service demand. Embedding, reranking, generation, networking and failure reserve are separate budgets.
+Let $`\lambda`$ denote query rate and $`t_{\mathrm{CPU}}`$ CPU-seconds of search per query. At target utilization $`0\lt u\lt 1`$, a logical shard needs approximately $`c\ge\lambda t_{\mathrm{CPU}}/u`$ search cores. With $`R`$ equally loaded replicas, replace $`\lambda`$ by $`\lambda/R`$ for each replica. Wall-clock search latency need not equal CPU service demand. Embedding, reranking, generation, networking and failure reserve are separate budgets.
 All dollar prices, service times and example outcomes below are stipulated planning inputs, not measured SLAs or invoices. A weighted sum of route latencies is a mean, not a median or tail quantile. Keep full precision until reporting. Percentages and percentage-point changes are different units.
-For the reject-option calculation, correctness has zero cost, an accepted error costs $`C_w>0`$, escalation has expected cost $`C_a\ge0`$, and $`p\in[0,1]`$ is a decision-relevant correctness probability. Regulatory, professional-review, evidence or permission rules can prohibit automation regardless of that comparison. Estimated calibration is uncertain and may not transfer across domains, subgroups, routing or distribution shift.
+For the reject-option calculation, correctness has zero cost, an accepted error costs $`C_w\gt 0`$, escalation has expected cost $`C_a\ge0`$, and $`p\in[0,1]`$ is a decision-relevant correctness probability. Regulatory, professional-review, evidence or permission rules can prohibit automation regardless of that comparison. Estimated calibration is uncertain and may not transfer across domains, subgroups, routing or distribution shift.
 Aggregate recall, gold presence, answer correctness and causal faithfulness are separate measurements. A regression diagnosis requires matched inputs, question-level transitions, uncertainty and controlled ablations; a higher aggregate score does not exonerate a component. Correlated or copied sources do not provide independent corroboration.
 ### 41.1 Enterprise RAG over 100M documents at 500 QPS
 #### What
@@ -225,15 +225,15 @@ Report detection-to-block, publication-to-valid-replacement, read visibility and
 ### 41.3 High-stakes RAG: medicine and law
 #### What
 Place an evidence and acceptance gate before delivery. In high-stakes use, permissions, missing provenance or mandatory expert review can stop automation regardless of a model confidence score.
-Let $`p`$ estimate correctness for this decision, let $`C_w>0`$ be expected harm from an accepted wrong answer, and let $`C_a\ge0`$ include escalation cost, delay and any residual harm. Costs need common units. The simplified model assigns zero cost to a correct automatic answer.
+Let $`p`$ estimate correctness for this decision, let $`C_w\gt 0`$ be expected harm from an accepted wrong answer, and let $`C_a\ge0`$ include escalation cost, delay and any residual harm. Costs need common units. The simplified model assigns zero cost to a correct automatic answer.
 Expected automatic cost is $`(1-p)C_w`$, while expected escalation cost is $`C_a`$. Asymmetric error types, action-dependent harms, review imperfections or nonzero correct-answer cost require a richer loss model.
 When automation is permitted, prefer it strictly under the following inequality; at equality the simplified costs tie:
 
 ```math
-(1-p)C_w<C_a\quad\Longleftrightarrow\quad p>p^*=1-\frac{C_a}{C_w},\qquad C_w>0.
+(1-p)C_w\lt C_a\quad\Longleftrightarrow\quad p\gt p^*=1-\frac{C_a}{C_w},\qquad C_w\gt 0.
 ```
 
-For $`0<C_a<C_w`$, the interior threshold is $`p^*=1-C_a/C_w`$. If $`C_a\ge C_w`$, the numerical rule has no positive confidence floor; if $`C_a=0`$, strict preference for automation never occurs. These limiting cases do not override mandatory review.
+For $`0\lt C_a\lt C_w`$, the interior threshold is $`p^*=1-C_a/C_w`$. If $`C_a\ge C_w`$, the numerical rule has no positive confidence floor; if $`C_a=0`$, strict preference for automation never occurs. These limiting cases do not override mandatory review.
 This is a simplified cost-based reject-option derivation in the tradition of Chow’s optimal error/reject trade-off. It is not a theorem that a generative model’s score is calibrated or that cost minimization authorizes clinical/legal practice.[\[3\]](https://ieeexplore.ieee.org/document/1054406)
 #### Why
 With $`C_w=1`$ and $`C_a=0.05`$ in common hypothetical cost units, $`p^*=0.95`$. The units and harm assumptions must be justified for the actual product.
@@ -265,7 +265,7 @@ Cross-source corroboration can help when sources are identifiable and not merely
 #### What
 A multi-hop question requires combining facts, not necessarily exactly one distinct document per fact. Write $`f_i`$ for an intermediate fact and $`q_i`$ for a retrieval query; later queries may depend on earlier evidence.
 For a film-director/university/country question, one useful retrieval sequence discovers the director, then the university, then its location and the relevant country. A corpus may already contain a passage with several steps, so iteration is a workload-dependent remedy.
-A useful pattern is $`q_i=\mathop{\mathrm{FormQuery}}\nolimits(q,f_{<i},\mathcal E_{<i})`$, where $`\mathcal E_{<i}`$ is accumulated source evidence. Verify the intermediate fact before letting it determine later searches.
+A useful pattern is $`q_i=\mathop{\mathrm{FormQuery}}\nolimits(q,f_{\lt i},\mathcal E_{\lt i})`$, where $`\mathcal E_{\lt i}`$ is accumulated source evidence. Verify the intermediate fact before letting it determine later searches.
 One-shot retrieval uses the original query, but dense semantics, a bridge-rich document or existing model knowledge can still retrieve intermediate evidence. It may miss unnamed bridge facts; it is not mathematically incapable of retrieving them.
 IRCoT interleaves retrieval with generated reasoning sentences, using retrieval to inform later reasoning and those sentences to guide later search. This is the published method’s design, not a guarantee that its intermediate claims are correct.[\[4\]](https://aclanthology.org/2023.acl-long.557)
 Self-ask explicitly poses follow-up questions, obtains answers through search and continues or stops. Log the explicit query, source spans and concise evidence summaries; a formatted follow-up can still ask the wrong question.
@@ -471,7 +471,7 @@ flowchart TB
   D -->|yes| A["Deliver only under validated risk and operating gates"]
   D -->|no or unresolved tie| X
 ```
-**Figure **$`41.3`$**:** Under the simplified loss assumptions, prefer automation when $`(1-p)C_w<C_a`$, equivalently $`p>1-C_a/C_w`$ for $`C_w>0`$. Mandatory review and missing evidence remain separate gates. Calibration uncertainty and residual accepted risk require validation; a confidence threshold is not a clinical or legal safety certificate.
+**Figure **$`41.3`$**:** Under the simplified loss assumptions, prefer automation when $`(1-p)C_w\lt C_a`$, equivalently $`p\gt 1-C_a/C_w`$ for $`C_w\gt 0`$. Mandatory review and missing evidence remain separate gates. Calibration uncertainty and residual accepted risk require validation; a confidence threshold is not a clinical or legal safety certificate.
 ### Figure 41.4
 ```mermaid
 flowchart TB
@@ -540,7 +540,7 @@ flowchart TB
 ### Probe 1: How do 100 million documents, 500 QPS, and a 15-minute freshness SLA change one architecture?
 Answer: Count indexed vectors and all resident structures, measure per-query service demand, and distinguish logical shards from load-sharing replicas. Add version-aware exclusion, asynchronous replacement with verified visibility, background maintenance and serving checks. Capacity nodes do not establish freshness; component minima do not establish the publication-to-answer SLA.
 ### Probe 2: A clinical question is both low-confidence and multi-hop. Which problem do you solve first?
-Answer: If required evidence is missing, obtain it within a safe resource budget or escalate; do not force a clinical system to finish a chain before seeking review. Validate the delivered decision’s probability and expected harm, then apply $`(1-p)C_w<C_a`$ only if automation is otherwise permitted. A disclaimer, a larger top-$`k`$ or a high raw token probability cannot substitute for supported evidence and professional-review requirements.
+Answer: If required evidence is missing, obtain it within a safe resource budget or escalate; do not force a clinical system to finish a chain before seeking review. Validate the delivered decision’s probability and expected harm, then apply $`(1-p)C_w\lt C_a`$ only if automation is otherwise permitted. A disclaimer, a larger top-$`k`$ or a high raw token probability cannot substitute for supported evidence and professional-review requirements.
 ### Probe 3: Why not place text, tables, scanned contracts, photos, and slides in one shared index?
 Answer: A shared index can work if representations, authorization, provenance and fusion are validated. Separate modality routes can reduce expensive work, but their overhead and misses must be measured. Use compatible scorers and ranks/calibrated scores; there is no universal two-source cutoff for a shared space or full broadcast.
 ### Probe 4: Recall improves from $`71\%`$ to $`86\%`$, yet exact match falls from $`68\%`$ to $`59\%`$. Do you revert the reranker?

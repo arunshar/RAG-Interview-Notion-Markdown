@@ -118,6 +118,8 @@ def tex_errors(tex: str) -> list[str]:
         errors.append("Empty math expression.")
     if BLOCKED.search(tex):
         errors.append(r"GitHub rejects \operatorname; use supported operator notation.")
+    if "<" in tex or ">" in tex:
+        errors.append(r"Use \lt and \gt instead of raw angle symbols in GitHub math.")
     depth = 0
     i = 0
     while i < len(tex):

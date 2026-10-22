@@ -71,12 +71,12 @@ class MathValidationTests(unittest.TestCase):
         self.assertEqual({"inline": 1, "display": 1}, stats)
 
     def test_protected_math_fence(self):
-        text = "Before.\n\n```math\nx_{<t}^* + \\{1\\}\n```\n\nAfter.\n"
+        text = "Before.\n\n```math\nx_{\\lt t}^* + \\{1\\}\n```\n\nAfter.\n"
         self.check_valid(text)
         spans, _ = scan_math(text)
         self.assertEqual(1, len(spans))
         self.assertEqual("fence", spans[0].syntax)
-        self.assertEqual(r"x_{<t}^* + \{1\}", spans[0].tex(text))
+        self.assertEqual(r"x_{\lt t}^* + \{1\}", spans[0].tex(text))
 
     def test_math_fence_still_checks_tex(self):
         errors, _ = validate_text("```math\n\\operatorname{RET}(q,D)\n```\n")
@@ -106,6 +106,14 @@ class MathValidationTests(unittest.TestCase):
     def test_notion_import_is_idempotent(self):
         text = "```math\nx+y=2\n```\n"
         self.assertEqual(notion_markdown(text), notion_markdown(notion_markdown(text)))
+
+    def test_named_comparisons(self):
+        self.check_valid(r"$`x_{\lt t}\lt y,\quad z\gt 0`$")
+
+    def test_raw_comparisons_rejected(self):
+        for tex in ["x_{<t}", "x>0"]:
+            errors, _ = validate_text("$`" + tex + "`$")
+            self.assertTrue(any(r"\lt and \gt" in e for e in errors))
 
 
 if __name__ == "__main__":

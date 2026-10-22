@@ -66,7 +66,7 @@ The three blocks below preserve the source layout and all 57 primary symbol-mean
 | $`P@k`$ | Precision at $`k`$ | Measures useful-result density |
 | $`P_k`$ | Segmentation error | Measures chunk-boundary error rather than precision |
 | $`\mathop{\mathrm{IoU}}\nolimits`$ | Intersection over Union for chunk-span overlap | Measures overlap between predicted and reference spans |
-| $`F_1`$ | $`2PR/(P+R)`$ when $`P+R>0`$ | State zero-denominator and macro/micro averaging policies |
+| $`F_1`$ | $`2PR/(P+R)`$ when $`P+R\gt 0`$ | State zero-denominator and macro/micro averaging policies |
 
 
 ### Block 3: Training, serving, and graph notation
@@ -75,7 +75,7 @@ The three blocks below preserve the source layout and all 57 primary symbol-mean
 | Symbol | Meaning | Why it matters |
 | --- | --- | --- |
 | $`\mathcal{L}`$ | Training loss | Defines the optimization target |
-| $`\tau`$ | Positive softmax temperature $`\tau>0`$ | Relative to fixed scores: smaller sharpens, larger flattens |
+| $`\tau`$ | Positive softmax temperature $`\tau\gt 0`$ | Relative to fixed scores: smaller sharpens, larger flattens |
 | $`D^{\prime}`$ | Retrieved subset in training | Separates training evidence from the full store |
 | $`\lambda(d,x)`$ | Normalized document weight for a stated ensemble | Define candidate support and normalization; not every mixture uses this same convention |
 | $`P_R`$ | Retriever distribution | Describes retrieval preferences |

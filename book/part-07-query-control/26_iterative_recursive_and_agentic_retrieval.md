@@ -243,7 +243,7 @@ What:
 FLARE drafts the next sentence $`s_t`$ of $`m`$ tokens, using ordinary model probabilities $`p_i`$ for its drafted tokens under a defined decoding distribution. These are not probabilities that the tokens are true. If no token crosses the threshold, accept the draft; otherwise retrieve and regenerate the affected sentence.
 
 ```math
-\text{retrieve}\quad\Longleftrightarrow\quad\min_{1\le i\le m}p_i<\theta.
+\text{retrieve}\quad\Longleftrightarrow\quad\min_{1\le i\le m}p_i\lt \theta.
 ```
 
 On a trigger, remove or mask uncertain guessed spans when constructing the query, retrieve passages and regenerate $`s_t`$; discard the fired draft, not every non-triggering draft. Dropping the retrieved passages afterward changes context and may invalidate a cached suffix. Charge that context management where it occurs.
@@ -269,7 +269,7 @@ For all twenty-five probabilities equal to $`0.95`$, $`H=-\ln0.95\approx0.051293
 Implicit and explicit queries:
 - An implicit query masks tokens below the mask threshold $`\beta`$, for example a draft of “Person X attended \[mask\] and earned \[mask\].” It adds no extra query-generation call beyond the already charged draft. Retrieval still costs work, and the remaining frame may be uninformative or combine distinct needs.
 - An explicit query generates one question per uncertain span, not necessarily one per token. It separates needs but adds query decoding and input processing.
-- The trigger threshold $`\theta`$ and mask threshold $`\beta`$ have different roles. With the same strict comparison, $`\beta\ge\theta`$ covers every triggering token; if $`\beta<\theta`$, a trigger may mask nothing. Specify span expansion and threshold-boundary handling.
+- The trigger threshold $`\theta`$ and mask threshold $`\beta`$ have different roles. With the same strict comparison, $`\beta\ge\theta`$ covers every triggering token; if $`\beta\lt \theta`$, a trigger may mask nothing. Specify span expansion and threshold-boundary handling.
 - This implementation needs access to the relevant token probabilities. An API without them needs a different available gate or model interface; a trained Retrieve control token is an alternative architecture, not a feature automatically present in the existing model.
 Cost and complexity:
 - Hold answer length at twelve sentences of twenty-five tokens, with the common stream proxy $`\tau\approx4.179104478\,\mathrm{ms/token}`$. Sentence decode is $`S=25\tau\approx104.477612\,\mathrm{ms}`$ and the $`300`$-token output costs $`1{,}253.731343\,\mathrm{ms}`$.
@@ -299,7 +299,7 @@ Practice decisions:
 ### 26.5 Corrective RAG
 What:
 - CRAG places a separately trained retrieval evaluator between retrieval and generation. It aggregates query-document scores into a set score $`s`$; this is not a calibrated correctness probability without validation.
-- Choose $`\tau_{\mathrm{lo}}<\tau_{\mathrm{hi}}`$. Here define INCORRECT as $`s<\tau_{\mathrm{lo}}`$, AMBIGUOUS as $`\tau_{\mathrm{lo}}\le s\le\tau_{\mathrm{hi}}`$, and CORRECT as $`s>\tau_{\mathrm{hi}}`$, so every boundary has a branch.
+- Choose $`\tau_{\mathrm{lo}}\lt \tau_{\mathrm{hi}}`$. Here define INCORRECT as $`s\lt \tau_{\mathrm{lo}}`$, AMBIGUOUS as $`\tau_{\mathrm{lo}}\le s\le\tau_{\mathrm{hi}}`$, and CORRECT as $`s\gt \tau_{\mathrm{hi}}`$, so every boundary has a branch.
 - CORRECT splits chunks into short strips, rescores and recomposes survivors. INCORRECT discards local results, rewrites the query and filters web results. AMBIGUOUS retains filtered local evidence while adding filtered web results.
 - Strip filtering can remove a needed qualifier, and appended evidence can distract. These are architectural mitigations, not correctness guarantees. The reported Self-CRAG system combines this correction layer with Self-RAG.
 Why:
@@ -333,13 +333,13 @@ What:
 Self-RAG extends the generator vocabulary with learned reflection groups: Retrieve decisions, IsRel relevance, IsSup support and IsUse ordinal usefulness ratings. For a specified desired token $`r_G^\star`$ in group $`G`$, normalize its probability within that group, with a positive denominator:
 
 ```math
-s_G=\frac{p_\theta(r_G^\star\mid\text{current context})}{\sum_{r\in G}p_\theta(r\mid\text{current context})},\qquad\sum_{r\in G}p_\theta(r\mid\text{current context})>0.
+s_G=\frac{p_\theta(r_G^\star\mid\text{current context})}{\sum_{r\in G}p_\theta(r\mid\text{current context})},\qquad\sum_{r\in G}p_\theta(r\mid\text{current context})\gt 0.
 ```
 
 For $`K`$ passage-conditioned candidate segments, a schematic decode-time ranking combines segment likelihood with weighted reflection scores. Specify the target reflection token or rating expectation used in each group; IsUse can be an expected ordinal score rather than an argmax token. One illustrative score is
 
 ```math
-f\!\left(\hat y_t^{(i)}\right)=\log p_\theta\!\left(\hat y_t^{(i)}\mid x,d_i,y_{<t}\right)+\sum_G w_Gs_G^{(i)}.
+f\!\left(\hat y_t^{(i)}\right)=\log p_\theta\!\left(\hat y_t^{(i)}\mid x,d_i,y_{\lt t}\right)+\sum_G w_Gs_G^{(i)}.
 ```
 
 The weights $`w_G`$ are decode-time choices. Group-normalized model scores are not automatically calibrated truth probabilities. Use a consistent sequence-likelihood or length-normalized convention across candidates; otherwise unequal segment lengths can distort the ranking. This schematic is not a claim that every Self-RAG implementation uses exactly this score.
@@ -369,7 +369,7 @@ Why GRPO:
 - This is not unavoidable PPO critic memory: critic size, shared trunks, sharding, optimizer precision and offload change it. Define the population-standard-deviation group advantage as follows, setting it to zero for an exactly constant-reward group:
 
 ```math
-\hat A_i=\begin{cases}(r_i-\mu)/\sigma,&\sigma>0,\\0,&\sigma=0.\end{cases}
+\hat A_i=\begin{cases}(r_i-\mu)/\sigma,&\sigma\gt 0,\\0,&\sigma=0.\end{cases}
 ```
 
 
@@ -382,7 +382,7 @@ Why GRPO:
 \sigma=\sqrt{\frac1G\sum_{j=1}^{G}(r_j-\mu)^2}.
 ```
 
-- For binary rewards and $`c`$ successes, let $`\hat p=c/G`$ be the empirical group success fraction, distinct from a true sampling probability. If $`0<c<G`$, success advantage is $`\sqrt{(1-\hat p)/\hat p}`$ and failure advantage is $`-\sqrt{\hat p/(1-\hat p)}`$ under the population variance above.
+- For binary rewards and $`c`$ successes, let $`\hat p=c/G`$ be the empirical group success fraction, distinct from a true sampling probability. If $`0\lt c\lt G`$, success advantage is $`\sqrt{(1-\hat p)/\hat p}`$ and failure advantage is $`-\sqrt{\hat p/(1-\hat p)}`$ under the population variance above.
 - At $`G=5`$ with one success, advantages are $`+2`$ and four copies of $`-0.5`$. With two successes, the positive value is $`\sqrt{1.5}\approx1.224745`$ and the negative value is $`-\sqrt{2/3}\approx-0.816497`$, with $`\sigma=\sqrt{0.24}\approx0.489898`$.
 - Advantages sum to zero in a nonconstant group, but the weighted policy gradients do not generally cancel. Using sample variance, an epsilon or a different normalization changes the magnitudes. Group-relative normalization is not automatically an unbiased gradient estimator for expected exact match.
 Failure without safeguards:
@@ -398,7 +398,7 @@ P_{\mathrm{constant}}(\pi,G)=\pi^G+(1-\pi)^G.
 - Scoring the search engine’s observed tokens as policy actions would add an imitation/language-model objective, not the standard KL over controllable actions. Observation text being legitimate context is not a reason to penalize its token likelihood as if the policy chose it.
 Search cost objective:
 - Exact-match reward alone does not price search. An alternative is $`r=\mathrm{EM}-\lambda n`$ for $`n`$ searches, with reward and $`\lambda`$ in consistent utility units.
-- Let $`v_t`$ be expected terminal correctness under a specified continuation policy. In a myopic comparison of exactly one extra search, holding other costs and continuations fixed, search is worthwhile if $`v_{t+1}-v_t>\lambda`$. This is not a theorem that RL finds the optimal stopping policy; a full Bellman comparison also accounts for future search and costs.
+- Let $`v_t`$ be expected terminal correctness under a specified continuation policy. In a myopic comparison of exactly one extra search, holding other costs and continuations fixed, search is worthwhile if $`v_{t+1}-v_t\gt \lambda`$. This is not a theorem that RL finds the optimal stopping policy; a full Bellman comparison also accounts for future search and costs.
 - For a $`3`$-billion-parameter model, a $`300`$-token linear prefill costs $`300(6\times10^9)/F\approx5.294118\,\mathrm{ms}`$. Add $`20\,\mathrm{ms}`$ retrieval for $`25.294118\,\mathrm{ms}`$, excluding search-query decode and other overhead.
 - If one accuracy percentage point is worth $`100\,\mathrm{ms}`$, one unit of accuracy fraction is worth $`10{,}000\,\mathrm{ms}`$. The corresponding component-only penalty is $`\lambda\approx25.294118/10{,}000=0.002529412`$, not a conversion using milliseconds per unit fraction as if it were per point.
 Training cost:
@@ -426,10 +426,10 @@ Failure and crossover:
 - Let $`W_s^{\mathrm{mono}}`$ and $`W_s^{\mathrm{agent}}`$ denote additional adaptive follow-up durations for source $`s`$ under their respective context schedules. If those follow-ups serialize in the monolith but overlap across agents, the conditional crossover is
 
 ```math
-\sum_s W_s^{\mathrm{mono}}-\max_s W_s^{\mathrm{agent}}>\Delta_0.
+\sum_s W_s^{\mathrm{mono}}-\max_s W_s^{\mathrm{agent}}\gt \Delta_0.
 ```
 
-- In the further simplification of equal per-round cost $`c`$ and $`n_s`$ additional follow-ups per source, this becomes $`c(\sum_s n_s-\max_s n_s)>\Delta_0`$. Initial retrieval waits that can already run concurrently in either architecture must not be counted as saved serial follow-ups.
+- In the further simplification of equal per-round cost $`c`$ and $`n_s`$ additional follow-ups per source, this becomes $`c(\sum_s n_s-\max_s n_s)\gt \Delta_0`$. Initial retrieval waits that can already run concurrently in either architecture must not be counted as saved serial follow-ups.
 - The former “more than $`1.08`$ rounds” threshold follows only from separately ignoring the initial prefill advantage and taking $`\Delta_0=882.980862\,\mathrm{ms}`$, $`c=815\,\mathrm{ms}`$: the quotient is $`1.083412`$. It is not the crossover for the worked context-splitting scenario or a universal requirement for agents.
 - Fixed concurrent retrieval can be implemented without agents. Agent autonomy is useful when per-source adaptive queries, state or permissions justify it; context partitioning can also help even without follow-ups. Compare the full feasible baseline, not a deliberately serial fixed-retrieval implementation.
 Worked example:
@@ -468,10 +468,10 @@ Dilution and accuracy:
 A(T)=m_{\mathrm{floor}}+(1-m_{\mathrm{floor}})C(T)u(T).
 ```
 
-For $`C(T-1)>0`$, $`m_{\mathrm{floor}}<1`$ and the stated multiplicative utilization model, adding a round improves this toy accuracy exactly when
+For $`C(T-1)\gt 0`$, $`m_{\mathrm{floor}}\lt 1`$ and the stated multiplicative utilization model, adding a round improves this toy accuracy exactly when
 
 ```math
-\frac{C(T)-C(T-1)}{C(T-1)}>\Phi(\mu)^{-k}-1=\exp(k\beta_{\mathrm d})-1\approx k\beta_{\mathrm d}.
+\frac{C(T)-C(T-1)}{C(T-1)}\gt \Phi(\mu)^{-k}-1=\exp(k\beta_{\mathrm d})-1\approx k\beta_{\mathrm d}.
 ```
 
 

@@ -327,11 +327,11 @@ An organizer can prune, rerank, augment context and serialize or project evidenc
 3. Add validated context or separately sourced assertions only when useful.
 4. Serialize or project the retained evidence, preserving identifiers and verification access.
 Semantic relevance, graph structure, linguistic distance and learned dynamic masks are different pruning signals. The cited QA-GNN/PipeNet/JointLK-style examples motivate these categories, not a universal five-layer pipeline or guaranteed precision. Collapsing duplicate assertions does not mean collapsing all edges with the same relation type; that would erase legitimate distinct facts.
-Let $`v_i>0`$ be teleport probabilities summing to one, $`0\le\alpha<1`$ the link-following probability and $`d_j^{\mathrm{out}}`$ the out-degree. With dangling nodes redistributed according to $`v`$, a PageRank iteration is:
+Let $`v_i\gt 0`$ be teleport probabilities summing to one, $`0\le\alpha\lt 1`$ the link-following probability and $`d_j^{\mathrm{out}}`$ the out-degree. With dangling nodes redistributed according to $`v`$, a PageRank iteration is:
 
 ```math
 \pi_i^{(t+1)}=(1-\alpha)v_i+\alpha\left[
-\sum_{j:\,(j,i)\in E,\ d_j^{\mathrm{out}}>0}\frac{\pi_j^{(t)}}{d_j^{\mathrm{out}}}
+\sum_{j:\,(j,i)\in E,\ d_j^{\mathrm{out}}\gt 0}\frac{\pi_j^{(t)}}{d_j^{\mathrm{out}}}
 +v_i\sum_{j:\,d_j^{\mathrm{out}}=0}\pi_j^{(t)}\right].
 ```
 
@@ -405,7 +405,7 @@ Withhold or replace evidence in controlled ablations and compare answer/support 
 #### What
 The checked GraphRAG global-query pipeline extracts entities/relationships and element descriptions, detects a hierarchical community partition, builds bottom-up community reports and answers with map-reduce over summaries at a selected level. Its target is corpus-wide sense-making. This describes the cited global method, not every current query mode or all graph-based RAG.[\[5\]](https://arxiv.org/html/2404.16130v2)
 Leiden has local moving, partition refinement and aggregation phases. Omitting refinement makes the description resemble Louvain and loses the reason for Leiden’s improved connectivity guarantees. It can optimize modularity or a Constant Potts Model objective with specified resolution; it does not guarantee a global optimum. A community hierarchy is not the same construction as HNSW’s sampled search layers.[\[6\]](https://arxiv.org/html/1810.08473v3)
-For the following toy, project to an unweighted undirected graph with no self-loops, adjacency $`A`$, degrees $`k_i`$, $`m>0`$ edges and resolution one. Standard modularity is:
+For the following toy, project to an unweighted undirected graph with no self-loops, adjacency $`A`$, degrees $`k_i`$, $`m\gt 0`$ edges and resolution one. Standard modularity is:
 
 ```math
 Q_{\mathrm{mod}}=\frac1{2m}\sum_{i,j}\left(A_{ij}-\frac{k_i k_j}{2m}\right)\mathbb1[c_i=c_j].
@@ -635,7 +635,7 @@ No. Name the question mix, evidence budgets and evaluation procedure first. The 
 | $`40.7`$ | $`20+400+8{,}000=8{,}420`$ | Non-root tree occurrences at branching 20 and depth 3 |
 | $`40.7`$ | $`8{,}420\times7=58{,}940`$ tokens | Toy raw triple serialization |
 | $`40.7`$ | $`50\times7+5\times20=450`$ tokens | Selected triples plus summaries; not a complete prompt |
-| $`40.7`$ | $`58{,}940>32{,}768>8{,}192`$ | Raw payload exceeds both windows, by about $`1.798706`$ and $`7.194824`$ times |
+| $`40.7`$ | $`58{,}940\gt 32{,}768\gt 8{,}192`$ | Raw payload exceeds both windows, by about $`1.798706`$ and $`7.194824`$ times |
 | $`40.7`$ | $`k\le5`$ | Skipping reranking is a workload heuristic, not a correctness rule |
 | $`40.7`$ | $`k=10`$ versus a $`128\mathrm K`$ context | The tail-size scenario is hypothetical; record actual token counts and omissions |
 | $`40.8`$ | $`40\times15=600`$ text positions | Constructed triple serialization without extra metadata |

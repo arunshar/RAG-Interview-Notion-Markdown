@@ -34,7 +34,7 @@ The two routes therefore cooperate. The catalog supplies private, recent, and ci
 | Document $`d`$ | One retrievable item in the corpus | It receives an identifier or an index record |
 | Document identifier (docid) $`i(d)`$ | A token string that names one document | The model retrieves by generating this string |
 | Sequence-to-sequence model | A model that maps one token sequence to another | It maps documents and queries to identifiers |
-| Autoregressive decoding | Generate $`t_j`$ from $`p_\theta(t_j\mid t_{<j},q)`$ | The product over $`L_{\mathrm{id}}`$ steps defines the ID probability; variable lengths need termination rules |
+| Autoregressive decoding | Generate $`t_j`$ from $`p_\theta(t_j\mid t_{\lt j},q)`$ | The product over $`L_{\mathrm{id}}`$ steps defines the ID probability; variable lengths need termination rules |
 | Differentiable Search Index (DSI) | A learned retriever that stores query-to-docid behavior in parameters | It demonstrates the model-based retrieval program |
 | Indexing task | Training that maps a document’s text to its own identifier | It teaches corpus memorization |
 | Retrieval task | Training that maps a query to the relevant identifier | It teaches the behavior served at query time |
@@ -141,7 +141,7 @@ Recitation equations describe a specified clean entry/continuation/extraction pa
 Assign an injective identifier $`i(d)=(t_1,\ldots,t_{L_{\mathrm{id}}})`$ from an alphabet of size $`V`$. The autoregressive factorization is
 
 ```math
-p_\theta(i\mid q)=\prod_{j=1}^{L_{\mathrm{id}}}p_\theta(t_j\mid t_{<j},q).
+p_\theta(i\mid q)=\prod_{j=1}^{L_{\mathrm{id}}}p_\theta(t_j\mid t_{\lt j},q).
 ```
 
 The ID-generation stage can consult weights and a constraint structure rather than scanning document vectors. Returning a passage still requires an identifier-to-document mapping and content access. Training and constraint storage do not disappear, and variable-length schemes need explicit termination semantics.
@@ -297,7 +297,7 @@ Daily graph insertion is $`4.9152\times10^{11}`$ FLOPs; the initial full refresh
 #### Two stores can produce the same context object
 An external datastore $`D`$ retains documents; weights $`\theta`$ encode learned behavior. A model that emits a docid still needs a content store to turn it into a retrieved passage. A reciter instead generates a passage-like string, which may be wrong or untraceable. Either can supply context set $`C`$ to a final generator, but they do not confer the same provenance. A smaller model plus external retrieval beating a larger model is a workload-dependent reported motivation, not a universal seven-billion-versus-seventy-billion substitution law.
 #### Recitation converts continuation into temporary access
-Autoregressive generation factorizes a string into next-token probabilities $`p_\theta(x_t\mid x_{<t})`$. A model can also directly answer a question from its prompt; it is not architecturally forced to reproduce all earlier tokens of a remembered source. The procedure analyzed here intentionally locates a passage beginning and generates forward. It is not a keyed database read, and its exact-continuation reliability is a property to measure rather than a certified source-access operation.
+Autoregressive generation factorizes a string into next-token probabilities $`p_\theta(x_t\mid x_{\lt t})`$. A model can also directly answer a question from its prompt; it is not architecturally forced to reproduce all earlier tokens of a remembered source. The procedure analyzed here intentionally locates a passage beginning and generates forward. It is not a keyed database read, and its exact-continuation reliability is a property to measure rather than a certified source-access operation.
 #### Recitation success has an exponential distance term
 For a specified recitation-and-answer distribution, the law of total probability gives
 

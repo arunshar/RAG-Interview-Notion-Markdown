@@ -107,7 +107,7 @@ Probabilities and rates are fractions in $`[0,1]`$; report percentage-point chan
 For binary judge metrics, let $`\mathrm{TP}`$, $`\mathrm{FN}`$, $`\mathrm{FP}`$ and $`\mathrm{TN}`$ be counts against the declared support labels, with attributable as the positive class. Macro-$`F_1`$ is not accuracy, and $`1-\text{macro-}F_1`$ is not a wrong-verdict probability. Source-reported historical scores, selected error-audit proportions, local deployment rates and three-way routing performance must not be substituted for one another.
 ### 31.1 Attribution as RAG’s core promise
 #### Parametric generation has no corpus receipt
-- A fixed-weight text generator predicts tokens using a distribution such as $`p_\theta(x_t\mid x_{<t},u)`$, where $`u`$ is the supplied request/context.
+- A fixed-weight text generator predicts tokens using a distribution such as $`p_\theta(x_t\mid x_{\lt t},u)`$, where $`u`$ is the supplied request/context.
 - That probability notation alone neither includes nor rules out a provenance mechanism. The ordinary closed-book architecture considered here does not expose a reliable training-document lookup for each output span.
 - Asking it to name a source produces another generated claim, which may be right but is not a verifiable record of the generation’s origin.
 - Adding a datastore, retained provenance metadata or explicit source-aware architecture can change the available operations. The absence of a native pointer is not a theorem that no tuning or architectural change could ever add one.
@@ -209,7 +209,7 @@ The end-to-end AIS rate is:
 - Automation may use a resolver/filter followed by a support judge, or another validated implementation preserving the ordered semantics. One call is not inherently invalid, nor are two calls inherently correct.
 - Track false rejections at the first gate: a cheap filter can save calls while incorrectly discarding interpretable claims.
 - Under a latency budget, compare measured cost and quality rather than assuming a staged design is automatically cheaper.
-For $`N`$ sentences with first-stage pass fraction $`p_I`$, a simple sequential cost model is $`C=Nc_I+Np_Ic_A`$, where $`c_I`$ and $`c_A`$ are costs per resolution and support evaluation. At one million sentences and the illustrative $`p_I=0.94`$, that is one million cheap evaluations plus $`940{,}000`$ expensive ones. Compared with one expensive call per sentence, it saves cost only when $`c_I<0.06c_A`$ under this narrow model; throughput, batching and semantic differences need separate measurement.
+For $`N`$ sentences with first-stage pass fraction $`p_I`$, a simple sequential cost model is $`C=Nc_I+Np_Ic_A`$, where $`c_I`$ and $`c_A`$ are costs per resolution and support evaluation. At one million sentences and the illustrative $`p_I=0.94`$, that is one million cheap evaluations plus $`940{,}000`$ expensive ones. Compared with one expensive call per sentence, it saves cost only when $`c_I\lt 0.06c_A`$ under this narrow model; throughput, batching and semantic differences need separate measurement.
 ### 31.3 Post-hoc citations: similarity is not verification
 #### Post-hoc citation changes the question
 - A bare post-hoc system fixes the answer text, then retrieves passages resembling it and attaches markers.

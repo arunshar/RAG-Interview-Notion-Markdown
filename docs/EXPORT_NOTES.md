@@ -27,6 +27,7 @@ The original root page was a 60-link index. Its complete inventory is represente
 
 - Replaced 451 uses of GitHub-blocked `\operatorname` with equivalent supported upright operator notation, retaining side-subscript behavior.
 - Protected all 1,040 book display equations with GitHub math fences so Markdown does not misinterpret their TeX as lists, links, emphasis, or HTML.
+- Normalized raw comparison signs to `\lt` and `\gt` so GitHub cannot interpret sequence subscripts or inequalities as HTML.
 - Used named vertical-bar delimiters in affected table expressions, distinguishing original absolute-value bars from norm notation before Markdown table escaping.
 - Preserved all 28,968 inline book expressions, all 1,040 display expressions, and all 200 original fenced code and diagram blocks. The mathematical content and prose were not rewritten.
 - Rebuilt the Notion import archive with native display-equation delimiters. Packaging converts only the math fences; their TeX contents and the original code/diagram fences remain unchanged.

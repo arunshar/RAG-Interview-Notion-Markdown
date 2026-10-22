@@ -176,7 +176,7 @@ The original DPR single-dataset result reports $`78.4\%`$ NQ top-twenty answer-c
 - **Why:** Aggregate gains can hide losses, but selected extreme examples also overstate apparent mechanisms.
 - **Limit:** A post-hoc discovered slice is exploratory until confirmed on fresh/held-out cases or handled by an appropriate multiplicity protocol.
 - **Cost:** Reading roughly ten to thirty cases per direction is a workflow heuristic, not a statistical sample-size guarantee. Include random and consequential-error cases too.
-For the weighted identity below, define a per-query score $`s_i\in[0,1]`$ and a disjoint, exhaustive partition $`I_1,\ldots,I_J`$ of $`N>0`$ queries. Let $`n_j=|I_j|>0`$, $`w_j=n_j/N`$ and $`\bar s_j=n_j^{-1}\sum_{i\in I_j}s_i`$. Then:
+For the weighted identity below, define a per-query score $`s_i\in[0,1]`$ and a disjoint, exhaustive partition $`I_1,\ldots,I_J`$ of $`N\gt 0`$ queries. Let $`n_j=|I_j|\gt 0`$, $`w_j=n_j/N`$ and $`\bar s_j=n_j^{-1}\sum_{i\in I_j}s_i`$. Then:
 
 ```math
 \bar s=\frac1N\sum_{i=1}^N s_i=\sum_{j=1}^Jw_j\bar s_j,\qquad \sum_jw_j=1.
@@ -188,7 +188,7 @@ Take $`1{,}200`$ queries and define the metric specifically as mean per-query $`
 A disjoint partition has $`240`$ multi-hop queries and $`960`$ single-hop queries. Stipulated multi-hop means move $`0.68\to0.83`$ and single-hop $`0.80\to0.78`$. Their weighted means are exactly $`0.2(0.68)+0.8(0.80)=0.776`$ and $`0.2(0.83)+0.8(0.78)=0.79`$. The contributions are $`0.2(0.15)=0.03`$ and $`0.8(-0.02)=-0.016`$, totaling $`0.014`$. This algebra does not determine uncertainty or why the changes occurred.
 #### Significance filter and claim limit
 The single-proportion formula $`\sqrt{p(1-p)/n}`$ is not the standard error of a two-system change. Plugging the average rates into it gives approximately $`2.776201`$ and $`1.314582`$ percentage points here, but dividing the observed changes by those values does not justify the original “$`5.4`$ standard errors” or “inside noise” conclusions. The toy metrics are not even independent binary trials.
-For matched per-query means, set $`d_i=s_i^{\mathrm{on}}-s_i^{\mathrm{off}}`$, $`\bar d=n^{-1}\sum_i d_i`$, and for $`n>1`$ use
+For matched per-query means, set $`d_i=s_i^{\mathrm{on}}-s_i^{\mathrm{off}}`$, $`\bar d=n^{-1}\sum_i d_i`$, and for $`n\gt 1`$ use
 
 ```math
 \widehat{\mathrm{SE}}(\bar d)=\frac{s_d}{\sqrt n},\qquad
@@ -218,7 +218,7 @@ For two independent $`100`$-item proportions near one half, the difference stand
 ```math
 \hat d=\frac{u-v}{n},\qquad
 \widehat{\mathrm{SE}}(\hat d)=
-\sqrt{\frac{(u+v)/n-\hat d^2}{n-1}},\quad n>1.
+\sqrt{\frac{(u+v)/n-\hat d^2}{n-1}},\quad n\gt 1.
 ```
 
 A four-point control move and fifteen-point target move at $`n=100`$ cannot be certified harmless/significant by a ten-point rule. Use paired inference, effect size and an equivalence/harm margin; failure to reject zero is not proof the control is within that margin.
@@ -306,7 +306,7 @@ A $`400\,\mathrm{ms}`$ median alone cannot assess a one-second percentile SLA. A
 Run a fixed query $`R\ge1`$ times under a declared generation/retrieval policy. Use a validated semantic clustering rule, with cluster counts $`c_j`$ summing to $`R`$. Define an empirical modal-answer fraction, rather than a general probability that two answers agree:
 
 ```math
-\widehat{\mathrm{SC}}_{\mathrm{mode}}=\frac{\max_jc_j}{R},\qquad \sum_jc_j=R>0.
+\widehat{\mathrm{SC}}_{\mathrm{mode}}=\frac{\max_jc_j}{R},\qquad \sum_jc_j=R\gt 0.
 ```
 
 This diagnostic differs from the self-consistency decoding strategy of sampling reasoning paths and voting. It also differs from distinct-pair agreement,
