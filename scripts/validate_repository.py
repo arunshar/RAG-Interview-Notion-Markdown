@@ -15,7 +15,7 @@ from build_import import verify_archive
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / 'EXPORT-MANIFEST.json'
 STRUCTURAL_TAGS = re.compile(r'<(?:mention-page|page|callout|table|tr|td)\b')
-LINKS = re.compile(r'\[[^\]\n]*\]\((?:<([^>]+)>|([^\s)]+))(?:\s+"[^"]*")?\)')
+LINKS = re.compile(r'\[(?:\\.|[^\]\\\n])*\]\((?:<([^>]+)>|([^\s)]+))(?:\s+"[^"]*")?\)')
 
 
 def visible_markdown(text: str) -> str:
