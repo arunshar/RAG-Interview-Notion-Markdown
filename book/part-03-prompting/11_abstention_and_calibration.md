@@ -78,8 +78,8 @@ Finally, a six-paragraph story is not one indivisible fact. The editor must deci
 | sigmoid | A map from log-odds to a probability | It converts $`6.6007`$ log-odds to $`0.9986`$ |
 | self-consistency | Independent samples followed by a vote | Partial independence can improve accuracy |
 | plurality vote | Choosing the answer with the most samples | It can beat sequential revision at equal token spend |
-| Expected Calibration Error ($`\operatorname{ECE}`$) | Bucketed mismatch between stated confidence and observed accuracy | It measures reliability, not ranking quality |
-| Area Under the Receiver Operating Characteristic curve ($`\operatorname{AUROC}`$) | Probability that a correct answer outscores a wrong one, with half credit for ties | It measures failure prediction and ordering |
+| Expected Calibration Error ($`\mathop{\mathrm{ECE}}\nolimits`$) | Bucketed mismatch between stated confidence and observed accuracy | It measures reliability, not ranking quality |
+| Area Under the Receiver Operating Characteristic curve ($`\mathop{\mathrm{AUROC}}\nolimits`$) | Probability that a correct answer outscores a wrong one, with half credit for ties | It measures failure prediction and ordering |
 | calibration | Agreement between a score and empirical correctness frequency | Users can interpret a calibrated probability |
 | failure prediction | Separating correct from wrong answers by score | An abstention gate needs this property |
 | recalibration | Monotone post-processing of existing scores | It can repair reliability but cannot create ordering |
@@ -103,7 +103,7 @@ Finally, a six-paragraph story is not one indivisible fact. The editor must deci
 | verbalized confidence | A percentage requested in model text | It tends to occupy a few round values |
 | agreement score | Fraction $`\frac{k}{m}`$ of samples that agree with the served answer | It estimates the model’s answer distribution |
 | binomial model | A model for $`k`$ agreements in $`m`$ draws | It gives the variance and standard error of agreement |
-| standard error $`\operatorname{SE}`$ | Sampling uncertainty of an estimated agreement fraction | It limits which adjacent score levels are distinguishable |
+| standard error $`\mathop{\mathrm{SE}}\nolimits`$ | Sampling uncertainty of an estimated agreement fraction | It limits which adjacent score levels are distinguishable |
 | self-probing | A fresh-session judge of an answer with its query and evidence | Removes original history, not all anchoring or shared model error |
 | multi-step elicitation | Confidence per reasoning step followed by aggregation | It anchors scores to sub-claims |
 | top-$`k`$ elicitation | Asking for several candidate answers and confidence for each | It forces probability mass onto alternatives |
@@ -117,8 +117,8 @@ Finally, a six-paragraph story is not one indivisible fact. The editor must deci
 | proportional utility | Value that scales with the supported fraction | It consumes the mean of $`S`$ |
 | all-or-nothing utility | Value that requires every claim to be supported | It consumes the probability that $`S=1`$ |
 | cumulative distribution function (CDF) | Probability that $`S`$ is at or below each level | It retains more information than one scalar |
-| Continuous Ranked Probability Score ($`\operatorname{CRPS}`$) | A proper score for a predicted distribution over $`S`$ | It reduces to the Brier score for binary outcomes |
-| indicator function | A term that equals $`1`$ when its condition holds and $`0`$ otherwise | It writes the realized support threshold inside $`\operatorname{CRPS}`$ |
+| Continuous Ranked Probability Score ($`\mathop{\mathrm{CRPS}}\nolimits`$) | A proper score for a predicted distribution over $`S`$ | It reduces to the Brier score for binary outcomes |
+| indicator function | A term that equals $`1`$ when its condition holds and $`0`$ otherwise | It writes the realized support threshold inside $`\mathop{\mathrm{CRPS}}\nolimits`$ |
 | strictly proper score | A score optimized by reporting the true predictive distribution | It discourages strategic probability reports |
 | continuous self-evaluation | Repeated fresh-session scoring of one answer | It estimates a distribution over support |
 | claim-overlap similarity | Agreement measured over claims rather than exact strings | Long briefs rarely match word for word |
@@ -137,21 +137,25 @@ Use natural logarithms and nats. Correctness, answerability, support and agreeme
 - **Failure without it:** One global cutoff becomes permissive on high-stakes traffic and conservative on low-stakes traffic.
 - **Cost or complexity:** The product owner must state $`c_w`$ and $`c_a`$ per route. The model supplies only $`p`$.
 Answering has expected value $`p-(1-p)c_w`$. Abstaining has value $`-c_a`$. Answer when:
-$$
-p - (1-p)c_w > -c_a
+
+```math
+p - (1-p)c_w \gt  -c_a
 \Longleftrightarrow
-p(1+c_w) > c_w-c_a
+p(1+c_w) \gt  c_w-c_a
 \Longleftrightarrow
-p > \tau = \frac{c_w-c_a}{1+c_w}
-$$
+p \gt  \tau = \frac{c_w-c_a}{1+c_w}
+```
+
 At $`c_w = 2`$ and $`c_a = 0.5`$, $`\tau = \frac{1.5}{3} = 0.500`$. At $`c_w=200`$ with the same $`c_a`$, $`\tau=199.5/201\approx0.992537`$.
-If $`c_a > c_w`$, then $`\tau \lt 0`$. The cost-optimal policy never refuses because abstention costs more than a wrong answer.
+If $`c_a \gt  c_w`$, then $`\tau \lt 0`$. The cost-optimal policy never refuses because abstention costs more than a wrong answer.
 Abstention happens after retrieval and generation. A retrieve-or-not reflection token acts before evidence exists. A system can retrieve often and still refuse often.
 #### Citations change cost, not confidence
 - **What:** For this illustrative cost model, let $`q`$ be the probability, conditional on a wrong answer, that verification catches it before the modeled harm. Let $`c_v`$ be the replacement cost on that caught-wrong branch. Correct-answer verification costs and residual harm are omitted; adding them changes the decision utility. The effective wrong-answer cost is:
-$$
+
+```math
 c_w' = (1-q)c_w + qc_v
-$$
+```
+
 - **Why:** A readable cited span lets the user detect residual support failures.
 - **Failure without it:** Citation presence alone does not carry correctness information. The cited FActScore result found citations on over $`30\%`$ of supported sentences and over $`30\%`$ of unsupported sentences.
 - **Cost or complexity:** The product must measure citation open rate and span-level correctness. An access-controlled or unreadable source does not reduce $`c_w`$.
@@ -162,9 +166,11 @@ At $`c_w = 20`$, $`q = 0.6`$, and $`c_v = 0.2`$, the effective cost is $`8.12`$.
 - **Failure without it:** A reported $`80\%`$ macro-$`F_1`$ neither implies $`t=0.8,f=0.2`$ nor rules out a higher-precision, lower-coverage threshold.
 - **Cost or complexity:** Treat $`t=0.8,f=0.2`$ as an independent toy assumption, not an optimistic bound extracted from AttributionBench. Measure the ROC or risk-coverage curve and validate that the support event matches the product's correctness target.
 For the separate toy operating point $`a=0.81`$, $`t=0.8`$ and $`f=0.2`$, pass precision is:
-$$
-\operatorname{Prec}_{\mathrm{pass}}=\frac{0.8(0.81)}{0.8(0.81)+0.2(0.19)}=\frac{0.648}{0.686}\approx0.944606.
-$$
+
+```math
+\mathop{\mathrm{Prec}}\nolimits_{\mathrm{pass}}=\frac{0.8(0.81)}{0.8(0.81)+0.2(0.19)}=\frac{0.648}{0.686}\approx0.944606.
+```
+
 That particular binary pass group does not meet $`\tau\approx0.992537`$. Equating its precision to the cost threshold gives $`c_w=(p+c_a)/(1-p)\approx26.0789`$ for bare answers, or an original wrong-answer cost of about $`64.8974`$ under the stated citation-cost transformation. These are intersections for this fixed operating point, not universal stakes limits or proof that no other threshold can work. Measure precision and coverage at alternative thresholds, improve evidence or escalate when no validated point meets the route requirement.
 A standing disclaimer on $`100\%`$ of answers is a constant rather than a correctness signal. Being constant, the disclaimer carries no discrimination information; whether it changes harm is a separate empirical and legal question. A refusal policy is informative only to the extent that its decisions actually correlate with correctness.
 #### Worked traffic economics
@@ -195,9 +201,11 @@ The opening audit found the answer verbatim in the top retrieved chunk for 31 of
 - **Failure without a better signal:** Dense Passage Retrieval (DPR) training fixes score gaps within a query but not absolute score levels. It also scores topic overlap, not answer containment.
 - **Cost or complexity:** It is nearly free as a pre-filter. It is not a calibrated answer-confidence score.
 The training loss is:
-$$
+
+```math
 L = -\log \frac{\exp(s(q,d^+)/T)}{\sum_j \exp(s(q,d_j)/T)}
-$$
+```
+
 Adding the same constant $`c`$ to all scores for one query multiplies numerator and denominator by $`\exp(c/T)`$. The loss does not change, so a global score level is unconstrained.
 A 2024 parental-leave question can retrieve a 2019 policy page at high similarity. The chunk is topical but can carry the wrong number.
 #### Mechanism 2: knowledge-graph node absence
@@ -211,11 +219,13 @@ A 2024 parental-leave question can retrieve a 2019 policy page at high similarit
 - **Failure without semantic isolation:** A 40-token answer has 12 claim tokens and 28 glue tokens. One formatting surprise can move the mean almost as much as collapse across every claim token.
 - **Cost or complexity:** It is cheap when token probabilities are exposed. It is unavailable from many closed APIs and is sensitive to format.
 The two mean changes are:
-$$
+
+```math
 \frac{12\ln(0.9/0.6)}{40} = 0.1216
 \qquad \text{versus} \qquad
 \frac{\ln(0.97/0.02)}{40} = 0.0970
-$$
+```
+
 The glue-token change is roughly four-fifths of the full content collapse. The cited FormatSpread result reports swings up to 76 accuracy points on LLaMA-2-13B from formatting.
 #### Mechanism 4: self-check
 - **What:** Ask the generator whether its own answer is supported.
@@ -251,29 +261,39 @@ For a prevalence-matched $`t=0.8,f=0.2`$ toy gate at $`a=0.738`$, precision is $
 - **Failure without outside data:** A behavior with probability $`q`$ appears zero times with probability $`(1-q)^N`$, approximately $`\exp(-qN)`$. In a pure empirical-only resampling model with no smoothing or outside information, a zero-frequency state is absorbing; general models need not have this property.
 - **Cost or complexity:** First-stage presence probability is $`1-(1-q)^N`$; $`qN\gg1`$ makes presence likely in the rare-event approximation, not certain. Frequency increments of $`1/N`$ are not a hard extinction threshold.
 For $`q = 10^{-4}`$ and $`N = 5{,}000`$:
-$$
+
+```math
 \Pr(K_1=0)=(1-q)^N=(1-10^{-4})^{5{,}000}\approx0.606515\approx e^{-0.5}.
-$$
+```
+
 If, additionally, each surviving generation were reset to the same rare-event probability $`q`$, a constant-hazard toy calculation would give:
-$$
+
+```math
 \Pr(\text{survive three stages})=\left[1-(1-q)^N\right]^3\approx0.060924\quad\text{under constant conditional absence hazard}.
-$$
-This roughly $`6.09\%`$ value is not the survival law of actual recursive empirical retraining: after survival the frequency is random, and later absence probabilities depend on it. In a pure empirical-resampling model, $`K_{t+1}\mid K_t\sim\operatorname{Bin}(N,K_t/N)`$ and $`0`$ is absorbing. Generalization, smoothing, priors and external data can make absence non-absorbing. The first-generation absence probability illustrates rarity; it does not establish a hard deletion of all behaviors below $`1/N`$.
+```
+
+This roughly $`6.09\%`$ value is not the survival law of actual recursive empirical retraining: after survival the frequency is random, and later absence probabilities depend on it. In a pure empirical-resampling model, $`K_{t+1}\mid K_t\sim\mathop{\mathrm{Bin}}\nolimits(N,K_t/N)`$ and $`0`$ is absorbing. Generalization, smoothing, priors and external data can make absence non-absorbing. The first-generation absence probability illustrates rarity; it does not establish a hard deletion of all behaviors below $`1/N`$.
 #### Self-reflection as context-window resampling
 - **What:** Round $`t+1`$ samples from the question plus prior answers, not from the question alone.
-$$
+
+```math
 p(\cdot \mid q,a_1,\ldots,a_t)
 \quad \text{rather than} \quad
 p(\cdot \mid q)
-$$
+```
+
 - A prior answer may bias a later continuation; a constant $`\beta`$ log-odds increment is a toy assumption, not an inevitable law. Compare fixed alternatives with and without the prior turn to estimate a log-odds change; one answer’s log probability alone is not a log-odds difference. Each revision adds full inference work and latency.
 Take the constant-increment toy $`\beta=0.8`$ nats per round and initial $`p_{\mathrm{wrong}}=0.55`$, $`p_{\mathrm{right}}=0.45`$. Initial log odds are $`\ln(0.55/0.45)\approx0.200671`$. After eight rounds:
-$$
+
+```math
 \ell_8=\ln\frac{0.55}{0.45}+8(0.8)\approx6.60067070.
-$$
-$$
+```
+
+
+```math
 p_{\mathrm{wrong}}^{(8)}=\frac1{1+e^{-\ell_8}}\approx0.998642390.
-$$
+```
+
 The equivalent temperature is $`T = \frac{0.2007}{6.6007} = 0.030`$. Eight self-affirmations sharpen this one decision like a temperature drop from $`1.0`$ to $`0.03`$, with no new evidence.
 #### Stated odds and real odds diverge
 - **What:** A naive aggregator treats every self-check pass as independent.
@@ -293,17 +313,21 @@ The equivalent temperature is $`T = \frac{0.2007}{6.6007} = 0.030`$. Eight self-
 The stated dependence scenario leaves conditional odds $`(738/262)(1.2)\approx3.38015267`$, giving $`77.169746\%`$ precision. Naively multiplying eight independent ratios gives $`(738/262)(4.5)^8\approx473{,}647.4251`$ odds and approximately $`99.99978887\%`$ confidence. The odds inflation factor is $`4.5^8/1.2\approx140{,}126.0449`$ in this toy, not eight independent pieces of evidence.
 Nine equal-length serial passes emit $`2{,}250`$ output tokens and take $`56.25\,\mathrm s`$ of decode at $`40`$ tokens per second. At $`1{,}000`$ queries per day and $`\$3.00`$ per million output tokens, output cost is $`\$6.75`$ daily. Above two passes at $`\$1.50`$ daily, the $`365`$-day increment is $`\$1{,}916.25`$ and serial decode latency is $`4.5`$ times higher. Zero accuracy gain is a scenario assumption; inputs and other overhead are excluded.
 For a separate idealized plurality example, suppose each of eight IID draws outputs the one correct answer with probability $`0.738`$, and each of four wrong values with probability $`0.262/4=0.0655`$. Break a tie uniformly among tied leaders. Then:
-$$
-C \sim \operatorname{Bin}(8,0.738)
-$$
-$$
+
+```math
+C \sim \mathop{\mathrm{Bin}}\nolimits(8,0.738)
+```
+
+
+```math
 \begin{aligned}
-\mathbf N&\sim\operatorname{Multinomial}\!\left(8;0.738,0.0655,0.0655,0.0655,0.0655\right),\\
+\mathbf N&\sim\mathop{\mathrm{Multinomial}}\nolimits\!\left(8;0.738,0.0655,0.0655,0.0655,0.0655\right),\\
 \Pr(\text{correct plurality})&=\sum_{\sum_i n_i=8}\Pr(\mathbf N=\mathbf n)
 \frac{\mathbf1[n_0=\max_i n_i]}{\sum_i\mathbf1[n_i=\max_j n_j]}
 \approx0.987701.
 \end{aligned}
-$$
+```
+
 The multinomial scenario gives $`98.7701\%`$ plurality accuracy, about $`24.9701`$ points over one draw. The event $`C\le2`$ has probability about $`0.005455`$, but its complement is not a sufficient condition for a correct plurality: three correct votes can lose to five identical wrong votes, and four can tie four. A strict correct majority alone guarantees success with probability approximately $`86.8914\%`$. Eight $`250`$-token outputs total $`2{,}000`$ output tokens and $`\$6.00`$ per $`1{,}000`$ queries at the stated price, excluding inputs. The ideal $`6.25\,\mathrm s`$ parallel decode time assumes full batch capacity and no per-sequence slowdown; it is not a measured latency. Real query-specific answer probabilities and wrong-answer concentration must be measured. The reported $`17.9`$-point forty-sample study gain is a different experiment, not a validation or fixed fraction of this toy result.
 When a checker judges evidence rather than a draft, clear prior answers and verdicts from its context. Log confidence by round and alert when it rises while labeled accuracy stays flat.
 Do not fine-tune a successor on unverified outputs from its predecessor. The stated safeguards are external verification, rare-intent oversampling, and a fresh human-labeled tail set.
@@ -311,21 +335,25 @@ Do not fine-tune a successor on unverified outputs from its predecessor. The sta
 #### Two independent score properties
 - **What:** Calibration asks whether stated confidence matches empirical accuracy. Failure prediction asks whether correct answers outrank wrong ones.
 - **Why:** User-facing probabilities need calibration, while an abstention gate needs ordering.
-- **Failure without separation:** A temperature sweep can cut Expected Calibration Error ($`\operatorname{ECE}`$) from $`0.21`$ to $`0.01`$ while leaving the refused set and selective precision unchanged.
-- **Cost or complexity:** Compute both $`\operatorname{ECE}`$ and Area Under the Receiver Operating Characteristic curve ($`\operatorname{AUROC}`$), or publish the full risk-coverage curve.
+- **Failure without separation:** A temperature sweep can cut Expected Calibration Error ($`\mathop{\mathrm{ECE}}\nolimits`$) from $`0.21`$ to $`0.01`$ while leaving the refused set and selective precision unchanged.
+- **Cost or complexity:** Compute both $`\mathop{\mathrm{ECE}}\nolimits`$ and Area Under the Receiver Operating Characteristic curve ($`\mathop{\mathrm{AUROC}}\nolimits`$), or publish the full risk-coverage curve.
 For score buckets $`B_1`$ through $`B_M`$:
-$$
-\operatorname{ECE}
+
+```math
+\mathop{\mathrm{ECE}}\nolimits
 = \sum_{m=1}^{M}\frac{|B_m|}{n}
-\left|\operatorname{acc}(B_m)-\operatorname{conf}(B_m)\right|
-$$
+\left|\mathop{\mathrm{acc}}\nolimits(B_m)-\mathop{\mathrm{conf}}\nolimits(B_m)\right|
+```
+
 For one correct and one wrong draw:
-$$
-\operatorname{AUROC}
-= \Pr(s_{\mathrm{correct}}>s_{\mathrm{wrong}})
+
+```math
+\mathop{\mathrm{AUROC}}\nolimits
+= \Pr(s_{\mathrm{correct}}\gt s_{\mathrm{wrong}})
 + \frac{1}{2}\Pr(s_{\mathrm{correct}}=s_{\mathrm{wrong}})
-$$
-Emit the constant score $`s = a`$, where $`a`$ is base accuracy. When $`a`$ is the observed accuracy on this same dataset, empirical $`\operatorname{ECE}=0`$ in all nonempty bins and $`\operatorname{AUROC}=0.5`$ if both classes occur. Population calibration requires $`a`$ to equal the true base rate; a fitted constant need not remain calibrated after distribution shift. The score is perfectly calibrated and useless for abstention.
+```
+
+Emit the constant score $`s = a`$, where $`a`$ is base accuracy. When $`a`$ is the observed accuracy on this same dataset, empirical $`\mathop{\mathrm{ECE}}\nolimits=0`$ in all nonempty bins and $`\mathop{\mathrm{AUROC}}\nolimits=0.5`$ if both classes occur. Population calibration requires $`a`$ to equal the true base rate; a fitted constant need not remain calibrated after distribution shift. The score is perfectly calibrated and useless for abstention.
 #### Why recalibration cannot create separation
 - **What:** A strictly increasing map of one fixed scalar score preserves every ordering and tie, hence AUROC and rank-based risk-coverage points with a fixed tie policy.
 - **Why:** Binary temperature scaling with positive temperature, or a positive-slope Platt map, has this property. Refit numeric thresholds if the score scale changes.
@@ -333,44 +361,48 @@ Emit the constant score $`s = a`$, where $`a`$ is base accuracy. When $`a`$ is t
 - **Cost or complexity:** Isotonic regression is only non-decreasing. It can merge reversed pairs or correctly ordered pairs into ties, so empirical AUROC can increase or decrease, not only decrease. It creates no new sample information, and held-out validation remains necessary.
 The cited black-box elicitation study found different winners. Pairwise-ranking aggregation gave the best calibration. Average confidence over samples gave the best failure prediction. It also reported systematic overconfidence under vanilla verbalized prompting and better failure prediction with more samples.
 #### Brier decomposition
-- **What:** Murphy’s Brier score ($`\operatorname{BS}`$) decomposition separates probability error into reliability, resolution, and task uncertainty.
+- **What:** Murphy’s Brier score ($`\mathop{\mathrm{BS}}\nolimits`$) decomposition separates probability error into reliability, resolution, and task uncertainty.
 - **Why:** It names which budget post-processing can fix.
 - **Failure without it:** Reliability improvements can be mistaken for a better gating signal.
 - **Cost or complexity:** Fit calibration on held-out labeled data. Resolution must come from a better raw signal.
-$$
-\operatorname{BS}
+
+```math
+\mathop{\mathrm{BS}}\nolimits
 =
 \underbrace{\sum_m \frac{|B_m|}{n}
-\left(\operatorname{conf}(B_m)-\operatorname{acc}(B_m)\right)^2}_{\mathrm{REL}}
+\left(\mathop{\mathrm{conf}}\nolimits(B_m)-\mathop{\mathrm{acc}}\nolimits(B_m)\right)^2}_{\mathrm{REL}}
 -
 \underbrace{\sum_m \frac{|B_m|}{n}
-\left(\operatorname{acc}(B_m)-a\right)^2}_{\mathrm{RES}}
+\left(\mathop{\mathrm{acc}}\nolimits(B_m)-a\right)^2}_{\mathrm{RES}}
 +
 \underbrace{a(1-a)}_{\mathrm{UNC}}
-$$
+```
+
 The displayed finite-sample Brier decomposition is exact when each group has a constant issued forecast, as in the discrete-score example. Replacing varying individual forecasts by coarse-bin means changes the score and may require within-bin terms. Mapping each fixed group to its empirical accuracy makes its in-sample reliability zero. A one-to-one relabeling retains those groups and their resolution; merging groups can reduce resolution. Deterministic post-processing does not create information, but arbitrary numerical binning can change reported resolution. Evaluate calibration on separate data.
 #### Worked calibration comparison
 - **What:** Use the same $`1{,}000`$ queries with base accuracy $`a=0.738`$ and $`\mathrm{UNC}=0.738(0.262)=0.193356`$.
 - **Why:** The example holds answers fixed and changes only the confidence signal.
-- **Failure without the comparison:** $`\operatorname{ECE}`$ alone chooses the wrong gate.
+- **Failure without the comparison:** $`\mathop{\mathrm{ECE}}\nolimits`$ alone chooses the wrong gate.
 - **Cost or complexity:** The verbalized signal uses three levels. The agreement signal requires eight samples.
 Verbalized confidence has 300 queries at $`0.90`$ with 210 correct, 400 at $`0.95`$ with 300 correct, and 300 at $`1.00`$ with 228 correct. Bucket accuracies are $`0.700`$, $`0.750`$, and $`0.760`$.
-$$
-\operatorname{ECE}
+
+```math
+\mathop{\mathrm{ECE}}\nolimits
 = 0.3(0.200)+0.4(0.200)+0.3(0.240)
 = 0.212
-$$
+```
+
 Among $`738\times262=193{,}356`$ correct–wrong pairs, verbalized confidence has $`70{,}320`$ wins and $`65{,}316`$ ties: AUROC $`(70{,}320+65{,}316/2)/193{,}356\approx0.532582387`$.
-Eight-probe agreement is illustrated with bucket sizes $`350{,}200{,}180{,}150{,}120`$, scores $`1,7/8,6/8,5/8,3/8`$, and correct counts $`329{,}168{,}126,75,40`$. The last score is explicitly $`3/8`$, not an unspecified value at most $`4/8`$; this makes the reported errors reproducible. Then $`\operatorname{ECE}=0.06075`$, $`\mathrm{REL}\approx0.00450708`$, $`\mathrm{RES}\approx0.04476933`$, and $`\operatorname{AUROC}=153{,}888/193{,}356\approx0.795879`$. These are stipulated bucket data, not performance implied by eight IID samples.
+Eight-probe agreement is illustrated with bucket sizes $`350{,}200{,}180{,}150{,}120`$, scores $`1,7/8,6/8,5/8,3/8`$, and correct counts $`329{,}168{,}126,75,40`$. The last score is explicitly $`3/8`$, not an unspecified value at most $`4/8`$; this makes the reported errors reproducible. Then $`\mathop{\mathrm{ECE}}\nolimits=0.06075`$, $`\mathrm{REL}\approx0.00450708`$, $`\mathrm{RES}\approx0.04476933`$, and $`\mathop{\mathrm{AUROC}}\nolimits=153{,}888/193{,}356\approx0.795879`$. These are stipulated bucket data, not performance implied by eight IID samples.
 Isotonic fitting maps the three verbalized levels to $`0.700,0.750,0.760`$ with no merges. On these same fit data, ECE is zero and AUROC remains approximately $`0.532582`$. This is an in-sample illustration, not proof of zero held-out calibration error. In general isotonic merges can change AUROC.
 At $`\tau=19.5/21\approx0.928571`$, the raw verbalized scores would naively admit $`700`$ of $`1{,}000`$ answers, since $`0.95`$ and $`1.00`$ exceed the cutoff. That is not a justified cost decision because those scores are miscalibrated. The fitted verbalized values admit none. The agreement top group has observed accuracy $`329/350=0.94`$ and contains $`350`$ answers; to apply a probability threshold to agreement, calibrate the agreement-to-correctness map and include uncertainty, rather than equating sample consensus with truth.
 If calibration makes $`\mathrm{REL}=0`$ on these same groups, Brier skill against the empirical constant base rate is $`\mathrm{RES}/\mathrm{UNC}`$. At $`\mathrm{UNC}=0.193356`$, verbalized groups give $`0.328927\%`$ and agreement groups $`23.153837\%`$. These are groupwise-calibrated skill values, not raw agreement skill or held-out guarantees.
 #### Deployment rules and claim limits
-- **What:** Select the raw signal on $`\operatorname{AUROC}`$ or risk-coverage. Fit calibration afterward.
+- **What:** Select the raw signal on $`\mathop{\mathrm{AUROC}}\nolimits`$ or risk-coverage. Fit calibration afterward.
 - **Why:** The product chooses an operating point from a cost ratio in probability units.
 - **Failure without maintenance:** A map fit to one model version and query mix goes stale.
 - **Cost or complexity:** Refit after model-version changes and query-mix shifts. The book suggests isotonic regression with enough labels, but warns that under roughly $`1{,}000`$ labeled examples it may fit noise. Platt or temperature scaling is then lower variance.
-Global $`\operatorname{ECE}`$ at $`M = 1`$ reduces to the absolute gap between mean confidence and accuracy. Opposite segment errors can cancel. Report $`\operatorname{ECE}`$ by query type, source, and language.
+Global $`\mathop{\mathrm{ECE}}\nolimits`$ at $`M = 1`$ reduces to the absolute gap between mean confidence and accuracy. Opposite segment errors can cancel. Report $`\mathop{\mathrm{ECE}}\nolimits`$ by query type, source, and language.
 Coverage at a fixed $`\tau`$ is a label-free drift signal. The book suggests triggering a refit when coverage moves more than a few points without a release.
 ### 11.5 Eliciting confidence from a black box
 #### Sequence probability scores strings, not meanings
@@ -386,24 +418,28 @@ If five correct phrasings each have probability $`0.12`$ and one wrong canonical
 - **Cost or complexity:** Recalibration can move the three values but cannot invent more levels.
 The cited study reports that vanilla verbalized confidence is systematically overconfident. Other cited work limits the criticism. Verbalized probabilities from Reinforcement Learning from Human Feedback (RLHF) models can be better calibrated than conditional token probabilities, and a model can be fine-tuned to verbalize calibrated probabilities. Those results address reliability, not resolution.
 #### Agreement from $`m`$ independent samples
-- **What:** Fix the served answer before collecting $`m`$ new IID responses conditional on the query, model, sampling policy and served answer. With semantic agreement probability $`c`$, let $`K\sim\operatorname{Bin}(m,c)`$ and $`\widehat c=K/m`$.
+- **What:** Fix the served answer before collecting $`m`$ new IID responses conditional on the query, model, sampling policy and served answer. With semantic agreement probability $`c`$, let $`K\sim\mathop{\mathrm{Bin}}\nolimits(m,c)`$ and $`\widehat c=K/m`$.
 - **Why:** This estimates agreement with that fixed answer, not its probability of being true. A modal answer chosen from the same samples has selection bias and is a different statistic.
 - **Failure without uncertainty accounting:** Adjacent observed levels are not independent certainty intervals. Fresh sessions remove shared conversation history, not shared model bias.
 - **Cost or complexity:** There are $`m+1`$ possible scores and $`m`$ probe calls in addition to the original answer generation. Including the served answer among the $`m`$ probes changes the binomial model and its variance.
 For $`k`$ distributed binomially:
-$$
-\operatorname{Var}(\widehat{c})=\frac{c(1-c)}{m}
+
+```math
+\mathop{\mathrm{Var}}\nolimits(\widehat{c})=\frac{c(1-c)}{m}
 \qquad
-\operatorname{SE}(\widehat{c})=\sqrt{\frac{c(1-c)}{m}}
-$$
+\mathop{\mathrm{SE}}\nolimits(\widehat{c})=\sqrt{\frac{c(1-c)}{m}}
+```
+
 Adjacent levels are $`\frac{1}{m}`$ apart. Requiring one level gap to exceed one standard error gives:
-$$
-\frac{c(1-c)}{m} < \frac{1}{m^2}
+
+```math
+\frac{c(1-c)}{m} \lt  \frac{1}{m^2}
 \Longleftrightarrow
-m < \frac{1}{c(1-c)}
-$$
-For $`m=8`$, comparing nominal spacing with one population standard error gives $`c(1-c)<1/8`$, equivalently $`c<(1-\sqrt{1/2})/2\approx0.146447`$ or $`c>(1+\sqrt{1/2})/2\approx0.853553`$. This is a heuristic scale comparison in terms of unknown $`c`$, not a confidence guarantee that adjacent observed scores are distinguishable. In particular, observing eight agreements in eight probes gives a one-sided exact $`95\%`$ lower bound of only $`0.05^{1/8}\approx0.687656`$ on agreement probability, not $`0.929`$ on correctness.
-For a fixed interior $`c`$, spacing shrinks as $`1/m`$ while SE shrinks as $`1/\sqrt m`$, so sufficiently fine score levels become closer than one SE; at $`c=1/2`$ this occurs for $`m>4`$, with equality at $`m=4`$. Near endpoints the condition differs. More probes still improve estimation at a fixed meaningful precision. Use interval estimates and held-out correctness calibration rather than treating nominal granularity as statistical resolution.
+m \lt  \frac{1}{c(1-c)}
+```
+
+For $`m=8`$, comparing nominal spacing with one population standard error gives $`c(1-c)\lt 1/8`$, equivalently $`c\lt (1-\sqrt{1/2})/2\approx0.146447`$ or $`c\gt (1+\sqrt{1/2})/2\approx0.853553`$. This is a heuristic scale comparison in terms of unknown $`c`$, not a confidence guarantee that adjacent observed scores are distinguishable. In particular, observing eight agreements in eight probes gives a one-sided exact $`95\%`$ lower bound of only $`0.05^{1/8}\approx0.687656`$ on agreement probability, not $`0.929`$ on correctness.
+For a fixed interior $`c`$, spacing shrinks as $`1/m`$ while SE shrinks as $`1/\sqrt m`$, so sufficiently fine score levels become closer than one SE; at $`c=1/2`$ this occurs for $`m\gt 4`$, with equality at $`m=4`$. Near endpoints the condition differs. More probes still improve estimation at a fixed meaningful precision. Use interval estimates and held-out correctness calibration rather than treating nominal granularity as statistical resolution.
 #### Conditioning strategy
 - **What:** Vanilla scoring stays in the original session. Self-probing uses a fresh session. Multi-step scoring attaches confidence to sub-claims. Top-$`k`$ elicitation forces alternatives. Sampling aggregates consistency, average confidence, or pairwise rankings.
 - **Why:** A fresh scorer removes the original conversation history; the candidate answer can still anchor the new judge, so no numerical commitment bonus is guaranteed to be zero.
@@ -414,30 +450,36 @@ For a fixed interior $`c`$, spacing shrinks as $`1/m`$ while SE shrinks as $`1/\
 - **Why:** It prices confidence as an explicit multiple of generation.
 - **Failure without pricing:** A team can add sampling without knowing what decision value it must recover.
 - **Cost or complexity:** One generation call costs:
-$$
+
+```math
 2400 \times 3 \times 10^{-6}
 + 150 \times 15 \times 10^{-6}
 = 0.0072 + 0.00225
 = \$0.00945
-$$
+```
+
 Vanilla verbalized confidence adds about 10 output tokens, or $`\$0.00015`$. Total cost is $`\$0.00960`$ per query and $`\$9.60`$ per day. It yields three levels.
 Self-probing adds a fresh call with $`2{,}550`$ input tokens and 10 output tokens:
-$$
+
+```math
 2550 \times 3 \times 10^{-6}
 + 10 \times 15 \times 10^{-6}
 = \$0.00780
-$$
+```
+
 Self-probing costs $`\$0.01725`$ per query and $`\$17.25`$ per $`1{,}000`$ queries: $`0.01725/0.00945\approx1.82540`$ times base generation, or $`1.796875`$ times verbalized-confidence cost. It adds a serial round trip and still emits three nominal confidence levels in this example.
 Eight new agreement probes plus the original answer require nine $`\$0.00945`$ generation calls: $`\$0.08505`$ per query or $`\$85.05`$ per $`1{,}000`$ queries. Conditional on an already fixed answer, probe latency adds a parallel fan-out round plus its tail; sufficient batch capacity and no slowdown are assumptions. If eight total calls including the served answer are reused instead, the earlier binomial model and score definition must be changed.
 This nine-call agreement design costs $`\$75.45`$ more per day than $`\$9.60`$ verbalized confidence. In the stipulated calibrated top-bucket scenario it admits $`350`$ answers at $`94.0\%`$ observed precision where calibrated verbalized scores admit none. These group estimates need held-out uncertainty accounting before a risk guarantee.
-$$
+
+```math
 350\left[0.94-0.06\times20-(-0.5)\right]
 =350\times0.24
 =84\ \text{units per day}
-$$
+```
+
 Under the stipulated $`84`$ utility-unit gain, break-even is $`\$75.45/84\approx\$0.898214`$ per unit, equivalent to about $`53.89`$ seconds at $`\$60`$ per hour. This monetization assumes utility units represent reader time and omits other costs.
 Numerically, $`\tau\approx0.928571`$ lies between $`7/8`$ and $`1`$, so a naive raw-agreement cutoff admits the top observed score. Its $`35\%`$ coverage and $`94\%`$ correctness are stipulated bucket facts, not a consequence of the score lying outside a one-SE band. Calibrate the raw score to correctness and validate the selected group.
-At temperature $`0`$, all $`m`$ draws are identical and $`\widehat{c}=1`$ for every query. That constant-score failure has $`\operatorname{AUROC} = 0.5`$. The book recommends nonzero sampling temperature and suggests raising it if more than one-third of queries have $`\widehat{c}=1`$.
+At temperature $`0`$, all $`m`$ draws are identical and $`\widehat{c}=1`$ for every query. That constant-score failure has $`\mathop{\mathrm{AUROC}}\nolimits = 0.5`$. The book recommends nonzero sampling temperature and suggests raising it if more than one-third of queries have $`\widehat{c}=1`$.
 If latency forces $`m`$ from $`8`$ to $`4`$, Four new probes give five nominal levels, but plugging observed endpoints into an SE formula does not establish resolution. At the same fixed population $`c`$, reducing $`m`$ from eight to four increases SE by $`\sqrt2`$. The decision check is precision at fixed $`35\%`$ coverage. The source proposes rejecting $`m = 4`$ if it costs more than one precision point.
 At $`c_w=200`$ and $`c_a=0.5`$, the required probability is approximately $`0.992537`$; the $`0.94`$ group would not clear it. A $`32`$-probe budget is worthwhile only if its validated selected-group correctness, coverage and net utility justify its cost. Higher stakes alone do not make an inaccurate admitted answer valuable, and sample count does not certify correctness.
 ### 11.6 Long-form calibration: $`80\%`$ of what?
@@ -447,27 +489,35 @@ At $`c_w=200`$ and $`c_a=0.5`$, the required probability is approximately $`0.99
 - **Failure without a named functional:** A score meant as $`\mathbb{E}[S]`$ can be compared with a threshold derived for $`\Pr(S=1)`$. The number looks valid and the decision silently uses the wrong event.
 - **Cost or complexity:** FActScore extracts atomic facts, verifies them against a reliable source, and reports the supported fraction. Claim extraction and verification add model work.
 Two candidate summaries are:
-$$
+
+```math
 c = \Pr(S=1)
 \qquad \text{or} \qquad
 c = \mathbb{E}[S]
-$$
+```
+
 The first means every claim is supported with the stated probability. The second means that fraction of claims is supported on average.
 #### The cost model selects the functional
 - **What:** Under proportional harm, a partial answer earns $`S-c_w(1-S)`$. Under all-or-nothing harm, it earns $`1`$ only when $`S = 1`$ and $`-c_w`$ otherwise.
 - **Why:** Each utility reads exactly one summary of the distribution.
 - **Failure without the right summary:** A compliance memo can look safe under average claim support while one bad claim still creates the full incident cost.
 - **Cost or complexity:** Product owners must classify each output route as proportional, all-or-nothing, or another explicitly modeled utility.
-$$
+
+```math
 \mathbb{E}[U_{\mathrm{prop}}] = \mathbb{E}[S](1+c_w)-c_w
-$$
-$$
+```
+
+
+```math
 \mathbb{E}[U_{\mathrm{all}}] = \Pr(S=1)(1+c_w)-c_w
-$$
+```
+
 Both produce the same numeric threshold:
-$$
+
+```math
 \tau=\frac{c_w-c_a}{1+c_w}=\frac{19.5}{21}=\frac{13}{14}\approx0.928571429.
-$$
+```
+
 The identical algebra is the trap. The statistic under the threshold differs.
 #### Length amplifies the difference
 - **What:** Under the stated independence model, each of $`n`$ claims is supported with probability $`p`$.
@@ -476,14 +526,16 @@ The identical algebra is the trap. The statistic under the threshold differs.
 - **Cost or complexity:** An all-or-nothing gate requires $`p\ge\tau^{1/n}`$. Using $`\tau=13/14`$, $`n=12`$ requires $`p\ge0.993843366`$ and $`n=30`$ requires $`p\ge0.997532783`$.
 Claims sharing evidence can be dependent. Pairwise positive correlation alone does not guarantee $`\Pr(\text{all supported})\ge p^n`$. Under equal marginal support $`p`$ without stronger assumptions, the Fréchet bounds are $`\max(0,np-(n-1))\le\Pr(S=1)\le p`$. Independence gives $`p^n`$; suitable positive-association assumptions can imply a product lower bound, but must be justified. This is a scenario calculation, not a production forecast.
 #### Predict the full distribution
-- **What:** Emit a predicted cumulative distribution $`\widehat{F}`$ over $`S`$ and score it with the Continuous Ranked Probability Score ($`\operatorname{CRPS}`$).
+- **What:** Emit a predicted cumulative distribution $`\widehat{F}`$ over $`S`$ and score it with the Continuous Ranked Probability Score ($`\mathop{\mathrm{CRPS}}\nolimits`$).
 - **Why:** One distribution serves consumers that need the mean, a tail probability, or the mass at full support.
 - **Failure with one scalar:** Choosing $`\Pr(S=1)`$ discards the mean. Choosing $`\mathbb{E}[S]`$ discards the full-support atom.
 - **Cost or complexity:** The cited black-box routes score the same answer in $`m`$ fresh sessions or sample $`m`$ alternative briefs and measure claim-level corroboration.
-$$
-\operatorname{CRPS}(\widehat{F},s)
+
+```math
+\mathop{\mathrm{CRPS}}\nolimits(\widehat{F},s)
 =\int_0^1\left(\widehat{F}(t)-\mathbf{1}[s\le t]\right)^2\,\mathrm{d}t
-$$
+```
+
 For a Bernoulli forecast and a binary realized outcome $`s\in\{0,1\}`$, CRPS equals the Brier score. With fractional observed support $`s`$, that identity does not hold in general. It is strictly proper and carries a reliability, resolution, and uncertainty decomposition. Resolution still cannot be created by post-processing.
 Exact string matching fails for long briefs because samples rarely match word for word. Use similarity over atomic claims or named entities.
 #### Claim extraction and recall
@@ -496,20 +548,26 @@ Exact string matching fails for long briefs because samples rarely match word fo
 - **Why:** It shows the same $`0.95`$ score can produce positive proportional value and strongly negative all-or-nothing value.
 - **Failure without functional alignment:** Mean support clears $`\tau`$ while nearly half the briefs contain at least one unsupported claim.
 - **Cost or complexity:** Gate on $`\mathbb{E}[S] = 0.950`$ under proportional costs. Net value relative to abstention is:
-$$
+
+```math
 350\left[0.95\times21-20-(-0.5)\right]
 =350\times0.45
 =157.5\ \text{units per day}
-$$
+```
+
 Under all-or-nothing costs, the gate should read $`0.95^{12}\approx0.540360`$. About 189 briefs are fully supported and 161 carry at least one unsupported claim. The correct policy under the stated costs is to refuse all 350. Shipping them yields:
-$$
+
+```math
 350\left[21(0.95^{12})-20+0.5\right]\approx-2{,}853.35\ \mathrm{utility\ units/day}.
-$$
+```
+
 Use the unrounded $`\tau=19.5/21`$: at $`n=12`$, required marginal support under independence is $`p\ge(19.5/21)^{1/12}\approx0.993843366`$. Among $`4{,}200`$ claims this is approximately $`25.8579`$ expected unsupported claims, versus $`210`$ at $`p=0.95`$, an approximately $`8.121`$-fold reduction. This marginal requirement depends on the independence model, not merely the mean support.
 A supported two-claim hedge has precision $`1.000`$ but recall $`\frac{2}{12} = 0.167`$. Its score is:
-$$
+
+```math
 F_{1,@K}=\frac{2\cdot1\cdot(2/12)}{1+2/12}=\frac27\approx0.285714.
-$$
+```
+
 As a check, $`0.94^{12} = 0.476`$ and $`0.94^{40} = 0.084`$. The source interprets the latter as a mostly correct 40-claim biography receiving binary failure about $`92\%`$ of the time.
 The recommended outputs are $`\mathbb{E}[S]`$ and $`\Pr(S\ge s_0)`$ for an explicit $`s_0`$. A single consumer may use one field, but its name should identify the functional, such as `expected_support` or `p_fully_supported`.
 At $`p = 0.95`$ and $`n = 12`$, a mean-support gate refuses nothing while $`46\%`$, or 161 briefs per day, carry at least one unsupported claim.
@@ -558,8 +616,8 @@ odds 10⁶ |                              stated: ×4.5 each round
 
 | Panel | Signal | Reliability view | Separation view |
 | --- | --- | --- | --- |
-| (a) and (b) | verbalized | $`\operatorname{ECE}`$ $`0.212`$, then points slide to the diagonal | $`\operatorname{AUROC}`$ $`0.533`$, with correct and wrong mass heavily overlapping |
-| (a) and (b) | 8-sample agreement | $`\operatorname{ECE}`$ $`0.061`$ | $`\operatorname{AUROC}`$ $`0.796`$, with visibly better separation |
+| (a) and (b) | verbalized | $`\mathop{\mathrm{ECE}}\nolimits`$ $`0.212`$, then points slide to the diagonal | $`\mathop{\mathrm{AUROC}}\nolimits`$ $`0.533`$, with correct and wrong mass heavily overlapping |
+| (a) and (b) | 8-sample agreement | $`\mathop{\mathrm{ECE}}\nolimits`$ $`0.061`$ | $`\mathop{\mathrm{AUROC}}\nolimits`$ $`0.796`$, with visibly better separation |
 
 
 The reliability panel moves scores sideways under isotonic recalibration. The separation panel keeps each answer’s order and overlap unchanged. Grey denotes correct answers. White denotes wrong answers. Each distribution is normalized to its own total.
@@ -570,8 +628,8 @@ The reliability panel moves scores sideways under isotonic recalibration. The se
 
 | Metric | verbalized | + isotonic | 8-sample agreement |
 | --- | --- | --- | --- |
-| $`\operatorname{ECE}`$ | $`0.212`$ | $`0`$ on fit data | $`0.06075`$ |
-| $`\operatorname{AUROC}`$ | $`0.532582`$ | $`0.532582`$ in this no-merge example | $`0.795879`$ |
+| $`\mathop{\mathrm{ECE}}\nolimits`$ | $`0.212`$ | $`0`$ on fit data | $`0.06075`$ |
+| $`\mathop{\mathrm{AUROC}}\nolimits`$ | $`0.532582`$ | $`0.532582`$ in this no-merge example | $`0.795879`$ |
 | reliability $`\mathrm{REL}`$ | $`0.04528`$ | $`0`$ on fit data | $`0.004507083`$ |
 | resolution $`\mathrm{RES}`$ | $`0.000636`$ | $`0.000636`$ with unchanged groups | $`0.044769333`$ |
 | Brier score | $`0.238`$ | $`0.19272`$ on fit data | $`0.15309375`$ |
@@ -619,8 +677,8 @@ flowchart LR
 Start with a query flowing through retrieval, generation, and a support gate. The model supplies a correctness estimate, but the product sets the refusal threshold from the costs of a wrong answer and an abstention. Add a cited-span branch because a checkable citation can lower harm. Then split confidence quality into calibration and failure prediction. Calibration aligns scores with observed frequencies. Failure prediction orders correct answers above wrong ones, which is what the gate needs. For a black-box model, use fresh independent samples. For long answers, label confidence as expected claim support or the probability that every claim is supported.
 ## Interview traps
 ### 1. Is a well-calibrated score enough for abstention?
-No. A constant score equal to base accuracy has $`\operatorname{ECE} = 0`$ and $`\operatorname{AUROC} = 0.5`$, so no threshold separates correct from wrong answers. Select the signal on failure prediction or its risk-coverage curve, then calibrate it.
-### 2. Why can temperature scaling improve $`\operatorname{ECE}`$ without improving selective precision?
+No. A constant score equal to base accuracy has $`\mathop{\mathrm{ECE}}\nolimits = 0`$ and $`\mathop{\mathrm{AUROC}}\nolimits = 0.5`$, so no threshold separates correct from wrong answers. Select the signal on failure prediction or its risk-coverage curve, then calibrate it.
+### 2. Why can temperature scaling improve $`\mathop{\mathrm{ECE}}\nolimits`$ without improving selective precision?
 A strictly increasing map of one scalar preserves the answered ordering and the set at fixed coverage, apart from unchanged ties. Positive-temperature scaling of a binary logit is such a map. Multiclass maximum-probability confidence need not preserve cross-example ordering under temperature scaling. Recheck the actual scalar and tie policy before claiming invariant selective precision.
 ### 3. When should you not use repeated self-reflection?
 Do not loop when every round uses the same weights, context, and prior draft. The rounds repeat correlated evidence and can amplify commitment. Use a loop only when each round consumes an external signal such as a fresh retrieval, test result, compiler error, or different model family.
@@ -648,7 +706,7 @@ Do not use $`m = 8`$ when generation cost or the $`p_{99}`$ tail cannot support 
 | Parallel vote limit | IID multinomial with four equiprobable wrong values and random tie breaking: $`98.7701\%`$ correct plurality. Eight votes cost $`2{,}000`$ output tokens; ideal parallelism is not a latency guarantee |
 | Calibration | Base $`a=0.738`$, $`\mathrm{UNC}=0.193356`$. Verbal ECE $`0.212`$, AUROC $`0.532582387`$; agreement ECE $`0.06075`$, AUROC $`0.795879104`$. No-merge isotonic fit has zero fit-data ECE, not guaranteed test calibration |
 | Brier decomposition table | Verbalized REL $`0.04528`$, RES $`0.000636`$, BS $`0.238`$; fitted map REL $`0`$, BS $`0.19272`$. Agreement last score $`3/8`$ gives REL about $`0.00450708`$, RES $`0.04476933`$, BS $`0.15309375`$. Raw coverages $`70\%,0\%,35\%`$ respectively |
-| Agreement resolution | Eight new probes yield nine nominal levels; $`c<0.146447`$ or $`c>0.853553`$ only compares spacing with one population SE. Eight agreements give one-sided $`95\%`$ lower agreement bound $`0.687656`$, not a correctness guarantee |
+| Agreement resolution | Eight new probes yield nine nominal levels; $`c\lt 0.146447`$ or $`c\gt 0.853553`$ only compares spacing with one population SE. Eight agreements give one-sided $`95\%`$ lower agreement bound $`0.687656`$, not a correctness guarantee |
 | Elicitation cost | Base call $`\$0.00945`$; verbalized $`\$9.60`$/day; self-probing $`\$17.25`$/day. Original answer plus eight new probes costs $`\$85.05`$/day, increment $`\$75.45`$ over verbalized |
 | Decision value | Stipulated top group: $`350`$ answers at $`94\%`$ correctness yields $`84`$ utility units/day. Incremental break-even about $`\$0.898214`$/unit or $`53.89`$ seconds at $`\$60`$/hour |
 | Long-form threshold | Use $`\tau=19.5/21`$. Under equal independent support, $`n=12`$ requires $`0.9938434`$, $`n=30`$ requires $`0.9975328`$, and $`n=4`$ requires $`0.9816436`$ |

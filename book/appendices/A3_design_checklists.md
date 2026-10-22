@@ -85,7 +85,7 @@ Departure requires five exit stamps. If any card lacks its stamp, the aircraft s
 | Payload store | Text and filterable metadata under a placement policy | Can dominate after compression; the crossover is workload specific |
 | Shard count | Logical corpus partitions | Ceiling division of aggregate bytes is a capacity lower bound, not the shard plan |
 | Random access memory (RAM) | Usable memory on an index node | It limits how much index footprint one node can hold |
-| $`\operatorname{Recall}@k^{\prime}`$ | Candidate recall at retrieval depth | Define evidence judgments separately from exact-neighbor approximation |
+| $`\mathop{\mathrm{Recall}}\nolimits@k^{\prime}`$ | Candidate recall at retrieval depth | Define evidence judgments separately from exact-neighbor approximation |
 | Exact search | A search that establishes the neighbor ground truth | It is the comparison target for recall |
 | Held-out sample | Data reserved for evaluation | Recall must be measured on data outside the tuning path |
 | Relevance judgment | A label about result usefulness | It measures a different question from exact-neighbor recall |
@@ -102,7 +102,7 @@ Departure requires five exit stamps. If any card lacks its stamp, the aircraft s
 | Inter-annotator agreement | Agreement among human judges | It shows whether relevance labels are stable |
 | Training-data contamination | Evaluation examples appearing in generator training data | It can make the test set uninformative |
 | Retrieval benchmark wearing RAG clothing | A task with closed-book-solvable questions | Can test retrieval benefit/harm, but alone does not isolate retrieval coverage |
-| Normalized Discounted Cumulative Gain at $`k`$ ($`\operatorname{nDCG}@k`$) | A ranked relevance score at the depth sent to the generator | It answers a different question from $`\operatorname{Recall}@k^{\prime}`$ |
+| Normalized Discounted Cumulative Gain at $`k`$ ($`\mathop{\mathrm{nDCG}}\nolimits@k`$) | A ranked relevance score at the depth sent to the generator | It answers a different question from $`\mathop{\mathrm{Recall}}\nolimits@k^{\prime}`$ |
 | Ceiling check | Fixed-generator oracle-context diagnostic | Not an absolute bound on all future retrieval or generation improvements |
 | Large language model (LLM) judge | A model that assigns evaluation labels | Its agreement with humans must be known on a sample |
 | Macro average | An average that gives each class equal weight | It prevents large classes from hiding weak judge agreement |
@@ -522,7 +522,7 @@ Optimize the measured critical path and constrained resource under production lo
 | In-place rebuild versus separate hot-swap | State where rebuilding happens | Query behavior during rebuild must also be tested |
 | Versioned representation migration | Document and query changes have different effects | Partial/dual-index or compatible migration can exist with explicit routing |
 | 3 real queries | Hand-written correct-answer examples before metric selection | Evaluation starts from concrete intended behavior |
-| $`\operatorname{Recall}@k^{\prime}`$ and $`\operatorname{nDCG}@k`$ | Two retrieval-layer measures that must both be reported | They answer different questions |
+| $`\mathop{\mathrm{Recall}}\nolimits@k^{\prime}`$ and $`\mathop{\mathrm{nDCG}}\nolimits@k`$ | Two retrieval-layer measures that must both be reported | They answer different questions |
 | 3 attribution classes | Attributable, extrapolatory, contradictory | Attribution quality is measured at claim level |
 | Faithfulness versus factuality | Report them separately | A faithful answer can follow a wrong document |
 | Abstention versus production coverage | Report abstention rate and accuracy conditioned on answering | More refusal can improve precision while worsening production behavior |

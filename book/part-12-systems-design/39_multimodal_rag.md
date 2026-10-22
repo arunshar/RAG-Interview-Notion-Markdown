@@ -160,18 +160,24 @@ A cheap shortlist can use a separately trained compatible global model, or a del
 The chapter cites a roughly six-to-tenfold ColBERTv2 text-index compression result; that is not a guaranteed visual-index compression ratio or preservation of exact values. Measure residual/PQ or lower-precision variants before declaring a memory target met. Halving numeric value precision halves vector payload only, not raw media, graph links, IDs or total resident cost. OCR can be sufficient for some prose; preserve local/raw evidence where the product requires it, and benchmark rather than imposing one encoder on every document.
 ### 39.3 CLIP’s three biases
 #### What it is
-For a batch of $`N\ge1`$ matched image-caption pairs, project both nonzero encoder outputs into a common space and normalize: $`u_i=f_{\mathrm{img}}(I_i)/\|f_{\mathrm{img}}(I_i)\|_2`$ and $`v_j=f_{\mathrm{txt}}(T_j)/\|f_{\mathrm{txt}}(T_j)\|_2`$. Let temperature $`\tau>0`$; a learned logit scale can equivalently parameterize its inverse.
-$$
+For a batch of $`N\ge1`$ matched image-caption pairs, project both nonzero encoder outputs into a common space and normalize: $`u_i=f_{\mathrm{img}}(I_i)/\|f_{\mathrm{img}}(I_i)\|_2`$ and $`v_j=f_{\mathrm{txt}}(T_j)/\|f_{\mathrm{txt}}(T_j)\|_2`$. Let temperature $`\tau\gt 0`$; a learned logit scale can equivalently parameterize its inverse.
+
+```math
 S_{ij}=\frac{u_i^{\mathsf T}v_j}{\tau},\qquad i,j\in\{1,\ldots,N\}.
-$$
-$$
+```
+
+
+```math
 S=\begin{bmatrix}S_{11}&\cdots&S_{1N}\\\vdots&\ddots&\vdots\\S_{N1}&\cdots&S_{NN}\end{bmatrix}.
-$$
-$$
+```
+
+
+```math
 \mathcal L=-\frac1{2N}\sum_{i=1}^{N}\left[
 \log\frac{e^{S_{ii}}}{\sum_{j=1}^{N}e^{S_{ij}}}
 +\log\frac{e^{S_{ii}}}{\sum_{j=1}^{N}e^{S_{ji}}}\right].
-$$
+```
+
 The terms cover image-to-text and text-to-image matching. The batch has $`N`$ labeled positive positions and $`N^2-N`$ nominal negatives. All participate in the loss: an off-diagonal logit has a nonzero softmax gradient in general. Semantically compatible off-diagonal pairs can be false negatives. At $`N=1`$ this in-batch loss has no negative discrimination. This whole-pair supervision backpropagates through visual/text features, but supplies no explicit word-region labels or demographic-equality constraint.[\[1\]](https://proceedings.mlr.press/v139/radford21a/radford21a.pdf)
 #### Why it exists
 Whole-pair contrastive training can learn useful local or compositional features indirectly, but does not guarantee every entity binding, spatial relation or fairness criterion. Caption salience, data composition, architecture and objective can all affect behavior. A missing explicit constraint is not a proof that a particular bias must occur, or that all three named failure classes have one shared mathematical cause. Audit the deployed variant and population.
@@ -183,22 +189,28 @@ The CLIP paper reports $`76.2\%`$ zero-shot ImageNet top-1 for its best/default 
 ### 39.4 Per-modality thresholds
 #### What it is
 The opening surface has four modality pools: text, image, video and geolocation. For query $`q`$, modality $`m`$ and a nonempty collection $`D_{m,c}`$, let $`s_{m,c}(q,d)`$ be a declared compatible score. An illustrative admission rule is
-$$
+
+```math
 A_{m,c}(q)=\mathbb1\!\left[\max_{d\in D_{m,c}}s_{m,c}(q,d)\ge\theta_{m,c}\right].
-$$
+```
+
 For an empty collection define admission to be zero, or equivalently set its maximum to $`-\infty`$. A threshold can also depend on query features and a calibrated cost policy. Approximate search exposes a candidate-set maximum, not necessarily the exact maximum over the whole corpus. Index both collection and modality in the calibration record.
 #### Why it exists
 CLIP, DPR, SBERT, ASR confidence and geolocation distances do not automatically share a relevance scale. Even the same encoder can shift across collections, populations or candidate depths. A collection one hundred times smaller has a different null maximum in general, but size alone does not fix its direction or relevance precision without a score/dependence model. Modality-gap geometry is not itself a numerical calibration map.
 Let $`F_0`$ be the CDF of a noise pair score and suppose, only for illustration, that all $`n`$ scores in a no-relevant-item collection are IID. Then
-$$
+
+```math
 \Pr(\max_{1\le i\le n}S_i\ge\theta\mid\text{all noise})=1-F_0(\theta)^n.
-$$
+```
+
 This is not the pair false-positive rate $`1-F_0(\theta)`$. Correlated documents, ANN candidates and query-level mixture effects require their own analysis. Measure the deployed admission event directly where possible.
 #### Failure without it
 A raw cutoff can suppress almost all genuine image pairs while admitting text noise, but need not make every image score impossible. Pair precision also needs prevalence $`\pi`$: with nonzero admitted mass,
-$$
-\operatorname{precision}=\frac{\pi\,\mathrm{TPR}}{\pi\,\mathrm{TPR}+(1-\pi)\,\mathrm{FPR}}.
-$$
+
+```math
+\mathop{\mathrm{precision}}\nolimits=\frac{\pi\,\mathrm{TPR}}{\pi\,\mathrm{TPR}+(1-\pi)\,\mathrm{FPR}}.
+```
+
 A high cutoff does not guarantee high precision without labels, base rates and stable distributions. Raw $`0.28`$ image and $`0.75`$ text scores are not a common ranking scale by default. Properly calibrated comparable probabilities with the same decision costs may justify a common threshold; otherwise tune collection-aware admission and fusion. A well-captioned web video calibration need not transfer to surveillance footage.
 #### Cost, complexity, and decisions
 Use the stipulated pair distributions, not measured CLIP results: text relevant/noise are $`\mathcal N(0.75,0.05^2)`$ and $`\mathcal N(0.35,0.10^2)`$; image relevant/noise are $`\mathcal N(0.30,0.03^2)`$ and $`\mathcal N(0.18,0.04^2)`$. With standard-normal CDF $`\Phi`$, pair admission probability is $`1-\Phi((\theta-\mu)/\sigma)`$.
@@ -208,13 +220,15 @@ Calibrate with representative held-out queries, relevant/irrelevant candidates, 
 ### 39.5 Multi-granularity noise correspondence and reranking
 #### What it is
 For an explicit mean-pooling toy, a $`224\times224`$ image with $`32\times32`$ patches has $`R=49`$. Take unit orthogonal directions $`g`$ (gist) and $`s`$ (queried detail), and assume averaging yields $`v_+=g+s/R`$ for the relevant item, $`v_-=g`$ for a distractor, and query $`q=g+s`$. These are stipulated linear features, not a literal account of every CLIP ViT or its class-token readout.
-$$
+
+```math
 \begin{aligned}
 \cos(q,v_+)&=\frac{1+1/R}{\sqrt2\sqrt{1+1/R^2}}\approx0.721387321,\\
 \cos(q,v_-)&=\frac1{\sqrt2}\approx0.707106781,\\
 \Delta s&\approx0.014280540\qquad(R=49).
 \end{aligned}
-$$
+```
+
 The detail coefficient is $`1/49\approx0.020408`$, or about $`2.0408\%`$ of its per-patch coefficient in this construction. It is not a percentage of all information stored in the embedding. The old $`0.7215`$/$`0.0144`$ labels are replaced with values calculated before rounding.
 #### Why it exists
 Image/audio/video content can be highly localized, but compression, crop changes and ANN errors do not have a universal one-percent cosine perturbation. Measure them on the pipeline. If each score's additive error has magnitude at most $`\varepsilon`$, the order is guaranteed by a positive margin greater than $`2\varepsilon`$. For this toy, the half-margin is approximately $`0.007140270`$. Larger errors can permit a reversal, not force one. A local-content reader has access to evidence absent from a global score, but still needs an evaluated decision rule.
@@ -227,9 +241,11 @@ For a $`150\,\mathrm{ms}`$ $`p_{99}`$ budget with $`50`$ candidates and a self-h
 ### 39.6 Fusion: score, attention, unified
 #### What it is
 For candidate $`d`$, first define compatible/calibrated evidence features $`\widetilde s_t(q,d)`$ and $`\widetilde s_v(q,d)`$, a common candidate identity and a policy for missing modalities. A possible weighted rule is
-$$
+
+```math
 s(q,d)=\alpha\widetilde s_t(q,d)+(1-\alpha)\widetilde s_v(q,d),\qquad0\le\alpha\le1.
-$$
+```
+
 For two already computed scalar features this combination is $`O(1)`$ per candidate, or $`O(J)`$ for $`J`$ modalities; encoding and retrieval are not free. Normalization of ranges is not probability calibration or statistical independence. A score-only rule cannot inspect details not present in its features, although an upstream feature may already encode cross-modal agreement. Cross-attention can inspect tokens/patches across modalities; its ability to detect agreement or contradiction is empirical. Within-modality self-attention and cross-modal attention are connectivity choices, not guarantees of task reasoning.
 #### Why it exists
 BM25, cosine and detector/ASR confidence need a justified fusion rule. A large dynamic range can dominate a raw sum, but does not prove the largest-range modality always wins. Text-only systems also use score/rank fusion, so fusion has single-modality analogues. Projected/unified representations can amortize some work at ingestion, while a query-conditioned fusion network still does serving work. Captioning or projection can lose evidence. Compare score, rank, local interaction and attention variants at matched candidate coverage, source access and quality.
@@ -263,9 +279,11 @@ For “Q3 churn was $`4.2\%`$,” point to the relevant PDF page/cells and retai
 ### 39.9 Benchmarks and what they actually measure
 #### What it is
 A supplied-image reader test and a corpus-search test answer different questions. For a RAG item define query $`q`$, an explicitly supplied/referenced retrieval corpus $`C`$, answer $`y`$, evidence labels and retrieval cap $`k`$. A meaningful distractor corpus is larger than the support set; $`|C|\gg k`$ is a design description, not part of the mathematical definition. The pipeline can be written
-$$
-\widehat y=\operatorname{GEN}(q,\operatorname{RET}(q,C;k)).
-$$
+
+```math
+\widehat y=\mathop{\mathrm{GEN}}\nolimits(q,\mathop{\mathrm{RET}}\nolimits(q,C;k)).
+```
+
 A conventional supplied-image VQA task does not require a search stage. Modeling its supplied visual context as size one is a convenient contrast, not a claim that every VQA dataset has a one-item external corpus. Some knowledge-intensive VQA/RAG tasks also search a much larger corpus. Two readers can tie on supplied evidence yet differ substantially end to end once retrieval is required.
 #### Why it exists
 Use a checklist: identify what is retrieved and from which corpus; report retrieval metrics as well as appropriate answer/support metrics; use modality-removal or oracle-evidence ablations to diagnose bottlenecks. Their absence limits causal conclusions, not necessarily the task's status as RAG. Compare matched candidate budgets, readers, prompts and evidence access.
@@ -275,24 +293,30 @@ MRAG-Bench is genuinely vision-centric RAG: it provides $`16{,}130`$ images and 
 #### Cost, complexity, and decisions
 MRAG-Bench v2 reports GPT-4o accuracy of $`68.68\%`$ without extra RAG evidence and $`74.50\%`$ with ground-truth image evidence, a $`5.82`$-percentage-point change. Its human comparison starts at $`38.47\%`$ and reports gains of $`33.16`$ points with ground-truth evidence and $`22.91`$ points with retrieved evidence. These are setting-specific absolute gaps, not a generic “human-level” claim or a $`33.16\%`$ relative gain. Query templates/scenarios and repeated underlying concepts also complicate an IID interpretation.[\[9\]](https://arxiv.org/html/2410.08182v2)
 For a separate planning illustration, suppose two independent binomial accuracy estimates each have $`n`$ observations and the same planning accuracy $`p=0.73`$. Then
-$$
+
+```math
 \begin{aligned}
 \mathrm{SE}_{\mathrm{ind}}&=\sqrt{\frac{2p(1-p)}n},\\
 \mathrm{SE}_{\mathrm{ind}}(1{,}000)&=\sqrt{0.0003942}\approx0.019854471,\\
 h_{95}&\approx1.96\,\mathrm{SE}_{\mathrm{ind}}\approx0.038914762.
 \end{aligned}
-$$
+```
+
 Here the last value is approximately $`3.891476`$ percentage points of nominal confidence half-width, not a universal detectable-gain floor. At $`n=1{,}600`$, SE is approximately $`0.015696337`$ and the half-width is $`3.076482`$ points. Compared with the illustrative $`1{,}000`$ observations, a sixty-percent larger sample tightens that half-width by approximately $`20.943058\%`$. The actual MRAG count is $`1{,}353`$, not $`1{,}000`$: the same independent planning calculation there gives about $`3.345534`$ points, and moving to $`1{,}600`$ tightens it by about $`8.042129\%`$. Neither establishes the actual uncertainty of benchmark-specific paired or nonbinary metrics.
 For an independent-comparison target half-width $`h=0.02`$, the normal-approximation planning count per model is
-$$
+
+```math
 n=\left\lceil\frac{1.96^2\,2(0.73)(0.27)}{0.02^2}\right\rceil
 =\lceil3{,}785.8968\rceil=3{,}786.
-$$
+```
+
 This is a half-width calculation, not a powered superiority test or a lower bound on unique questions for paired evaluation. The more conservative independent planning value $`p=0.5`$ gives $`4{,}802`$ observations per model. Power additionally needs an alternative effect, decision rule and desired rejection probability.
 When both systems answer the same binary-scored items, let $`D_i=\mathbb1[B_i\text{ correct}]-\mathbb1[A_i\text{ correct}]`$, with discordance probabilities $`p_{01}`$ and $`p_{10}`$ and mean gap $`\Delta=p_{01}-p_{10}`$. Under IID paired items,
-$$
-\operatorname{Var}(\overline D)=\frac{p_{01}+p_{10}-\Delta^2}{n}.
-$$
+
+```math
+\mathop{\mathrm{Var}}\nolimits(\overline D)=\frac{p_{01}+p_{10}-\Delta^2}{n}.
+```
+
 Positive covariance can reduce uncertainty, while negative covariance can increase it. Equal marginals $`0.73`$ allow discordance $`0.54`$, larger than the independent coefficient $`0.3942`$; the independent formula is not a conservative upper bound. McNemar's test addresses matched binary outcomes under its assumptions; paired intervals/bootstraps and document/image/template-cluster resampling may be needed for other metrics or dependence.
 The human $`33.16`$-point change is numerically about $`8.52`$ times the illustrative $`3.891476`$-point half-width, but that ratio is not a matched significance test. A $`1.5`$-point paired gain can be distinguishable or not depending on discordances, sample design and uncertainty; do not reject or market it using an invented universal floor. Report the actual comparison and its practical importance, and match benchmark task/corpus shape to the product claim.
 ## Diagrams
@@ -336,7 +360,8 @@ Figure $`39.2`$: CLIP is a dual encoder with shared-space training, not a joint-
 
 Figure $`39.3`$: The diagonal marks labeled positive image-caption pairs; off-diagonal nominal negatives also participate in both softmax losses and receive gradients. A compatible off-diagonal pair can be a false negative. Whole-pair supervision does not provide explicit word-region labels, but can learn local features indirectly; it is not proof that every failure shares one cause.[\[1\]](https://proceedings.mlr.press/v139/radford21a/radford21a.pdf)
 ### Figure 39.4
-$$
+
+```math
 \begin{array}{lccc}
 \text{Stipulated pair population}&\theta&\mathrm{TPR}&\mathrm{FPR}\\
 \text{Text}&0.50&\approx99.999971\%&\approx6.680720\%\\
@@ -344,7 +369,8 @@ $$
 \text{Text}&0.60&\approx99.865010\%&\approx0.620967\%\\
 \text{Image}&0.25&\approx95.220965\%&\approx4.005916\%
 \end{array}
-$$
+```
+
 Figure $`39.4`$: These are conditional Gaussian pair-score tails, with the tiny image TPR in the second row expressed as a fraction rather than a percent. They are not precision or maximum-over-collection admission rates. Under the separate all-noise IID assumption the latter is $`1-F_0(\theta)^n`$. A very small normal tail is positive; correlations, bounded score support, collection size and the deployed candidate policy matter. No distributions here were fitted to CLIP measurements.
 ### Figure 39.5
 ```mermaid
@@ -372,7 +398,8 @@ flowchart LR
 ```
 Figure $`39.6`$: Score fusion cannot inspect information absent from its features; attention permits richer interaction but does not guarantee agreement detection. Summing $`J`$ existing scores is $`O(J)`$, while dense attention interaction is $`O(LN^2d)`$ at fixed layers/width. Projections/FFNs, encoders, memory and candidate search are additional costs. With five stipulated visual units the dense-pair baseline ratio is $`55.130625`$; five twenty-token captions give $`2.25`$, so their matched ratio is $`24.5025`$, not a total-price multiplier.
 ### Figure 39.7
-$$
+
+```math
 \begin{aligned}
 R(t)&=\begin{bmatrix}\cos(\omega t)&-\sin(\omega t)\\\sin(\omega t)&\cos(\omega t)\end{bmatrix},
 &\widetilde e(t)&=R(t)e,\\
@@ -381,7 +408,8 @@ R(t)&=\begin{bmatrix}\cos(\omega t)&-\sin(\omega t)\\\sin(\omega t)&\cos(\omega 
 e_1=e_2&=(1,0)^{\mathsf T}
 \quad\Longrightarrow\quad \text{score}=\cos(\omega\Delta t)=\cos(-\omega\Delta t).
 \end{aligned}
-$$
+```
+
 Figure $`39.7`$: Rotary features expose relative offsets, but the same-vector example cannot distinguish reversed order. A single frequency also aliases at a full period. Retain recording/scene/shot/clip hierarchy and exact timestamps, with additional segmentation for internal events; one frame per shot is a heuristic, not an information-preserving rule. Metadata may constrain retrieval before ranking. Neither rotation nor temporal order alone establishes cause.
 ### Figure 39.8
 ```mermaid

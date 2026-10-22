@@ -55,8 +55,8 @@ The handoff succeeds when a new crew can answer what the system does, what it co
 | Best Matching 25 (BM25) | Lexical scorer in the worked card | Exact-token retrieval channel |
 | Reciprocal Rank Fusion (RRF) | Rank-based list fusion | Combines lexical and dense channels |
 | JavaScript Object Notation (JSON) | Worked serialization format | Places retrieved blocks after instructions |
-| $`\operatorname{Recall}@k^{\prime}`$ | Relevant evidence found by retrieval depth | Requires a described judgment set |
-| $`\operatorname{nDCG}@k`$ | Normalized Discounted Cumulative Gain at final depth | Measures ranked quality at generator depth |
+| $`\mathop{\mathrm{Recall}}\nolimits@k^{\prime}`$ | Relevant evidence found by retrieval depth | Requires a described judgment set |
+| $`\mathop{\mathrm{nDCG}}\nolimits@k`$ | Normalized Discounted Cumulative Gain at final depth | Measures ranked quality at generator depth |
 | Judgment-set size | Count of evaluated queries or items | Defines evidence volume |
 | Judge | Human or other judging source | Defines who assigned relevance |
 | Relevance scale | Labels used for relevance | Makes metric interpretation possible |
@@ -228,8 +228,8 @@ Fill every field. A field that cannot be filled is the finding.
 | What | Conversational rewrite on turns greater than one. Identity otherwise. |
 | How | BM25 plus dense; RRF constant $`c_{\mathrm{RRF}}=60`$; retrieve 100, score 20 with the cross-encoder, present five. State that recall is measured before this candidate truncation. |
 | Present | $`k=5`$, most-relevant first and last, JSON blocks after the instruction |
-| $`\operatorname{Recall}@100`$ | Scenario value $`0.91`$ on $`2{,}000`$ judged queries; reported $`\kappa=0.71`$. Macro/micro aggregation, multi-judge statistic and intervals still need specification. |
-| $`\operatorname{nDCG}@5`$ | $`0.68`$ |
+| $`\mathop{\mathrm{Recall}}\nolimits@100`$ | Scenario value $`0.91`$ on $`2{,}000`$ judged queries; reported $`\kappa=0.71`$. Macro/micro aggregation, multi-judge statistic and intervals still need specification. |
+| $`\mathop{\mathrm{nDCG}}\nolimits@5`$ | $`0.68`$ |
 | Closed-book | $`0.42`$ end-to-end |
 | Gold-context | Fixed-generator scenario reference $`0.88`$, not a universal ceiling. |
 | Deployed | Scenario all-request accuracy $`0.79`$ with refusals counted incorrect; overall refusal $`9\%`$. Accepted-answer accuracy is $`0.79/0.91\approx0.868132`$ under that convention. |
@@ -289,7 +289,7 @@ The payload must remain a separate line so text cannot disappear inside an index
 
 | Field | Prompt to fill |
 | --- | --- |
-| Recall | Report $`\operatorname{Recall}@k`$ against exact search on a held-out sample at the production search parameter. State that this differs from relevance. |
+| Recall | Report $`\mathop{\mathrm{Recall}}\nolimits@k`$ against exact search on a held-out sample at the production search parameter. State that this differs from relevance. |
 | Search parameters | Give current $`\mathrm{ef}`$ or $`n_{\mathrm{probe}}`$ and a recall-latency curve across at least three values. |
 | Latency | Report $`p_{50}`$ and $`p_{95}`$ at production concurrency, not one query in isolation. |
 | Build | Report wall-clock build time, cost, and whether the build is in place or on a separate box. |
@@ -324,7 +324,7 @@ Freshness reports the full source-to-index path rather than the age of a source 
 | $`M_I`$ | $`128.96\,\mathrm{MB}`$ codes/IDs; $`12.582912\,\mathrm{MB}`$ coarse centroids; $`0.786432\,\mathrm{MB}`$ PQ codebook; subtotal $`142.329344\,\mathrm{MB}`$. |
 | $`M_{\mathrm{index,budget}}`$ | $`R=2`$, reserve $`h=0.2`$: $`341.590426\,\mathrm{MB}`$. Not full old/new peak. The $`2\,\mathrm{GB}`$ payload has a separate placement/replication policy. |
 | Shards | One logical shard is an illustrative choice, not a demonstrated node plan. Usable RAM, runtime, payload placement, load and replica/failure capacity must establish fit. |
-| $`\operatorname{Recall}@10`$ | $`0.94`$ versus exact at $`n_{\mathrm{probe}}=32`$ |
+| $`\mathop{\mathrm{Recall}}\nolimits@10`$ | $`0.94`$ versus exact at $`n_{\mathrm{probe}}=32`$ |
 | Recall curve | $`0.87`$ at $`8`$, $`0.94`$ at $`32`$, $`0.97`$ at $`128`$ probes |
 | Latency | $`p_{50}`$ $`4\ \mathrm{ms}`$, $`p_{95}`$ $`11\ \mathrm{ms}`$ at $`40`$ concurrent |
 | Build | Source scenario: 38 minutes and $`\$14`$, separate build box then swap. Build-box resources and transfer/old-new overlap must be budgeted separately. |

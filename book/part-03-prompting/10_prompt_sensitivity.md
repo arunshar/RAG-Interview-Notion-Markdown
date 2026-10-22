@@ -139,9 +139,11 @@ Use natural logarithms and nats for probabilities; percentages of accuracy chang
 - **Why:** The count makes the supposedly cosmetic format a real search space.
 - **Failure without it:** A team treats one inherited string as neutral and attributes its effect to the retriever or model.
 - **Cost or complexity:** The raw family is small enough for a grid once, but not cheap enough to repeat carelessly on every release.
-$$
+
+```math
 \lvert F\rvert=5\times4\times6\times3\times2\times2=1{,}440.
-$$
+```
+
 #### Explain the mechanism
 - **What:** A format change retokenizes the prompt.
 - Different token lengths move later positions, attention inputs, and residual-stream states.
@@ -166,31 +168,39 @@ $$
 - **Cost or complexity:** Separate format searches cost one sweep per arm. Fixing $`f_0`$ is cheaper, but then the format and its spread must be published.
 The same retrieval system can get different accuracy scores depending on how its prompt is formatted. So accuracy should be written as $`A(f)`$, where $`f`$ identifies the prompt wrapper—for example, its headers or separators. A score measured with one wrapper, $`f_0`$, is just one result for that format, not a format-independent measure of the system.
 The first formula compares two retrievers using the **same fixed wrapper**:
-$$
+
+```math
 \widehat\Delta_{f_0}=\widehat A_{R_1,\mathrm{test}}(f_0)-\widehat A_{R_2,\mathrm{test}}(f_0).
-$$
+```
+
 That tells you which retriever scored higher under *that particular* format. It does not necessarily tell you which retriever can perform better overall, because changing the retrieved content may also change which wrapper works best.
 The next equations distinguish the population-optimal wrapper from a development-selected wrapper evaluated on held-out data:
-$$
+
+```math
 \begin{aligned}
-f_R^\star&\in\operatorname*{arg\,max}_{f\in F}A_R(f),\\
+f_R^\star&\in\mathop{\mathrm{arg\,max}}_{f\in F}A_R(f),\\
 \Delta^\star&=A_{R_1}(f_{R_1}^\star)-A_{R_2}(f_{R_2}^\star),\\
-\widehat f_R&=\operatorname{Search}(R,F;\mathcal D_{\mathrm{dev}},B),\\
+\widehat f_R&=\mathop{\mathrm{Search}}\nolimits(R,F;\mathcal D_{\mathrm{dev}},B),\\
 \widehat\Delta_{\mathrm{tuned}}&=\widehat A_{R_1,\mathrm{test}}(\widehat f_{R_1})-\widehat A_{R_2,\mathrm{test}}(\widehat f_{R_2}).
 \end{aligned}
-$$
+```
+
 A tuned-system comparison is appropriate when both systems are allowed to choose their wrappers. Match the search budget and search family, then report held-out performance of each selected wrapper. Taking the largest noisy score on the same test set is not a fair confirmation. A shared fixed-wrapper experiment answers a different, valid question.
-$$
+
+```math
 \widehat\Delta_{f_0}=\widehat A_{R_1,\mathrm{test}}(f_0)-\widehat A_{R_2,\mathrm{test}}(f_0).
-$$
-$$
+```
+
+
+```math
 \begin{aligned}
-f_R^\star&\in\operatorname*{arg\,max}_{f\in F}A_R(f),\\
+f_R^\star&\in\mathop{\mathrm{arg\,max}}_{f\in F}A_R(f),\\
 \Delta^\star&=A_{R_1}(f_{R_1}^\star)-A_{R_2}(f_{R_2}^\star),\\
-\widehat f_R&=\operatorname{Search}(R,F;\mathcal D_{\mathrm{dev}},B),\\
+\widehat f_R&=\mathop{\mathrm{Search}}\nolimits(R,F;\mathcal D_{\mathrm{dev}},B),\\
 \widehat\Delta_{\mathrm{tuned}}&=\widehat A_{R_1,\mathrm{test}}(\widehat f_{R_1})-\widehat A_{R_2,\mathrm{test}}(\widehat f_{R_2}).
 \end{aligned}
-$$
+```
+
 #### Search efficiently and control selection bias
 - Use successive halving on development data, then confirm the selected wrapper on untouched questions.
 - A full $`1{,}440\times500`$ grid uses $`720{,}000`$ generations. At $`1{,}400`$ input tokens at $`\$0.60`$ per million and $`120`$ output tokens at $`\$2.40`$ per million, one generation costs $`\$0.001128`$, totaling $`\$812.16`$.
@@ -198,7 +208,7 @@ $$
 - These are search costs; untouched confirmation, labels and additional search are extra. Reused scores need separate incremental accounting.
 #### Read the worked result correctly
 - The search observes $`71.2\%`$ best, $`52.8\%`$ worst and $`64.0\%`$ incumbent: an $`18.4`$-percentage-point range and $`7.2`$-point development gain.
-- Near $`p=0.64`$ on $`n=500`$ independent questions, one-arm $`\operatorname{SE}=\sqrt{0.64(0.36)/500}\approx0.021466`$, or $`2.1466`$ points.
+- Near $`p=0.64`$ on $`n=500`$ independent questions, one-arm $`\mathop{\mathrm{SE}}\nolimits=\sqrt{0.64(0.36)/500}\approx0.021466`$, or $`2.1466`$ points.
 - The heuristic $`\sigma\sqrt{2\ln F}`$ gives about $`8.19`$ points for $`F=1{,}440`$. For independent Gaussian errors it is a leading extreme-value approximation and an upper scale for expected maxima, not an exact bias, a minimum required gain, or a universal bound for these correlated bounded scores.
 - Correlation and score heterogeneity change selection bias; correlation alone does not justify a guaranteed smaller value without a joint model.
 - A four-point difference cannot be declared significant or insignificant by comparing it with one arm's standard error. Use paired discordances, search-aware selection accounting, and untouched confirmation before rollback or release.
@@ -235,25 +245,31 @@ $$
 - Ordered pairs preserve directional asymmetry.
 - **Failure without it:** A variant that raises one answer’s likelihood and lowers another’s can average to false calm.
 - **Cost or complexity:** The full matrix uses $`N(N - 1)`$ scoring passes after $`N`$ generations.
-$$
-\operatorname{POSIX}=\frac1{N(N-1)}\sum_{i=1}^N\sum_{j\ne i}
+
+```math
+\mathop{\mathrm{POSIX}}\nolimits=\frac1{N(N-1)}\sum_{i=1}^N\sum_{j\ne i}
 \frac1{\lvert y_i\rvert}\left\lvert\ln\frac{P(y_i\mid x_j)}{P(y_i\mid x_i)}\right\rvert,
-\qquad N\ge2,\quad\lvert y_i\rvert>0.
-$$
+\qquad N\ge2,\quad\lvert y_i\rvert\gt 0.
+```
+
 - A $`40`$-token response moving from total log likelihood $`-12.0`$ to $`-13.6`$ contributes $`1.6/40=0.040\,\mathrm{nats/token}`$. Probabilities must be positive or scores need an explicit zero-probability convention.
 #### Connect sensitivity to the decoding margin
 - **What:** Let $`p_1`$ and $`p_2`$ be the top two next-token probabilities.
 - Their logit gap is $`\log(p_1 / p_2)`$.
-- For top-two logit gap $`\Delta>0`$, if every logit changes by at most $`\varepsilon`$ and $`2\varepsilon<\Delta`$, the top token cannot change. A small gap permits, but does not guarantee, a flip; a third token can also overtake the original winner.
+- For top-two logit gap $`\Delta\gt 0`$, if every logit changes by at most $`\varepsilon`$ and $`2\varepsilon\lt \Delta`$, the top token cannot change. A small gap permits, but does not guarantee, a flip; a third token can also overtake the original winner.
 - **Why:** Drift and margin now share units.
 - **Failure without it:** A raw agreement bit discards how close the answer was to changing.
 - **Cost or complexity:** The logits are computed during decoding, but extracting normalized token scores can require additional access, storage and some computation. This is often cheap on an owned stack, not universally free or exposed by a hosted API.
-$$
+
+```math
 \Delta z = \log \frac{p_1}{p_2}
-$$
-$$
+```
+
+
+```math
 \bar{\ell}(y) = \frac{1}{|y|} \sum_{t=1}^{|y|} \log p(y_t \mid x, y_{1:t-1})
-$$
+```
+
 - A confident $`0.90`$ versus $`0.05`$ split has a 2.89-nat barrier.
 - A hesitant $`0.35`$ versus $`0.30`$ split has a 0.154-nat barrier.
 - The gap ratio is $`\ln18/\ln(7/6)\approx18.75`$. This compares two gaps only if the perturbation changes their competing-logit differences by the same amount; it is not a measured probability of a flip.
@@ -277,7 +293,7 @@ $$
 - One-sided measurement uses one generation plus seven scores: $`1.920513\,\mathrm{s/query}`$, or $`960.26`$ seconds. The full-to-one-sided ratio is exactly $`8`$ for these homogeneous costs.
 - One-sided measurement misses some directional effects; escalate when variants disagree or the omitted directions matter. Actual throughput and caching must be measured.
 #### Interpret a score without inventing a threshold
-- Six absolute ordered-pair shifts summing to $`5.7`$ nats for equal $`40`$-token answers give $`\operatorname{POSIX}=5.7/(6\times40)=0.02375\,\mathrm{nats/token}`$.
+- Six absolute ordered-pair shifts summing to $`5.7`$ nats for equal $`40`$-token answers give $`\mathop{\mathrm{POSIX}}\nolimits=5.7/(6\times40)=0.02375\,\mathrm{nats/token}`$.
 - If the same average rate applied to $`120`$-token answers, the average absolute sequence-log-likelihood shift would be $`2.85`$ nats. Its exponential is $`e^{2.85}\approx17.29`$, a geometric scale for likelihood-ratio magnitudes, not a bound on every answer.
 - This sequence score does not measure the change in the gap between two competing next tokens. Dividing it by a next-token gap does not establish a flip-barrier share or certify stability.
 - Compare scores only under matched variants, queries, tokenization, lengths and scoring conventions. Use a separately measured token-gap perturbation for a token-level robustness argument; rebaseline after model or tokenizer changes.
@@ -289,16 +305,20 @@ $$
 - **Why:** The residual quantifies what the proxy cannot know.
 - **Failure without it:** A team writes that the lowest-sensitivity template is the most accurate without labels.
 - **Cost or complexity:** Estimating $`r`$ requires a labeled vertical with the same model, task, and variant family.
-$$
+
+```math
 \widehat{A} = \mu_A + \rho \frac{\sigma_A}{\sigma_S}(S - \mu_S)
-$$
-$$
+```
+
+
+```math
 \begin{aligned}
-\operatorname{sd}(A-\widehat A)&=\sigma_A\sqrt{1-\rho^2},\\
+\mathop{\mathrm{sd}}\nolimits(A-\widehat A)&=\sigma_A\sqrt{1-\rho^2},\\
 Z_A&=\rho Z_S+\sqrt{1-\rho^2}\,\varepsilon
 \quad\text{under a standardized joint-Gaussian model}.
 \end{aligned}
-$$
+```
+
 - At $`r = 0.7`$, the residual is $`0.714\,\sigma_A`$.
 - This reduces residual standard deviation by $`1-\sqrt{1-0.7^2}\approx28.59\%`$; the fraction of variance explained is $`r^2=49\%`$. Neither quantity is a $`70\%`$ removal of uncertainty.
 - If $`\sigma_A`$ is $`4.5`$ points, one residual standard deviation is $`3.2`$ points.
@@ -309,9 +329,11 @@ $$
 - **Why:** Ranking only needs the sign of a difference.
 - **Failure without it:** The phrase “strong correlation” hides a substantial reversal rate.
 - **Cost or complexity:** Even a high $`r`$ leaves some pairs backwards.
-$$
+
+```math
 \tau = \frac{2}{\pi}\arcsin \rho, \qquad \Pr[\text{correct order}] = \frac{1}{2} + \frac{1}{\pi}\arcsin r
-$$
+```
+
 - $`r = 0.3`$ gives $`59.7\%`$ pairwise accuracy.
 - $`r = 0.5`$ gives exactly two thirds.
 - $`r = 0.7`$ gives $`74.7\%`$.
@@ -354,12 +376,16 @@ $$
 - **Why:** The three candidate interventions do not act on the same statistic.
 - **Failure without it:** A team buys a 10-times larger serving bill to solve a variance problem the objective never names.
 - **Cost or complexity:** Measuring variance requires evaluating a format family rather than one leaderboard prompt.
-$$
+
+```math
 \mu_M = \mathbb{E}_{f \sim F}[A_M(f)]
-$$
-$$
+```
+
+
+```math
 \sigma_M^2 = \mathop{\text{Var}}_{f \sim F}[A_M(f)]
-$$
+```
+
 #### Why scale and standard instruction tuning do not impose invariance
 - **What:** Pre-training minimizes expected negative log-likelihood under observed corpus frequencies.
 - Standard instruction tuning keeps cross-entropy and swaps in instruction-response data.
@@ -376,9 +402,11 @@ $$
 - **Why:** The prompt supplies a local typography prior that does not depend on corpus frequency.
 - **Failure without it:** A demonstration rendered in a different wrapper uses context without supplying the intended pattern match.
 - **Cost or complexity:** The constant-$`g`$ equation is a local toy model, not a law of attention. A saturating model would instead use $`\Delta z(k)=\Delta z_0+\sum_{i=1}^k g_i`$ with diminishing $`g_i`$; attention normalization alone does not prove this pattern.
-$$
+
+```math
 \Delta z(k) = \Delta z_0 + kg
-$$
+```
+
 - For the illustrative constant-gain equation, $`\Delta z_0=0.154`$ and $`g=0.35`$ give gaps $`0.154,0.504,0.854,1.554,2.954`$ nats at $`k=0,1,2,4,8`$.
 - These assumed gaps are not measured effects of adding examples. The $`0.02375`$ POSIX average cannot be used as a competing-logit perturbation, so the former $`15.5\%`$ to $`0.81\%`$ “barrier shares” do not establish robustness.
 - Compare measured next-token gap changes under rewrites if that is the desired claim. The cited few-shot result concerns empirical sensitivity; it is not proved by this additive toy equation.
@@ -429,9 +457,11 @@ This passage gives practical advice for making prompts more robust without letti
 - **Why:** The count rules out enumeration and unguided random search.
 - **Failure without it:** A search result is described as broad when it covers a microscopic local slice.
 - **Cost or complexity:** Every workable optimizer must impose a structural restriction.
-$$
+
+```math
 \lvert\mathcal X\rvert=(C+1)^L=9^{60}\approx1.79701\times10^{57}.
-$$
+```
+
 #### COPLE restriction and guarantee
 - **What:** COPLE changes one word slot at a time.
 - It measures leave-one-out influence for all $`L`$ words.
@@ -442,12 +472,16 @@ $$
 - Coordinate edits also miss interactions between words.
 - **Cost or complexity:** Five sweeps evaluate 700 prompts, only $`4 \times 10^{-55}`$ of the space.
 - A finite, noisy search restricted to the top $`m`$ slots does not certify even a full coordinate-wise local optimum. Such a certificate would require checking every allowed one-coordinate neighbor with sufficiently reliable scores; no global optimum is guaranteed.
-$$
+
+```math
 I(w_j) = \left|S(x) - S(x_{\setminus j})\right|
-$$
-$$
+```
+
+
+```math
 L+mC=60+10\times8=140,\qquad b_{\mathrm{heuristic}}=\sigma\sqrt{2\ln(mC)}.
-$$
+```
+
 #### The accept rule controls whether a gain is real
 - **What:** Compare candidate and incumbent on identical examples. Pryzant et al. (2023) attach this best-arm-identification step to ProTeGi.
 - Stage evaluation so weak candidates receive fewer examples.

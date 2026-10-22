@@ -46,8 +46,8 @@ Moving facts into the card room repairs those cracks, but the bill moves too. A 
 | Bi-encoder | An encoder that represents the query and chunks separately so their vectors can be compared. | It supports the chapter’s two-store frame and evidence-retrieval decisions. |
 | Encoder | The model that converts text into an embedding vector. | It supports the chapter’s two-store frame and evidence-retrieval decisions. |
 | k-nearest-neighbor search | A non-parametric method that returns the $`k`$ closest stored vectors. | It supports the chapter’s two-store frame and evidence-retrieval decisions. |
-| Retriever $`\operatorname{RET}`$ | The read step that maps a query and datastore to $`k`$ passages. | It supports the chapter’s two-store frame and evidence-retrieval decisions. |
-| Generator $`\operatorname{GEN}`$ | The model step that maps the query and retrieved passages to an answer. | It supports the chapter’s two-store frame and evidence-retrieval decisions. |
+| Retriever $`\mathop{\mathrm{RET}}\nolimits`$ | The read step that maps a query and datastore to $`k`$ passages. | It supports the chapter’s two-store frame and evidence-retrieval decisions. |
+| Generator $`\mathop{\mathrm{GEN}}\nolimits`$ | The model step that maps the query and retrieved passages to an answer. | It supports the chapter’s two-store frame and evidence-retrieval decisions. |
 | Top-k | The highest-ranked $`k`$ retrieved items. | It supports the chapter’s two-store frame and evidence-retrieval decisions. |
 | Retrieval miss | A query result that fails to include the answer-bearing passage. | It supports the chapter’s two-store frame and evidence-retrieval decisions. |
 | Grounding | Constraining an answer to information in supplied passages. | It supports the chapter’s two-store frame and evidence-retrieval decisions. |
@@ -174,18 +174,24 @@ Storage is decimal unless marked binary: $`1\,\mathrm{GB}=10^9\,\mathrm B`$ and 
 ### 1.1 Parametric, non-parametric, semi-parametric: the frame behind every question
 #### What the frame is
 A parametric language model fixes its parameter count $`\lvert\theta\rvert`$ before training. That count does not grow with the amount of training data. The model represents the next-token distribution below over a vocabulary of size $`V`$.
-$$
+
+```math
 P_{\theta}(x_n \mid x_1, \ldots, x_{n-1})
-$$
+```
+
 After training, the source corpus is no longer an addressable part of the model. Everything retained from that corpus is compressed into the weights.
 A non-parametric datastore grows with its contents. Store $`N`$ chunks and its knowledge capacity is $`\mathcal O(N)`$. Add chunk $`N + 1`$ and capacity grows without retraining or disturbing an existing row. Dense retrieval is k-nearest-neighbor search in embedding space. It is non-parametric in capacity even though its encoder can contain tens or hundreds of millions of trained weights.
 RAG composes the two stores.
-$$
+
+```math
 c_1, \ldots, c_k = \mathop{\text{RET}}(x, D)
-$$
-$$
+```
+
+
+```math
 y = \mathop{\text{GEN}}_{\theta}(x, c_1, \ldots, c_k)
-$$
+```
+
 The query is $`x`$. The datastore is $`D`$. The retrieved chunks are $`c_1`$ through $`c_k`$. The answer is $`y`$.
 #### Why the split exists
 The split earns its keep through write-cost asymmetry, not through an unconditional accuracy claim. Writing one fact to $`D`$ embeds one chunk and inserts one row. That write takes milliseconds in the prose example, leaves other rows unchanged, and is reversible by deletion. Writing one fact to $`\theta`$ requires a gradient pass over the parameters. For a 27-billion-parameter model held in FP32, the weights alone occupy $`(27\times10^9)(4\,\mathrm{B/parameter})=108\,\mathrm{GB}`$ before optimizer state.
@@ -199,9 +205,11 @@ The source uses Llama 3 to quantify the lossiness. It reports more than 15 trill
 At the rounded $`15\times10^{12}`$-token reference scale, the input-to-parameter ratio is $`15\times10^{12}/(8\times10^9)=1{,}875`$ tokens per parameter. The corresponding input-to-checkpoint byte ratio is $`(1{,}875\times4)/2=3{,}750{:}1`$. This is a corpus-size comparison, not a claim that each parameter independently stores $`7{,}500`$ identifiable source bytes or that every fact is compressed losslessly. Rare facts can be poorly retained, but their learning probability cannot be inferred from this ratio or from a count of three appearances alone.
 #### Worked example: 40,000 internal documents
 The corpus has $`40{,}000`$ documents at $`2{,}000`$ tokens each. That is $`80{,}000{,}000`$ tokens. About $`6\%`$ changes each quarter. The generator has 8 billion parameters. The parametric route uses the training-cost identity below.
-$$
+
+```math
 \text{training FLOPs} \approx 6 N_{\text{params}} N_{\text{tokens}}
-$$
+```
+
 The factor $`6`$ approximates $`2`$ forward-pass and $`4`$ backward-pass FLOPs per parameter per token. One epoch costs $`3.84\times10^{18}\,\mathrm{FLOP}`$. The worked scenario budgets $`10`$ epochs, totaling $`3.84\times10^{19}\,\mathrm{FLOP}`$; neither successful memorization nor the necessity of ten epochs follows from that budget. A rounded dense bf16 peak near $`10^{15}\,\mathrm{FLOP\,s^{-1}}`$ at $`34\%`$ utilization gives the assumed $`3.4\times10^{14}\,\mathrm{FLOP\,s^{-1}}`$.
 The sustained throughput carried by the source is $`3.4 \times  10^{14} \,\mathrm{FLOP\,s^{-1}}`$. Training therefore takes $`1.13 \times  10^{5} \,\mathrm{s}`$, or about $`31.4 \,\mathrm{GPU\!-\!hours}`$. That cost repeats each quarter. The whole corpus is replayed because training only on the changed $`6\%`$ invites catastrophic forgetting. The datastore route chunks at 300 tokens.
 Use non-overlapping $`300`$-token chunks without crossing document boundaries, retaining a final partial chunk. Each modeled document produces $`\lceil2{,}000/300\rceil=7`$ chunks, for $`280{,}000`$ vectors. A forward-only embedding proxy for the $`110`$-million-parameter encoder is $`1.76\times10^{16}\,\mathrm{FLOP}`$, giving approximately $`51.76\,\mathrm{s}`$ at the stated throughput. The previously quoted $`44\,\mathrm{s}`$ is not reproduced by those inputs. At $`768`$ fp32 dimensions, vector payload is $`280{,}000\times768\times4=860{,}160{,}000\,\mathrm B=860.16\,\mathrm{MB}`$, excluding the index, identifiers, metadata and source text. Padding and actual encoder throughput can add work.
@@ -237,9 +245,11 @@ There is no operation that deletes one source document from a tensor. The cited 
 Unlearning reverses the training sign to punish specified sequences. It requires enumerating every target sequence in advance. The core problem is that the sensitive content in a large corpus is abundant and not fully known.
 #### Bottleneck 5: model size
 Training compute couples knowledge capacity to language competence. In this formula, $`N`$ is parameter count and $`D`$ is training-token count rather than the datastore.
-$$
+
+```math
 C \approx 6ND
-$$
+```
+
 Increasing parametric capacity to improve factual coverage raises work on every forward pass, including queries that need no external facts. Adding one fact does not automatically increase a fixed architecture's parameter count. Scaling can reduce some factual error; it does not itself provide document-level provenance or deletion. Model editing also needs locality and regression checks because changing shared parameters can affect unrelated behavior.
 Changing neurons associated with one fact can perturb unrelated knowledge and leave contradictory beliefs.
 #### Worked example: one policy changes on Tuesday
@@ -263,9 +273,11 @@ The later deletion is a row removal. The compute identity is checked against GPT
 ### 1.3 The five benefits, and what each one costs you
 #### One responsibility moves five times
 The generation step can be written as a conditional answer over the query and retrieved chunks.
-$$
+
+```math
 p_{\theta}(y \mid x, \mathop{\text{RET}}(x, D))
-$$
+```
+
 The weights are learned and then frozen for service. The datastore is queried at inference time. Each claimed RAG benefit transfers one responsibility from the weights to that datastore. The responsibility does not disappear. It acquires a new operational failure surface.
 #### Benefit 1: factual correctness
 The fact no longer has to survive pre-training compression. Rare entities that appeared only a few times can be supplied directly from a document. The cost is placing retrieval on the critical path. A wrong passage can override a parametric answer that would have been correct. The cited PopQA comparison measures this reversal on roughly $`10\%`$ of questions.
@@ -303,33 +315,43 @@ Twenty-one million Wikipedia passages at 768 float32 dimensions require $`64.5\,
 ### 1.4 RAG is one instance of tool use, not the general case
 #### The formal boundary
 A RAG system first retrieves passages and then generates from them.
-$$
+
+```math
 c_1, \ldots, c_k = \mathop{\text{RET}}(x, D)
-$$
-$$
+```
+
+
+```math
 y = \mathop{\text{GEN}}_{\theta}(x, c_1, \ldots, c_k)
-$$
+```
+
 A tool-augmented generator generalizes that sequence by choosing a tool and arguments before producing an answer.
-$$
+
+```math
 o_i = \mathop{\text{TOOL}}_{t_i}(a_i)
-$$
-$$
+```
+
+
+```math
 t_i \in T
-$$
-$$
+```
+
+
+```math
 y = \mathop{\text{GEN}}_{\theta}(x, o_1, \ldots, o_m)
-$$
-A simple single-retriever RAG pipeline is the special case $`\lvert T\rvert=1`$, with $`\operatorname{RET}`$ as its sole tool. This is a modeling example, not a definition restricting all RAG systems to one tool: hybrid search, multiple retrievers and agents can still perform retrieval-augmented generation. The retrieval argument is the query or a reformulation; its evidence return contains passages and source identifiers. The relevant boundary here is that evidence contract, not the number of tools or the index technology.
+```
+
+A simple single-retriever RAG pipeline is the special case $`\lvert T\rvert=1`$, with $`\mathop{\mathrm{RET}}\nolimits`$ as its sole tool. This is a modeling example, not a definition restricting all RAG systems to one tool: hybrid search, multiple retrievers and agents can still perform retrieval-augmented generation. The retrieval argument is the query or a reformulation; its evidence return contains passages and source identifiers. The relevant boundary here is that evidence contract, not the number of tools or the index technology.
 BM25 over web pages can satisfy the RAG contract. A search endpoint that returns only a synthesized answer string does not preserve it.
 #### What general tool use adds
-Tool selection turns a fixed retrieval pipeline into a policy. When $`\lvert T\rvert > 1`$, a classifier, router, or learned policy must choose $`t_i`$. The source names Toolformer as a self-supervised tool-selection approach. It names ReAct as an approach that interleaves reasoning and actions in the trace. It also notes that retrieval research can cast answer-versus-search as a reinforcement-learning policy.
+Tool selection turns a fixed retrieval pipeline into a policy. When $`\lvert T\rvert \gt  1`$, a classifier, router, or learned policy must choose $`t_i`$. The source names Toolformer as a self-supervised tool-selection approach. It names ReAct as an approach that interleaves reasoning and actions in the trace. It also notes that retrieval research can cast answer-versus-search as a reinforcement-learning policy.
 Argument synthesis produces a query or payload before the call runs. A weak retrieval query usually degrades into poor ranking. A malformed SQL or JSON argument can fail to parse. A syntactically valid argument with the wrong date range can return a plausible but wrong number. Effects remove cheap retries.
 Calling read-only retrieval twice adds latency but no second state change. Calling a ticket-creation tool twice can create a duplicate action.
 #### Why retrieval has a distinct contract
 The generator already knows how to read text in context, so passages require no new model capability. An answer span can be traced to a retrieved chunk and then to a source document. A human can audit the answer against those passages without trusting the model’s hidden computation. A calculator that returns 42 has a different contract. Its warrant is the calculator’s correctness, not a cited document.
 RAG returns evidence that can be cited. Other tools often return values that must be trusted. The evidence-returning, state-mutating quadrant is nearly empty. A retrieval call that logs a query or decrements a quota remains citable but is no longer free to retry. That distinction matters when a low-confidence loop re-queries.
 #### Why indexing everything fails
-A relevance index returns a few passages; an aggregate or exhaustive list can depend on every matching record. If the answer needs $`M>0`$ distinct records and retrieval returns $`k`$ records, evidence coverage is bounded above by $`\min(k,M)/M`$, and by $`k/M`$ when $`M>k`$. Equality requires every returned record to be relevant and distinct. A strong relevance ranker does not thereby certify completeness. The source calls such corpus-wide demands global or sensemaking queries.
+A relevance index returns a few passages; an aggregate or exhaustive list can depend on every matching record. If the answer needs $`M\gt 0`$ distinct records and retrieval returns $`k`$ records, evidence coverage is bounded above by $`\min(k,M)/M`$, and by $`k/M`$ when $`M\gt k`$. Equality requires every returned record to be relevant and distinct. A strong relevance ranker does not thereby certify completeness. The source calls such corpus-wide demands global or sensemaking queries.
 #### Worked example: route 1,000 production queries
 The traffic mix has $`620`$ lookups, $`180`$ aggregates, $`120`$ actions and $`80`$ closed-book queries. In this scenario, assume a retrieval-only product succeeds on every lookup and closed-book query, fails on these aggregates, and has no action execution path. Its resulting upper bound is $`(620+80)/1{,}000=70\%`$. This is a conditional workload ceiling, not a universal ceiling for RAG; a product with complete aggregation or action tools changes the assumptions.
 The aggregate example has $`3{,}200`$ Europe, Middle East, and Africa invoices, one per chunk. Even with all twenty returned invoices relevant and distinct, coverage is at most $`20/3{,}200=0.625\%`$. A sum over $`0.625\%`$ of the addends is wrong unless the omitted $`3{,}180`$ invoices cancel to zero. A routed design keeps the 620 lookups on retrieval. It sends the 180 aggregates to a text-to-SQL tool that scans all $`3{,}200`$ rows.
@@ -358,26 +380,34 @@ It follows from the relationship between what the model already knows and what r
 #### The popularity model
 Let $`s`$ be subject popularity measured by monthly Wikipedia page views. Pre-training text follows a power-law distribution over entities. Popular subjects receive more supporting documents. Their facts are therefore more likely to survive in the weights. Let $`p(s)`$ be closed-book accuracy.
 Let $`r(s)`$ be retrieval-augmented accuracy. Define $`g`$ as the probability that the final RAG answer is correct conditional on the closed-book answer being wrong, and $`h`$ as the probability that the final RAG answer is wrong conditional on the closed-book answer being correct. Merely retrieving an answer-bearing passage is not the same as successful rescue. The following identity uses conditional rates for that slice; treating $`g,h`$ as constant across popularity is an additional scenario assumption. It does not imply that both accuracy curves must increase: with fixed rates, $`r(s)=g+(1-g-h)p(s)`$.
-$$
+
+```math
 r(s) = p(s) + (1 - p(s))g - p(s)h
-$$
-$$
+```
+
+
+```math
 \Delta(s) = r(s) - p(s) = (1 - p(s))g - p(s)h
-$$
-Retrieval helps when the rescue term exceeds the harm term. The odds form below assumes $`h>0`$ and $`p(s)<1`$. The threshold form assumes $`g+h>0`$. If $`g=h=0`$, both policies tie everywhere; if $`h=0<g`$, retrieval cannot hurt in this model.
-$$
-\frac{p(s)}{1 - p(s)} < \frac{g}{h}
-$$
+```
+
+Retrieval helps when the rescue term exceeds the harm term. The odds form below assumes $`h\gt 0`$ and $`p(s)\lt 1`$. The threshold form assumes $`g+h\gt 0`$. If $`g=h=0`$, both policies tie everywhere; if $`h=0\lt g`$, retrieval cannot hurt in this model.
+
+```math
+\frac{p(s)}{1 - p(s)} \lt  \frac{g}{h}
+```
+
 The equivalent accuracy threshold is below.
-$$
-p(s) < p^{\star} = \frac{g}{g + h}
-$$
+
+```math
+p(s) \lt  p^{\star} = \frac{g}{g + h}
+```
+
 If $`g`$ and $`h`$ are constant across popularity and $`p(s)`$ is strictly increasing, the curves have at most one crossover; an actual crossing also requires the observed accuracy range to straddle $`p^\star`$. Flat segments can produce ties, and popularity-dependent $`g(s)`$ or $`h(s)`$ can create multiple crossings. The crossover is $`s^\star`$, where $`p(s^\star) = p^\star`$. Retrieval helps below $`s^\star`$ and harms above it. The threshold $`p^\star`$ is a property of the retriever and reader through $`g / h`$, not a property of one question. A small harm rate can dominate in the popular head.
 There, $`1 - p`$ is near zero and suppresses rescue, while $`p`$ is near one and preserves harm.
 #### What creates the harm rate
 On the slice where retrieval flips a correct answer, recall at 1 is significantly lower than overall recall. The first-ranked document is often topically related but does not contain the answer. A grounding prompt tells the reader to trust that supplied passage. The strongest distractor in the corpus can then override correct parametric knowledge. The harm rate is approximately rank-1 imprecision filtered through how strongly the prompt orders context use.
-Always-retrieve wins on average when $`\mathbb E[(1-p)g]-\mathbb E[ph]>0`$. It still pays the loss on the popular head, which can carry most traffic and executive scrutiny. Never-retrieve fails on the rare tail. The source again cites the $`10^{18}`$ parameter extrapolation as the infeasible scale-only alternative. Popularity is not difficulty.
-For $`g+h>0`$ and $`h>0`$, the threshold satisfies $`p^\star<1`$. A harmful region is possible near perfect closed-book accuracy, but it need not occur in a finite workload whose observed $`p(s)`$ stays below the threshold. Changing the generator, retriever or prompt can change $`p,g,h`$ together; the direction of a real crossover shift must be measured rather than inferred from only one changed quantity.
+Always-retrieve wins on average when $`\mathbb E[(1-p)g]-\mathbb E[ph]\gt 0`$. It still pays the loss on the popular head, which can carry most traffic and executive scrutiny. Never-retrieve fails on the rare tail. The source again cites the $`10^{18}`$ parameter extrapolation as the infeasible scale-only alternative. Popularity is not difficulty.
+For $`g+h\gt 0`$ and $`h\gt 0`$, the threshold satisfies $`p^\star\lt 1`$. A harmful region is possible near perfect closed-book accuracy, but it need not occur in a finite workload whose observed $`p(s)`$ stays below the threshold. Changing the generator, retriever or prompt can change $`p,g,h`$ together; the direction of a real crossover shift must be measured rather than inferred from only one changed quantity.
 A popular subject can still require fresh, ambiguous, or multi-step evidence. An obscure question can become easy once its one good page is present. The gate must estimate where the answer already lives, not whether the wording looks easy.
 #### Worked example: 100,000 daily queries
 The head has at least $`10^{5}`$ monthly page views and carries $`55\%`$ of queries. The torso spans $`10^{3}`$ to $`10^{5}`$ views and carries $`30\%`$. The tail is below $`10^{3}`$ views and carries $`15\%`$. Closed-book accuracies are $`0.90`$ for head, $`0.55`$ for torso, and $`0.20`$ for tail. The assumed rescue rate is $`g = 0.55`$.
@@ -580,7 +610,7 @@ No. Citation coverage only proves that a marker exists, so measure sentence-to-
 | Popularity traffic | $`100{,}000`$ queries per day. Head is at least $`10^{5}`$ views and $`55\%`$ of traffic. Torso is $`10^{3}`$ to $`10^{5}`$ and $`30\%`$. Tail is below $`10^{3}`$ and $`15\%`$. |
 | Closed-book bucket accuracy | Head $`0.90`$, torso $`0.55`$, tail $`0.20`$, and weighted total 0.690. |
 | Rescue and harm | $`g=0.55`$ assumed; joint flip probability $`0.10`$ assumed; $`h\approx0.144928`$ and $`p^\star\approx0.791449`$. Conditional and joint flip rates are not interchangeable. |
-| Crossover count and limit | At most one crossover only with fixed $`g,h`$, strictly increasing $`p(s)`$ and a range straddling $`p^\star`$. With $`g+h>0`$ and $`h>0`$, $`p^\star<1`$. |
+| Crossover count and limit | At most one crossover only with fixed $`g,h`$, strictly increasing $`p(s)`$ and a range straddling $`p^\star`$. With $`g+h\gt 0`$ and $`h\gt 0`$, $`p^\star\lt 1`$. |
 | Figure $`1.5`$ axes | Accuracy marks are 0, $`0.5`$, and 1.0. Popularity runs from $`10^{1}`$ through $`10^{6}`$ monthly page views on a log scale. |
 | Rescue-harm weighting | In the popular head, a harm rate of a few percent can outweigh a rescue rate of about $`50\%`$ because rescue is multiplied by $`1 - p`$ and harm by $`p`$. |
 | Retrieved bucket accuracy | Head $`0.824565`$, torso $`0.717790`$, tail $`0.611014`$, rounded only after using the full-precision harm rate. |

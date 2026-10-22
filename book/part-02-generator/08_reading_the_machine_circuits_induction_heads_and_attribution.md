@@ -213,7 +213,7 @@ Use natural logarithms and nats for likelihoods. Row-vector convention is used t
 
 | Aspect | Explanation |
 | --- | --- |
-| **What** | With row-vector states, the next-token logit row is $`\operatorname{LN}(x_L)W_U`$. The same dimensions are used in the vocabulary-expanded maps. |
+| **What** | With row-vector states, the next-token logit row is $`\mathop{\mathrm{LN}}\nolimits(x_L)W_U`$. The same dimensions are used in the vocabulary-expanded maps. |
 | **Why** | Each next-token prediction reads a $`d`$-dimensional current state, but later decoding steps can attend again to the retained context KV cache. This is not a one-time compression of the whole context into one permanently closed state. |
 | **Failure without enough selection** | Distractors can impair evidence use, but fixed residual width or a context-to-position count alone does not prove such impairment or an information-capacity threshold. Measure answer quality and interventions. |
 | **Cost or complexity** | Fifty chunks of $`500`$ tokens create $`25{,}000`$ positions. One layer of half-precision residual states occupies $`195`$ mebibytes (MiB). The answer position occupies $`8`$ kibibytes (KiB). The funnel is $`25{,}000:1`$. Reducing $`k`$ from $`50`$ to $`5`$ cuts layer storage from $`195\,\mathrm{MiB}`$ to $`19.5\,\mathrm{MiB}`$. It leaves the answer state at $`8\,\mathrm{KiB}`$. |
@@ -291,7 +291,7 @@ Use natural logarithms and nats for likelihoods. Row-vector convention is used t
 
 | Aspect | Explanation |
 | --- | --- |
-| **What** | As an explicitly defined heuristic, let $`\kappa=d_h^{-1}\sum_{i=1}^{d_h}f(\lambda_i)`$, with $`f(\lambda)=\operatorname{Re}(\lambda)/\lvert\lambda\rvert`$ for $`\lambda\ne0`$ and $`f(0)=0`$. Eigenvalues summarize the reduced OV operator; positive real parts are not by themselves a token-by-token copying guarantee. |
+| **What** | As an explicitly defined heuristic, let $`\kappa=d_h^{-1}\sum_{i=1}^{d_h}f(\lambda_i)`$, with $`f(\lambda)=\mathop{\mathrm{Re}}\nolimits(\lambda)/\lvert\lambda\rvert`$ for $`\lambda\ne0`$ and $`f(0)=0`$. Eigenvalues summarize the reduced OV operator; positive real parts are not by themselves a token-by-token copying guarantee. |
 | **Why** | A copier raises the logit of the token it attends to. |
 | **Failure without a null** | A sign-symmetric random-product ensemble can have mean zero for this odd score. The heuristic $`1/\sqrt{2d_h}=0.0625`$ follows an independent uniform-angle approximation; real-matrix eigenvalues are dependent and conjugate-paired, and trained/tied embeddings violate simple ensemble assumptions. This is not a calibrated null standard deviation for a deployed model. |
 | **Cost or complexity** | $`3/\sqrt{2(128)}=0.1875`$ suggests a rough $`0.19`$ screening flag only under that null approximation. Estimate an empirical null and account for scanning $`1{,}024`$ heads; this is not a conservative family-wise significance threshold. |
@@ -676,7 +676,7 @@ No, because a circuit fixes a weight-level transformation across inputs but does
 | All-head eigendecomposition | $`\mathcal O(LHd_h^3)`$, about $`2.15\times10^9`$ before constants | Omits forming the reduced products and eigensolver workspace |
 | Random $`\kappa`$ mean | $`0`$ only under a sign-symmetric ensemble | Not a universal model-initialization guarantee |
 | Kappa noise floor | $`1/\sqrt{2d_h}=0.0625`$ | Independent-angle heuristic, not a calibrated deployed null |
-| Copying-score screen | $`\kappa>0.19`$ as a heuristic flag | Not a multiple-comparison-corrected significance test |
+| Copying-score screen | $`\kappa\gt 0.19`$ as a heuristic flag | Not a multiple-comparison-corrected significance test |
 | Probe monitoring example | $`0.90`$ area under the curve (AUC) | Decodability without proof of use |
 | Saliency triage | First $`10`$ candidates when $`n`$ is in the hundreds | Rank candidates before causal ablation |
 | Random-repeat sequence | $`256`$ tokens repeated | $`512`$-token context |

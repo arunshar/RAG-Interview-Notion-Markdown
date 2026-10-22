@@ -23,11 +23,24 @@ The original root page was a 60-link index. Its complete inventory is represente
 - All 200 fenced code and diagram blocks were checked against the source export and retained byte-for-byte.
 - The page text was not rewritten. Existing prose may still refer to the Notion edition or original source page labels.
 
+## Math compatibility
+
+- Replaced 451 uses of GitHub-blocked `\operatorname` with equivalent supported upright operator notation, retaining side-subscript behavior.
+- Protected all 1,040 book display equations with GitHub math fences so Markdown does not misinterpret their TeX as lists, links, emphasis, or HTML.
+- Normalized raw comparison signs to `\lt` and `\gt` so GitHub cannot interpret sequence subscripts or inequalities as HTML.
+- Used named vertical-bar delimiters in affected table expressions, distinguishing original absolute-value bars from norm notation before Markdown table escaping.
+- Preserved all 28,968 inline book expressions, all 1,040 display expressions, and all 200 original fenced code and diagram blocks. The mathematical content and prose were not rewritten.
+- Rebuilt the Notion import archive with native display-equation delimiters. Packaging converts only the math fences; their TeX contents and the original code/diagram fences remain unchanged.
+
+See [math compatibility examples](MATH_COMPATIBILITY.md) for inline, table, aligned-equation, and matrix smoke tests.
+
 ## Validation scope
 
 `EXPORT-MANIFEST.json` records each page’s path, group, byte size, and SHA-256 digest. Its `source_markdown_sha256` values identify the original retrieved Markdown, before formatting and link conversion.
 
-The repository checks validate the 60-file book inventory, current file digests, local file targets, remaining Notion-specific structural tags, and the dedicated import archive. They do not verify the scientific correctness of every claim, guarantee third-party link availability, or test every equation and diagram in every Markdown renderer.
+The repository checks validate the 60-file book inventory, current file digests, local file targets, remaining Notion-specific structural tags, the dedicated import archive, math delimiters, display-block separation, balanced braces and environments, known incompatible operators, and unwrapped TeX outside intentional code. Math regression tests run in CI.
+
+GitHub previews are also checked during math-rendering releases for actual rendered expressions, rendering errors, and raw TeX in prose or tables. The dependency-free local checks are not a full TeX engine and cannot guarantee every future GitHub renderer change. These checks do not verify the scientific correctness of every claim, third-party link availability, or rendering in every other Markdown application.
 
 ## Rebuild the import
 

@@ -11,7 +11,7 @@ This unit standardizes the symbols, abbreviations, overloads, and measurement co
 - Several conventional symbols are overloaded. The source keeps them and requires context to identify the intended meaning.
 ## The story
 Learned generator parameters are $`\theta`$; datastore $`D`$ remains externally addressable. Component stores are $`D_1,\ldots,D_m`$. Transform input $`x`$ into retriever query $`q=\Phi(x)`$; the gate $`g(x)\in\{0,1\}`$ selects whether retrieval runs. These are local definitions, not a claim that weights and stores have the same update operations.
-When retrieval runs, write $`\operatorname{RET}(q,D)`$ for the ranked candidates. Candidate depth $`k'`$ precedes filtering/reranking and final depth $`k\le k'`$; these are requested upper limits, and fewer eligible contexts may remain. The generator conditions on the request and retained $`c_1,\ldots,c_k`$ to generate $`y`$ token by token.
+When retrieval runs, write $`\mathop{\mathrm{RET}}\nolimits(q,D)`$ for the ranked candidates. Candidate depth $`k'`$ precedes filtering/reranking and final depth $`k\le k'`$; these are requested upper limits, and fewer eligible contexts may remain. The generator conditions on the request and retained $`c_1,\ldots,c_k`$ to generate $`y`$ token by token.
 The library has several control panels. Retrieval scores and ranks items. The vector index controls how broadly the shelves are searched. Evaluation checks ranked results and chunk boundaries. Training aligns the retriever’s distribution with the generator’s preference. Multimodal admission rules and graph grounding decide which rooms and relationships can join the search.
 The checkout counter records each stage latency $`t_i`$ and query cost $`C_q`$ . Some labels repeat across panels. The label $`d`$ can mean a document at the search desk or a dimension at the index panel. The label only becomes safe when its panel and first-use definition are visible.
 ## Decoder table
@@ -25,21 +25,21 @@ The checkout counter records each stage latency $`t_i`$ and query cost $`C_q`$ .
 | The Semi-Parametric Frame: $`x`$ | User input | What the user actually typed. |
 | The Semi-Parametric Frame: $`q=\Phi(x)`$ | Query issued to the retriever | $`\Phi`$ is the query transformation. |
 | The Semi-Parametric Frame: $`g(x)\in\{0,1\}`$ | Retrieval gate | Decision one is whether to retrieve. |
-| The Semi-Parametric Frame: $`\operatorname{RET}(q,D)`$ | Retriever | Returns a ranked list. |
-| The Semi-Parametric Frame: $`\operatorname{GEN}_\theta`$ | Generator | The language model. |
+| The Semi-Parametric Frame: $`\mathop{\mathrm{RET}}\nolimits(q,D)`$ | Retriever | Returns a ranked list. |
+| The Semi-Parametric Frame: $`\mathop{\mathrm{GEN}}\nolimits_\theta`$ | Generator | The language model. |
 | The Semi-Parametric Frame: $`c_1,\ldots,c_k`$ | Retrieved contexts passed to the generator | These are the contexts retained after truncation. |
 | The Semi-Parametric Frame: $`y`$ | Generated answer | $`y_t`$ is its t-th token. |
-| The Semi-Parametric Frame: $`k`$ | Number of contexts passed to $`\operatorname{GEN}`$ | The top-k cutoff. |
+| The Semi-Parametric Frame: $`k`$ | Number of contexts passed to $`\mathop{\mathrm{GEN}}\nolimits`$ | The top-k cutoff. |
 | The Semi-Parametric Frame: $`k'`$ | Retrieval depth before reranking | $`k'\ge k`$. Truncation is decision five. |
 | Retrieval and Ranking: $`d`$ | A document or chunk | Context disambiguates it from dimension. |
 | Retrieval and Ranking: $`s(q,d)`$ | Relevance score of $`d`$ for $`q`$ | No additional convention is stated. |
-| Retrieval and Ranking: $`\operatorname{rank}(d)`$ | Position of $`d`$ in a ranked list | Positions are 1-indexed. |
+| Retrieval and Ranking: $`\mathop{\mathrm{rank}}\nolimits(d)`$ | Position of $`d`$ in a ranked list | Positions are 1-indexed. |
 | Retrieval and Ranking: $`f`$ | Term frequency in a document | Used by BM25. |
 | Retrieval and Ranking: $`k_1,b`$ | BM25 saturation and length-normalization parameters | Typically $`k_1\approx1.2`$ and $`b\approx0.75`$. |
-| Retrieval and Ranking: $`\operatorname{avgdl}`$ | Average document length in the collection | Used by BM25. |
+| Retrieval and Ranking: $`\mathop{\mathrm{avgdl}}\nolimits`$ | Average document length in the collection | Used by BM25. |
 | Retrieval and Ranking: $`E_Q(\cdot),E_P(\cdot)`$ | Query and passage encoders | Dense passage retrieval (DPR) convention. Bi-encoder. |
 | Retrieval and Ranking: $`L_q,L_p`$ | Query and passage length in tokens | Drives encoder floating-point operations (FLOPs). |
-| Retrieval and Ranking: $`\operatorname{MaxSim}`$ | Late-interaction operator | ColBERT. |
+| Retrieval and Ranking: $`\mathop{\mathrm{MaxSim}}\nolimits`$ | Late-interaction operator | ColBERT. |
 | Retrieval and Ranking: $`\mathcal L`$ | Training loss | No additional convention is stated. |
 | Retrieval and Ranking: $`\tau`$ | Softmax temperature | Sharpens or flattens a score distribution. |
 | Indexing and Vector Search: $`N`$ | Number of vectors in the index | Context distinguishes it from model parameter count. |
@@ -52,18 +52,18 @@ The checkout counter records each stage latency $`t_i`$ and query cost $`C_q`$ .
 | Indexing and Vector Search: $`k`$ | PQ centroids per subspace | With $`k=2^{b_{\mathrm{sub}}}`$, total code bits are $`m b_{\mathrm{sub}}`$ and fp32 codebooks use $`4kd\,\mathrm B`$ |
 | Indexing and Vector Search: $`b`$ | Bits per sub-code only when explicitly defined | $`k=2^{b_{\mathrm{sub}}}`$; distinguish total $`b_{\mathrm{code}}=m b_{\mathrm{sub}}`$ |
 | Indexing and Vector Search: $`R@k`$ | Recall at k | The index’s quality target. |
-| Evaluation: $`\operatorname{MRR}`$ | Mean reciprocal rank of the first relevant item | Multiple relevant items are allowed; specify cutoff and missing-hit rule |
-| Evaluation: $`\operatorname{DCG},\operatorname{nDCG}@k`$ | Discounted cumulative gain and normalized discounted cumulative gain at k | Used with graded relevance. |
+| Evaluation: $`\mathop{\mathrm{MRR}}\nolimits`$ | Mean reciprocal rank of the first relevant item | Multiple relevant items are allowed; specify cutoff and missing-hit rule |
+| Evaluation: $`\mathop{\mathrm{DCG}}\nolimits,\mathop{\mathrm{nDCG}}\nolimits@k`$ | Discounted cumulative gain and normalized discounted cumulative gain at k | Used with graded relevance. |
 | Evaluation: $`P@k,R@k`$ | Precision and recall at k | Set metrics. They are order-insensitive. |
-| Evaluation: $`P_k,\operatorname{WindowDiff}`$ | Text-segmentation error metrics | Used to evaluate a chunker. |
-| Evaluation: $`\operatorname{IoU}`$ | Intersection over union of chunk spans | Used to evaluate a chunker. |
-| Evaluation: $`F_1`$ | $`2PR/(P+R)`$ for $`P+R>0`$ | State zero-denominator and macro/micro policies; not equivalent to accuracy |
+| Evaluation: $`P_k,\mathop{\mathrm{WindowDiff}}\nolimits`$ | Text-segmentation error metrics | Used to evaluate a chunker. |
+| Evaluation: $`\mathop{\mathrm{IoU}}\nolimits`$ | Intersection over union of chunk spans | Used to evaluate a chunker. |
+| Evaluation: $`F_1`$ | $`2PR/(P+R)`$ for $`P+R\gt 0`$ | State zero-denominator and macro/micro policies; not equivalent to accuracy |
 | Training the RAG System: $`D'`$ | Retrieved subset used for a training step | Normalization is over $`D'`$, not $`D`$. |
 | Training the RAG System: $`\lambda(d,x)`$ | Normalized retrieval weight in an output ensemble | REPLUG. |
 | Training the RAG System: $`P_R(d\mid x)`$ | Retriever’s distribution over the top k | Defined over the same k as the generator preference. |
 | Training the RAG System: $`Q_{\mathrm{LM}}(d\mid x,y)`$ | Generator’s preference distribution over the same k | The supervision signal. |
 | Training the RAG System: $`\gamma,\beta`$ | Retriever and generator softmax temperatures | Language model (LM)-supervised retrieval. |
-| Training the RAG System: $`\operatorname{KL}(P\Vert Q)`$ | Directed Kullback–Leibler divergence | A fixed teacher target commonly uses $`\operatorname{KL}(Q_{\mathrm{LM}}\Vert P_R)`$; direction matters |
+| Training the RAG System: $`\mathop{\mathrm{KL}}\nolimits(P\Vert Q)`$ | Directed Kullback–Leibler divergence | A fixed teacher target commonly uses $`\mathop{\mathrm{KL}}\nolimits(Q_{\mathrm{LM}}\Vert P_R)`$; direction matters |
 | Training the RAG System: $`r`$ | LoRA rank | $`W+(\alpha/r)BA`$ with compatible dimensions; scale and trainable matrices must be stated |
 | Training the RAG System: $`A,B`$ | LoRA low-rank factors | The low-rank factors in $`W+BA`$. |
 | Multimodal and Graph Retrieval: $`E_q,E_d`$ | Query and document embeddings in a shared space | Modality-agnostic. |
@@ -120,14 +120,14 @@ The checkout counter records each stage latency $`t_i`$ and query cost $`C_q`$ .
 - $`F_1`$ requires declared averaging and zero-denominator policies; macro-$`F_1`$ is not accuracy or an overall error rate. Segmentation metrics and span IoU measure different objectives.
 ### Training the RAG System
 - A retrieved training support $`D'`$ must be explicitly defined. A top-candidate normalized distribution is conditional on that support; full-corpus objectives use a different normalizer.
-- If $`Q_{\mathrm{LM}}`$ is the fixed teacher target, a common cross-entropy-equivalent direction is $`\operatorname{KL}(Q_{\mathrm{LM}}\Vert P_R)`$. Reverse KL is different; writing generic $`\operatorname{KL}(P\Vert Q)`$ does not specify which system is the target.
+- If $`Q_{\mathrm{LM}}`$ is the fixed teacher target, a common cross-entropy-equivalent direction is $`\mathop{\mathrm{KL}}\nolimits(Q_{\mathrm{LM}}\Vert P_R)`$. Reverse KL is different; writing generic $`\mathop{\mathrm{KL}}\nolimits(P\Vert Q)`$ does not specify which system is the target.
 - Require positive softmax temperatures. Define mixture weights, support and whether gradients flow through teacher scores.
 - For $`W\in\mathbb R^{d_{\mathrm{out}}\times d_{\mathrm{in}}}`$, use $`A\in\mathbb R^{r\times d_{\mathrm{in}}}`$ and $`B\in\mathbb R^{d_{\mathrm{out}}\times r}`$; a common LoRA update is $`W+(\alpha/r)BA`$. Other orientations require a consistent factor order.
 ### Multimodal and Graph Retrieval
 - Shared embeddings require compatible training/normalization; “multimodal” does not make arbitrary encoder spaces interchangeable.
 - $`\theta_m`$ denotes a chosen modality-specific gate. Calibration may justify another policy, so “never global” is not a universal theorem.
 - A CLIP-style batch has diagonal designated pairs under its pairing convention; duplicates and multiple valid matches can require a richer target.
-- Distinguish full graph $`\mathcal G=(V,E)`$ from $`\operatorname{schema}(\mathcal G)`$. Graph grounding is not proof that the extracted assertions or generated answer are true.
+- Distinguish full graph $`\mathcal G=(V,E)`$ from $`\mathop{\mathrm{schema}}\nolimits(\mathcal G)`$. Graph grounding is not proof that the extracted assertions or generated answer are true.
 ### Latency and Cost
 - Stage latency $`t_i`$ and attributable device service time $`s_j`$ are different quantities. A serial critical path can add stage wall times; parallel fan-out follows its dependency graph, not the sum of all branches.
 - With resource price $`\rho_j`$ in dollars/hour and attributable service time $`s_j`$ in milliseconds, $`C_q^{\mathrm{resource}}=\sum_j\rho_j s_j/(3.6\times10^6)`$. This excludes fixed reservations, utilization policy and API billing unless explicitly included.
@@ -149,8 +149,8 @@ The source contains seven unnumbered notation tables and one unnumbered overload
 ## Whiteboard pack
 ### What to draw
 1. Draw $`x\to q=\Phi(x)`$ and a retrieval gate.
-2. Draw $`\operatorname{RET}(q,D)`$, candidate depth $`k'`$, eligibility/reranking and final contexts $`c_{1:k}`$.
-3. Condition $`\operatorname{GEN}_\theta`$ on the request and contexts to generate $`y`$.
+2. Draw $`\mathop{\mathrm{RET}}\nolimits(q,D)`$, candidate depth $`k'`$, eligibility/reranking and final contexts $`c_{1:k}`$.
+3. Condition $`\mathop{\mathrm{GEN}}\nolimits_\theta`$ on the request and contexts to generate $`y`$.
 4. Separate vector counts from model parameters, PQ sub-code bits from total code bits, and configured HNSW slots from realized degree.
 5. Add evaluation definitions and explicit teacher/retriever KL direction.
 6. Finish with dimension checks, log bases, storage units, resource service time and query cost.

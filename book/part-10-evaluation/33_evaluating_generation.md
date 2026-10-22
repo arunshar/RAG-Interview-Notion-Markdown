@@ -49,7 +49,7 @@ Use the newsroom analogy to separate evidence, measurement and action. Audit the
 | Verification source $`S`$ | Declared evidence $`S`$ with time/version | Support relative to a source is not world truth |
 | Support indicator | $`z_i\in\{0,1\}`$ under a stated rule | Unknown and contradicted may share a final binary label but differ diagnostically |
 | Fine-grained Atomic Evaluation of Factual Precision (FActScore) | Mean binary support over nonempty extracted atomic facts | Model-level aggregation and abstention need explicit policies |
-| Per-response precision | $`s/C`$ for $`C>0`$ | Does not establish coverage; empty precision is undefined without convention |
+| Per-response precision | $`s/C`$ for $`C\gt 0`$ | Does not establish coverage; empty precision is undefined without convention |
 | No-context estimator | LM judgment without retrieved evidence | No universal cheapest/weakest ordering across models |
 | Retrieve-and-judge estimator | Retrieved evidence followed by LM support judgment | Not the only original FActScore variant using retrieval |
 | Non-parametric probability estimator | Nonparametric masked-token probabilities with retrieval | Not a guaranteed one-pass/free-retrieval operation |
@@ -66,7 +66,7 @@ Use the newsroom analogy to separate evidence, measurement and action. Audit the
 | Truth-apt content | Content that can be judged true or false | Claims without it are removed before VeriScore verification |
 | $`C`$ | Total extracted verifiable-claim count | Precision denominator only; not the recall numerator |
 | $`C_{\mathrm{sup}}`$ | Integer supported count $`s=C_{\mathrm{sup}}`$ | Numerator of BOTH support precision and count recall |
-| Precision $`P`$ | $`P=s/C`$ for $`C>0`$ | Support among evaluated claims, not semantic completeness |
+| Precision $`P`$ | $`P=s/C`$ for $`C\gt 0`$ | Support among evaluated claims, not semantic completeness |
 | Reference constant $`K`$ | Original domain-specific median extracted claim count across compared-model responses | Require positive reference; version cohort and extraction |
 | Recall $`R`$ | $`R=\min(s/K,1)`$ | Saturates at K supported claims; not recall against a gold set |
 | $`F_1`$ score | Harmonic mean; zero when no claim is supported | Model domain score averages response scores |
@@ -74,10 +74,10 @@ Use the newsroom analogy to separate evidence, measurement and action. Audit the
 | Retrieval Augmented Generation Assessment (RAGAS) | Original reference-free three-proxy framework | Later library metrics may differ; validate judges |
 | Statement set $`T`$ | Indexed extracted statements $`T`$, count $`m`$ | Faithfulness needs positive denominator and an empty policy |
 | Supported-statement count | $`h\in\{0,\ldots,m\}`$ | Avoid overloading VeriScore collection V with a count |
-| RAGAS faithfulness $`F`$ | $`F=h/m`$ for $`m>0`$ | Task-critical unsupported claims can be hidden by a high fraction |
+| RAGAS faithfulness $`F`$ | $`F=h/m`$ for $`m\gt 0`$ | Task-critical unsupported claims can be hidden by a high fraction |
 | Answer relevance $`\mathrm{AR}`$ | Mean cosine with questions regenerated from answer alone | Not a correctness probability or completeness guarantee |
 | Regenerated question | A question an LLM infers from answer text alone | It supplies the missing artifact for answer relevance |
-| Regenerated-question count $`n`$ and item $`q_i^{\prime}`$ | $`n>0`$ questions and $`q_i^{\prime}`$ | Question dependence affects variance and useful sample size |
+| Regenerated-question count $`n`$ and item $`q_i^{\prime}`$ | $`n\gt 0`$ questions and $`q_i^{\prime}`$ | Question dependence affects variance and useful sample size |
 | Embedding | A numeric representation used to compare question meaning | RAGAS uses it for generated-question similarity |
 | Cosine similarity | Nonzero-vector similarity in $`[-1,1]`$ | A mean cosine is not automatically bounded below by zero |
 | Similarity function $`\mathrm{sim}`$ | The formula symbol for cosine similarity | It scores each real-query and regenerated-query pair before averaging |
@@ -144,9 +144,11 @@ FActScore changes the unit to an atomic fact. An atomic fact is minimal, self-co
 A sentence such as “Bridget Fonda is an American actress, model, and producer” contains several separately checkable assertions; this illustrates decomposition, not an endorsement of every asserted occupation. The original FActScore extraction pipeline operates sentence by sentence with its extraction procedure and context handling.[\[2\]](https://arxiv.org/html/2305.14251)
 For generation $`y`$, write the indexed collection $`A(y)=(a_1,\ldots,a_{m_y})`$, with a declared duplicate and granularity policy. Let $`z_i=\mathbf1[a_i\text{ is supported by }S]\in\{0,1\}`$. The evidence retrieval and judge determine these support decisions.
 The score is:
-$$
-\mathrm{FActScore}(y;S)=\frac1{m_y}\sum_{i=1}^{m_y}z_i,\qquad m_y=\lvert A(y)\rvert>0.
-$$
+
+```math
+\mathrm{FActScore}(y;S)=\frac1{m_y}\sum_{i=1}^{m_y}z_i,\qquad m_y=\lvert A(y)\rvert\gt 0.
+```
+
 For a nonempty collection of binary judgments, the score lies in $`[0,1]`$ and has at most $`m_y+1`$ possible values. With no claims, the ordinary ratio is undefined; a system-level abstention penalty or zero convention must be declared rather than inferred from this formula.
 This is support precision among the extracted claims, not proof that every claim is true or all requested content is present. If responses with counts one and nine have support counts one and zero, their equally response-weighted mean is $`0.5`$, while pooled claim precision is $`1/10=0.1`$. State the aggregation and empty-output policy.
 #### Why it exists
@@ -186,24 +188,30 @@ In the original prompted extractor, a focused sentence is supplied with a slidin
 Context can reduce reference failures without guaranteeing correct extraction. The paper extracts verifiable claims, ignoring content such as advice, fiction and opinions. A verifiable claim need not be atomically minimal: an event or state can retain necessary modifiers and meaningful parts, all of which must be supported.[\[3\]](https://arxiv.org/html/2406.19276)
 Let $`V(y)=(v_1,\ldots,v_C)`$ be the extracted verifiable-claim collection under that protocol. Distinguish a non-truth-apt opinion from a truth-apt claim for which search finds no evidence. Dropping the latter as “unverifiable” would artificially raise precision. Track unresolved searches and extraction exclusions explicitly.
 Define the integer supported count $`s=C_{\mathrm{sup}}=\sum_{i=1}^C\mathbf1[v_i\text{ is supported}]`$, so $`0\le s\le C`$. For a nonempty collection, precision is:
-$$
-P(y)=\frac{s}{C},\qquad C>0.
-$$
+
+```math
+P(y)=\frac{s}{C},\qquad C\gt 0.
+```
+
 In the original method, $`K`$ is the domain-specific median number of extracted verifiable claims across responses from the compared models. It is not the average claim count of good human responses. The model’s domain score averages response-level scores.[\[3\]](https://arxiv.org/html/2406.19276)
-For $`K>0`$, the recall-like term uses supported count $`s`$, not asserted count $`C`$. Fix and version the cohort and reference for a comparison. Changing the compared models can change the median and hence scores for unchanged responses. A zero-median domain needs a declared alternative policy; the literal ratio is undefined.
-$$
-R(y)=\min\!\left(\frac{s}{K},1\right),\qquad K>0.
-$$
+For $`K\gt 0`$, the recall-like term uses supported count $`s`$, not asserted count $`C`$. Fix and version the cohort and reference for a comparison. Changing the compared models can change the median and hence scores for unchanged responses. A zero-median domain needs a declared alternative policy; the literal ratio is undefined.
+
+```math
+R(y)=\min\!\left(\frac{s}{K},1\right),\qquad K\gt 0.
+```
+
 Recall saturates only when at least $`K`$ claims are supported. Adding unsupported claims does not increase $`R`$. The original count term is not recall against an enumerated gold set and does not prove that the response covers the requested semantic content.[\[3\]](https://arxiv.org/html/2406.19276)
 Use the harmonic mean when support is positive and the paper’s zero-score convention when none is supported. The equivalent count form makes both regimes explicit:
-$$
+
+```math
 \mathrm{VS}_K(y)=
 \begin{cases}
 0,&s=0,\\
-\dfrac{2P(y)R(y)}{P(y)+R(y)}=\dfrac{2s}{C+K},&0<s<K,\\
+\dfrac{2P(y)R(y)}{P(y)+R(y)}=\dfrac{2s}{C+K},&0\lt s\lt K,\\
 \dfrac{2P(y)}{P(y)+1}=\dfrac{2s}{C+s},&s\ge K.
 \end{cases}
-$$
+```
+
 #### Why it exists
 Context and extraction policy affect what gets counted; the supported-count term changes the reward for output amount. Neither guarantees perfect extraction, relevance, semantic completeness or correct support judgments.
 The original VeriScore framework also uses its own retrieval and claim-verification pipeline; it is not simply the unchanged FActScore verifier with a new denominator. Compare implementations under aligned evidence and extraction policies before attributing a score difference to the formula alone.[\[3\]](https://arxiv.org/html/2406.19276)
@@ -214,7 +222,7 @@ Then the harmonic mean also equals $`P`$, so this choice removes the additional 
 #### Worked example and cost
 For arithmetic only, stipulate $`K=12`$ under a fixed domain reference. It is not a universal published constant or evidence that every good summary should contain twelve claims.
 For $`C=14`$ and $`s=11`$, $`P=11/14\approx0.785714286`$ and $`R=11/12\approx0.916666667`$. Fourteen asserted claims do not saturate recall because only eleven are supported.
-Since $`s<K`$, $`\mathrm{VS}_{12}=2(11)/(14+12)=11/13\approx0.846153846`$, not $`0.880`$. Calculate from exact counts rather than the rounded precision. Compare a short response with $`C=s=2`$.
+Since $`s\lt K`$, $`\mathrm{VS}_{12}=2(11)/(14+12)=11/13\approx0.846153846`$, not $`0.880`$. Calculate from exact counts rather than the rounded precision. Compare a short response with $`C=s=2`$.
 Its precision is one, while $`R=2/12=1/6\approx0.166666667`$.
 Its combined score is $`2(2)/(2+12)=2/7\approx0.285714286`$. The precision-one value is exactly $`3.5`$ times this score. This cross-metric ratio illustrates the count penalty; it is not a measured performance multiplier.
 For a separate hypothetical implementation, suppose one whole-response extraction costs $`1.5\,\mathrm s`$, versus six sentence-level extractions at $`0.4\,\mathrm s`$ each, totaling $`2.4\,\mathrm s`$. This is not the original sliding-window algorithm’s mandatory call pattern or a measured speedup. Hold extracted claims fixed to isolate the timing comparison.
@@ -232,23 +240,29 @@ RAGAS starts from three artifacts available for every response.
 The artifacts are query $`q`$, context $`c(q)`$ and answer $`a(q)`$. The original metrics do not require a human reference answer per scored item. Prompted LLMs and embeddings supply proxies; validation, external service calls or human auditing can still be necessary. Later library versions may define different metrics.[\[1\]](https://arxiv.org/html/2309.15217)
 For faithfulness, the extractor uses the question and answer to form $`T=(t_1,\ldots,t_m)`$. The verifier judges each statement against context $`c(q)`$. Retain a consistent decomposition policy and distinguish unsupported from contradicted when diagnosing errors.
 Let $`h`$ count statements judged supported, with $`0\le h\le m`$. Reserve $`V(y)`$ for the VeriScore claim collection rather than overloading the same letter for this count.
-$$
-F=\frac{h}{m},\qquad m=\lvert T\rvert>0.
-$$
+
+```math
+F=\frac{h}{m},\qquad m=\lvert T\rvert\gt 0.
+```
+
 With no statements, this ordinary ratio is undefined; declare and report an abstention/empty policy. The original paper’s verification prompt batches the statements, so faithfulness can use one extraction and one verification call. One verification call per statement is another implementation, not a mandatory $`1+m`$ cost. Neither needs fresh evidence retrieval, but either can call a remote model.[\[1\]](https://arxiv.org/html/2309.15217)
-For answer relevance, generate $`n>0`$ questions $`q'_1,\ldots,q'_n`$ from the answer alone and embed them and the actual query with the same embedding model. The regenerated questions are proxy tasks the answer resembles, not a gold list of what it fully answers.[\[1\]](https://arxiv.org/html/2309.15217)
+For answer relevance, generate $`n\gt 0`$ questions $`q'_1,\ldots,q'_n`$ from the answer alone and embed them and the actual query with the same embedding model. The regenerated questions are proxy tasks the answer resembles, not a gold list of what it fully answers.[\[1\]](https://arxiv.org/html/2309.15217)
 The score averages their cosine similarities:
-$$
+
+```math
 \begin{aligned}
-\mathrm{AR}&=\frac1n\sum_{i=1}^n\operatorname{sim}(q,q'_i),\\
-\operatorname{sim}(u,v)&=\frac{e(u)^{\mathsf T}e(v)}{\lVert e(u)\rVert_2\lVert e(v)\rVert_2}.
+\mathrm{AR}&=\frac1n\sum_{i=1}^n\mathop{\mathrm{sim}}\nolimits(q,q'_i),\\
+\mathop{\mathrm{sim}}\nolimits(u,v)&=\frac{e(u)^{\mathsf T}e(v)}{\lVert e(u)\rVert_2\lVert e(v)\rVert_2}.
 \end{aligned}
-$$
+```
+
 This cosine mean lies in $`[-1,1]`$ for nonzero embeddings, not necessarily $`[0,1]`$; zero embeddings or $`n=0`$ make the displayed formula undefined. High similarity does not establish correctness, completeness or support. Fix the embedding model and question-generation/parsing policy before comparisons.
 For original context relevance, an LLM selects an unchanged subset of context sentences necessary to answer the question. Map selected sentences to distinct original occurrences: paraphrased, duplicated or invented “extractions” would break the intended count interpretation. The original prompt also handles insufficient information; do not force useful evidence to exist.[\[1\]](https://arxiv.org/html/2309.15217)
-$$
-\mathrm{CR}=\frac{\lvert S_{\mathrm{ext}}\rvert}{L_c},\qquad S_{\mathrm{ext}}\subseteq S_c,\quad L_c=\lvert S_c\rvert>0.
-$$
+
+```math
+\mathrm{CR}=\frac{\lvert S_{\mathrm{ext}}\rvert}{L_c},\qquad S_{\mathrm{ext}}\subseteq S_c,\quad L_c=\lvert S_c\rvert\gt 0.
+```
+
 #### Why it exists
 Each metric constructs an intermediate representation: claims for support, regenerated questions for similarity, or a sentence subset for context relevance. Each construction is itself an error-prone evaluation step.
 With a valid subset and nonempty context, $`0\le\mathrm{CR}\le1`$. Empty context needs an explicit undefined/zero policy. This is a sentence-count fraction, not token-weighted relevance, answerability or a full retrieval-recall measure. Judge extraction of long contexts is a limitation noted by the original paper.[\[1\]](https://arxiv.org/html/2309.15217)
@@ -337,9 +351,11 @@ flowchart TD
     E --> S
     S --> L["Report claim count, source scope, abstention and response aggregation"]
 ```
-$$
-\mathrm{FActScore}(y;S)=\frac1{m_y}\sum_{i=1}^{m_y}z_i,\qquad m_y=\lvert A(y)\rvert>0.
-$$
+
+```math
+\mathrm{FActScore}(y;S)=\frac1{m_y}\sum_{i=1}^{m_y}z_i,\qquad m_y=\lvert A(y)\rvert\gt 0.
+```
+
 Figure $`33.2`$: The four original FActScore variants do not include a three-way ensemble: the combined variant ANDs Retrieve→LM and NP. Both of those use retrieval. Cost, error and domain-transfer rankings require validation; supported-source precision is not semantic coverage.[\[2\]](https://arxiv.org/html/2305.14251)
 ### Figure 33.3
 ```mermaid
@@ -370,7 +386,8 @@ flowchart TB
 ```
 Figure $`33.4`$: The original RAGAS triangle preserves different proxy dimensions, not independent causal fault assignments. Faithfulness verification can batch statements. Answer relevance is cosine-based and can be negative; context relevance is sentence-count-based and requires valid subset extraction.[\[1\]](https://arxiv.org/html/2309.15217)
 ### Figure 33.5
-$$
+
+```math
 \begin{array}{c|rrrrrr}
 \text{Sentence position}&1&2&3&4&5&6\\
 \text{Evaluated claims}&100&100&100&100&100&100\\
@@ -379,12 +396,13 @@ $$
 \end{array}
 \qquad
 u_{\mathrm{pooled}}=\frac{133}{600}\approx0.221667.
-$$
+```
+
 Figure $`33.5`$: This native-LaTeX schematic replaces an imprecise ASCII curve with explicit constructed counts. Equal claim counts per position make the pooled fraction equal to the mean of the six rates; unequal buckets require claim-count weighting. These are not measured benchmark values or a causal law of length. Late-position populations and correlated claims require care in interpretation.
 ## Whiteboard pack
 ### What to draw
 1. Draw query $`q`$, context $`c(q)`$ and answer $`a(q)`$.
-2. Label answer-to-context support $`F=h/m`$ for $`m>0`$, with a declared empty-output policy.
+2. Label answer-to-context support $`F=h/m`$ for $`m\gt 0`$, with a declared empty-output policy.
 3. Label answer-to-query similarity $`\mathrm{AR}`$ and context-to-query judged sentence fraction $`\mathrm{CR}`$.
 4. Add evidence-source, judge-version, latency and quota ledgers; context-only does not mean no model API.
 5. Draw FActScore as atomic extraction then evidence support; include claim count and abstention.

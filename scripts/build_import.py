@@ -10,6 +10,8 @@ from pathlib import Path
 import sys
 import zipfile
 
+from validate_math import scan_math
+
 ROOT = Path(__file__).resolve().parents[1]
 ARCHIVE = ROOT / 'exports' / 'RAG-Interview-Notion-Markdown.zip'
 SUMS = ROOT / 'exports' / 'SHA256SUMS'
@@ -30,12 +32,26 @@ source-rights notice. It is a point-in-time copy, not a live synchronization.
 Comments, permissions, page history, icons, and database configuration are not
 included. Anchor links and tool-specific formatting may not import cleanly;
 math and Mermaid rendering may need manual adjustment in Notion.
+GitHub's protected math fences are converted to native display-equation
+delimiters in this import, with their TeX contents unchanged.
 
 See Notion's current import documentation:
 https://www.notion.so/help/import-data-into-notion
 
 Source attribution and third-party rights remain unchanged. See NOTICE.md.
 '''
+
+
+def notion_markdown(text: str) -> str:
+    """Use Notion-native display blocks without changing their TeX contents."""
+    spans, errors = scan_math(text)
+    if errors:
+        raise ValueError("Cannot package malformed math delimiters: " + str(errors))
+    for span in reversed(spans):
+        if span.kind == 'display' and span.syntax == 'fence':
+            native = '$$\n' + span.tex(text) + '\n$$'
+            text = text[:span.start] + native + text[span.end:]
+    return text
 
 
 def expected_entries() -> dict[str, bytes]:
@@ -49,7 +65,8 @@ def expected_entries() -> dict[str, bytes]:
         PREFIX + 'NOTICE.md': (ROOT / 'NOTICE.md').read_bytes(),
     }
     for item in manifest['files']:
-        entries[PREFIX + item['path']] = (ROOT / item['path']).read_bytes()
+        text = (ROOT / item['path']).read_text(encoding='utf-8')
+        entries[PREFIX + item['path']] = notion_markdown(text).encode('utf-8')
     return dict(sorted(entries.items()))
 
 

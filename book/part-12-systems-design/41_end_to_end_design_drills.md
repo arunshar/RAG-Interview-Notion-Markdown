@@ -58,7 +58,7 @@ For a retrofit, inspect what can change before promising a named method. A sourc
 | Calibrated confidence | Estimated probability aligned with observed outcomes in a defined population | Validation uncertainty, selection and shift limit its interpretation |
 | Confidence $`p`$ | Decision-relevant estimated correctness probability | Raw token likelihood is not this quantity |
 | Acceptance threshold $`p^*`$ | $`1-C_a/C_w`$ under the simplified loss model | Mandatory review and evidence eligibility remain separate |
-| Wrong-answer cost $`C_w`$ | Expected harm from an accepted error in common cost units | Assume $`C_w>0`$; heterogeneous harms may need richer losses |
+| Wrong-answer cost $`C_w`$ | Expected harm from an accepted error in common cost units | Assume $`C_w\gt 0`$; heterogeneous harms may need richer losses |
 | Escalation cost $`C_a`$ | Expected review cost, delay and residual harm | Assume $`C_a\ge0`$, not automatically the cost of evidence tracing |
 | Reject option | Choose automatic answering or escalation using expected loss | The algebra requires an appropriate probability and loss model |
 | Acceptance gate | Final eligibility and risk decision before delivery | A high score cannot repair missing required evidence |
@@ -133,9 +133,9 @@ For a retrofit, inspect what can change before promising a named method. A sourc
 ## Core mechanics
 ### Mathematical conventions
 Use decimal storage: $`1\,\mathrm{GB}=10^9\,\mathrm B`$ and $`1\,\mathrm{MB}=10^6\,\mathrm B`$. Count indexed vectors, not source files, unless one vector per document is explicitly assumed. Vector/base-link payloads omit other index, metadata, text, cache, allocator and replica storage; capacity ceilings based on them are lower bounds.
-Let $`\lambda`$ denote query rate and $`t_{\mathrm{CPU}}`$ CPU-seconds of search per query. At target utilization $`0<u<1`$, a logical shard needs approximately $`c\ge\lambda t_{\mathrm{CPU}}/u`$ search cores. With $`R`$ equally loaded replicas, replace $`\lambda`$ by $`\lambda/R`$ for each replica. Wall-clock search latency need not equal CPU service demand. Embedding, reranking, generation, networking and failure reserve are separate budgets.
+Let $`\lambda`$ denote query rate and $`t_{\mathrm{CPU}}`$ CPU-seconds of search per query. At target utilization $`0\lt u\lt 1`$, a logical shard needs approximately $`c\ge\lambda t_{\mathrm{CPU}}/u`$ search cores. With $`R`$ equally loaded replicas, replace $`\lambda`$ by $`\lambda/R`$ for each replica. Wall-clock search latency need not equal CPU service demand. Embedding, reranking, generation, networking and failure reserve are separate budgets.
 All dollar prices, service times and example outcomes below are stipulated planning inputs, not measured SLAs or invoices. A weighted sum of route latencies is a mean, not a median or tail quantile. Keep full precision until reporting. Percentages and percentage-point changes are different units.
-For the reject-option calculation, correctness has zero cost, an accepted error costs $`C_w>0`$, escalation has expected cost $`C_a\ge0`$, and $`p\in[0,1]`$ is a decision-relevant correctness probability. Regulatory, professional-review, evidence or permission rules can prohibit automation regardless of that comparison. Estimated calibration is uncertain and may not transfer across domains, subgroups, routing or distribution shift.
+For the reject-option calculation, correctness has zero cost, an accepted error costs $`C_w\gt 0`$, escalation has expected cost $`C_a\ge0`$, and $`p\in[0,1]`$ is a decision-relevant correctness probability. Regulatory, professional-review, evidence or permission rules can prohibit automation regardless of that comparison. Estimated calibration is uncertain and may not transfer across domains, subgroups, routing or distribution shift.
 Aggregate recall, gold presence, answer correctness and causal faithfulness are separate measurements. A regression diagnosis requires matched inputs, question-level transitions, uncertainty and controlled ablations; a higher aggregate score does not exonerate a component. Correlated or copied sources do not provide independent corroboration.
 ### 41.1 Enterprise RAG over 100M documents at 500 QPS
 #### What
@@ -146,20 +146,26 @@ Scatter-gather can encode each query once, send it to every logical shard, merge
 #### Why
 The example stipulates a $`110`$-million-parameter bi-encoder with $`d=768`$ output dimensions. Parameter count does not determine vector dimension, encoding latency or ANN time by itself.
 At fp32, the vector payload alone is:
-$$
+
+```math
 768\times4\,\mathrm B=3{,}072\,\mathrm B\quad\text{per vector}.
-$$
+```
+
 Under the common HNSW base-layer capacity convention, choose $`M=16`$ and $`M_0=2M=32`$ neighbor slots, each budgeted as a four-byte internal identifier. Occupancy, upper levels and other metadata are separate.
 Treat $`M=16`$ as this drill’s setting, not a universal default shared by every hnswlib and Faiss API. Faiss exposes different index constructors and an HNSW memory budget that includes graph links; check the actual implementation and version.[\[1\]](https://github.com/facebookresearch/faiss/wiki/Faiss-indexes)
 The base-layer link budget is $`32\times4=128\,\mathrm B`$ per vector. Adding it to fp32 payload gives $`3{,}200\,\mathrm B`$ per vector, or the following scoped subtotal—not a complete HNSW footprint:
-$$
+
+```math
 10^8(3{,}072+128)\,\mathrm B=3.2\times10^{11}\,\mathrm B=320\,\mathrm{GB}.
-$$
+```
+
 PQ splits $`768`$ dimensions into $`96`$ subvectors of dimension $`8`$. With $`256=2^8`$ centroids per subquantizer, each code uses $`8`$ bits, so the code payload is $`96\,\mathrm B`$ per vector.
 A hypothetical four-byte posting identifier gives $`100\,\mathrm B`$ per vector. Standard Faiss IVF-PQ uses eight-byte vector IDs, giving $`104\,\mathrm B`$ here, before shared tables and other overhead.[\[1\]](https://github.com/facebookresearch/faiss/wiki/Faiss-indexes)
-$$
+
+```math
 B_{\mathrm{PQ,4B\ ID}}=10^8(96+4)\,\mathrm B=10^{10}\,\mathrm B=10\,\mathrm{GB}.
-$$
+```
+
 The toy ratio is $`3{,}200/100=32`$. Using the Faiss-style $`104\,\mathrm B`$ posting gives $`3{,}200/104\approx30.769231`$ and $`10.4\,\mathrm{GB}`$ for $`10^8`$ entries. The $`96\times256\times8`$ fp32 PQ codebook adds $`786{,}432\,\mathrm B`$ once; coarse centroids, list structures, optional precomputed tables and retained full vectors are additional.
 With $`64\,\mathrm{GB}`$ available per capacity node, $`\lceil320/64\rceil=5`$ is only a lower-bound shard count for the raw subtotal. It exactly fills all five budgets; any positive omitted resident index storage forces more capacity under this fixed-budget design. A one-shard compressed payload is plausible, not an all-in fit guarantee, especially if full vectors are also retained for reranking.
 #### Failure without it
@@ -189,15 +195,19 @@ At retrieval and before delivery, check authoritative versions, effective dates,
 #### Why
 A nightly-only refresh cannot guarantee a much shorter freshness target. Scheduling delay is only one part of the end-to-end path.
 For a fixed 24-hour refresh cycle versus a 15-minute target, the scheduling-delay supremum in SLA units is:
-$$
+
+```math
 \frac{1{,}440\,\mathrm{min}}{15\,\mathrm{min}}=96.
-$$
+```
+
 A change at 09:00 followed by a midnight refresh waits $`15`$ hours, or $`900`$ minutes: $`900/15=60`$ SLA windows. A change just after a refresh can wait nearly $`1{,}440`$ minutes before processing even starts.
 An in-memory hash lookup or one invalidation-record write may have expected $`O(1)`$ local work in corpus size. Detecting the change, identifying every affected chunk, durable replication and enforcing it across reads are not thereby constant-time or bounded by $`10\,\mathrm{ms}`$. That time is only a stipulated toy input.
 For $`20`$ million chunks, the following logarithm is a scale reference. HNSW’s search/insertion behavior depends on its graph, dimensions, construction/search settings and implementation; this logarithm is not an exact hop count, worst-case complexity proof or millisecond bound:
-$$
+
+```math
 \log_2(20\times10^6)\approx24.253497.
-$$
+```
+
 The toy assumes an embedding round trip near $`100\,\mathrm{ms}`$ and very short local insertion. Neither is a measured guarantee, and neither includes every queue, visibility, retry or propagation delay.
 If the complete verified path really took $`0.1`$–$`0.3\,\mathrm s`$, a $`900\,\mathrm s`$ target would allow a factor of $`9{,}000`$–$`3{,}000`$, about $`3.95`$–$`3.48`$ decimal orders. That arithmetic does not establish that the real publication-to-answer path is subsecond.
 #### Failure without it
@@ -215,20 +225,24 @@ Report detection-to-block, publication-to-valid-replacement, read visibility and
 ### 41.3 High-stakes RAG: medicine and law
 #### What
 Place an evidence and acceptance gate before delivery. In high-stakes use, permissions, missing provenance or mandatory expert review can stop automation regardless of a model confidence score.
-Let $`p`$ estimate correctness for this decision, let $`C_w>0`$ be expected harm from an accepted wrong answer, and let $`C_a\ge0`$ include escalation cost, delay and any residual harm. Costs need common units. The simplified model assigns zero cost to a correct automatic answer.
+Let $`p`$ estimate correctness for this decision, let $`C_w\gt 0`$ be expected harm from an accepted wrong answer, and let $`C_a\ge0`$ include escalation cost, delay and any residual harm. Costs need common units. The simplified model assigns zero cost to a correct automatic answer.
 Expected automatic cost is $`(1-p)C_w`$, while expected escalation cost is $`C_a`$. Asymmetric error types, action-dependent harms, review imperfections or nonzero correct-answer cost require a richer loss model.
 When automation is permitted, prefer it strictly under the following inequality; at equality the simplified costs tie:
-$$
-(1-p)C_w<C_a\quad\Longleftrightarrow\quad p>p^*=1-\frac{C_a}{C_w},\qquad C_w>0.
-$$
-For $`0<C_a<C_w`$, the interior threshold is $`p^*=1-C_a/C_w`$. If $`C_a\ge C_w`$, the numerical rule has no positive confidence floor; if $`C_a=0`$, strict preference for automation never occurs. These limiting cases do not override mandatory review.
+
+```math
+(1-p)C_w\lt C_a\quad\Longleftrightarrow\quad p\gt p^*=1-\frac{C_a}{C_w},\qquad C_w\gt 0.
+```
+
+For $`0\lt C_a\lt C_w`$, the interior threshold is $`p^*=1-C_a/C_w`$. If $`C_a\ge C_w`$, the numerical rule has no positive confidence floor; if $`C_a=0`$, strict preference for automation never occurs. These limiting cases do not override mandatory review.
 This is a simplified cost-based reject-option derivation in the tradition of Chow’s optimal error/reject trade-off. It is not a theorem that a generative model’s score is calibrated or that cost minimization authorizes clinical/legal practice.[\[3\]](https://ieeexplore.ieee.org/document/1054406)
 #### Why
 With $`C_w=1`$ and $`C_a=0.05`$ in common hypothetical cost units, $`p^*=0.95`$. The units and harm assumptions must be justified for the actual product.
 With the separately stipulated clinical values $`C_w=1{,}000`$ and $`C_a=2`$, the simplified threshold is:
-$$
+
+```math
 p^*=1-\frac{2}{1{,}000}=0.998.
-$$
+```
+
 The threshold can change while the numerical model stays fixed. Calibration must still be revalidated if deployment domain, question mix, evidence, accepted subgroup or error severity changes; model identity alone does not preserve calibration.
 A faster, reliable escalation path can lower expected escalation cost. A disclaimer does not automatically reduce the wrong-answer harm assumed in this model.
 A governing requirement for expert review is a separate eligibility constraint, not necessarily an ordinary finite cost ratio that pushes a threshold near one. Confidence may prioritize review rather than authorize an autonomous answer.
@@ -251,7 +265,7 @@ Cross-source corroboration can help when sources are identifiable and not merely
 #### What
 A multi-hop question requires combining facts, not necessarily exactly one distinct document per fact. Write $`f_i`$ for an intermediate fact and $`q_i`$ for a retrieval query; later queries may depend on earlier evidence.
 For a film-director/university/country question, one useful retrieval sequence discovers the director, then the university, then its location and the relevant country. A corpus may already contain a passage with several steps, so iteration is a workload-dependent remedy.
-A useful pattern is $`q_i=\operatorname{FormQuery}(q,f_{<i},\mathcal E_{<i})`$, where $`\mathcal E_{<i}`$ is accumulated source evidence. Verify the intermediate fact before letting it determine later searches.
+A useful pattern is $`q_i=\mathop{\mathrm{FormQuery}}\nolimits(q,f_{\lt i},\mathcal E_{\lt i})`$, where $`\mathcal E_{\lt i}`$ is accumulated source evidence. Verify the intermediate fact before letting it determine later searches.
 One-shot retrieval uses the original query, but dense semantics, a bridge-rich document or existing model knowledge can still retrieve intermediate evidence. It may miss unnamed bridge facts; it is not mathematically incapable of retrieving them.
 IRCoT interleaves retrieval with generated reasoning sentences, using retrieval to inform later reasoning and those sentences to guide later search. This is the published method’s design, not a guarantee that its intermediate claims are correct.[\[4\]](https://aclanthology.org/2023.acl-long.557)
 Self-ask explicitly poses follow-up questions, obtains answers through search and continues or stops. Log the explicit query, source spans and concise evidence summaries; a formatted follow-up can still ask the wrong question.
@@ -271,16 +285,20 @@ Log retrieval actions, documents, query reformulations, versioned evidence and o
 The constructed workload is $`70\%`$ single-hop and $`30\%`$ needing the two-intermediate-round route below. The main mean calculation assumes perfect routing; real misclassification changes both quality and latency.
 Stipulate $`80\,\mathrm{ms}`$ per retrieval, $`50`$ decoded tokens/s, $`30`$ generated intermediate tokens per round and a $`60`$-token final answer. Thus intermediate decoding is $`600\,\mathrm{ms}`$ and final decoding $`1{,}200\,\mathrm{ms}`$. Omit prefill, queueing, networking, reranking and retries explicitly.
 The one-shot proxy is one retrieval plus final decoding:
-$$
+
+```math
 80\,\mathrm{ms}+\frac{60}{50}\,\mathrm s=1{,}280\,\mathrm{ms}.
-$$
+```
+
 Define the iterative route consistently: two rounds, each with one retrieval and $`30`$ intermediate tokens, then a $`60`$-token final answer using the accumulated evidence with no extra retrieval. It is $`2(80+600)+1{,}200=2{,}560\,\mathrm{ms}`$, exactly twice the one-shot proxy.
 The previously printed $`3{,}240\,\mathrm{ms}`$ belongs to three such intermediate rounds: $`3(680)+1{,}200`$. It cannot be derived from $`2(680)+1{,}200`$. If final generation performs a separate retrieval, add its latency instead of hiding it in either result.
 For sensitivity only, a three-round slow route gives a perfectly routed mean of $`5+0.7(1{,}280)+0.3(3{,}240)=1{,}873\,\mathrm{ms}`$. Keep this separate from the main two-round example.
 A stipulated $`5\,\mathrm{ms}`$ classifier perfectly routes the stated mix in the main two-round illustration:
-$$
+
+```math
 \mathbb E[T]_{\mathrm{routed}}=5+0.7(1{,}280)+0.3(2{,}560)=1{,}669\,\mathrm{ms}.
-$$
+```
+
 Against always taking the two-round $`2{,}560\,\mathrm{ms}`$ route, the mean reduction is $`1-1{,}669/2{,}560\approx34.804688\%`$. This is a weighted mean, not a measured median or tail latency, and assumes no routing errors.
 Adaptive-RAG reports no-retrieval, single-step and multi-step routing, trained with silver model-outcome labels plus dataset-based inductive bias. Its reported route times of $`0.35`$, $`3.08`$ and $`27.18`$ seconds are experiment-specific; $`27.18/3.08\approx8.824675`$, not this drill’s latency multiplier or a universal tenfold law.[\[8\]](https://arxiv.org/html/2403.14403)
 Evaluate a router’s confusion matrix and end-to-end cost/quality rather than assuming perfect labels or a universal required hop count. Model-generated silver labels reflect which tested strategy succeeded, not a proven minimum number of reasoning steps.
@@ -311,13 +329,17 @@ Single-image VQA does not validate corpus routing or evidence recall. Use retrie
 #### Cost and complexity
 Stipulate $`k=20`$ candidates per source and $`0.195\,\mathrm{ms}`$ of serial reranking work per candidate using modality-compatible scorers. A text BERT cross-encoder does not directly score raw photos, and real scorer costs can differ by modality and batch.
 With equal unit costs and serial execution, full fan-out produces 100 candidates and the following reranking-work proxy:
-$$
+
+```math
 (5)(20)(0.195\,\mathrm{ms})=19.5\,\mathrm{ms}\quad\text{of serial work}.
-$$
+```
+
 Routing this return-policy/packaging-photo query to text and photos gives 40 candidates in the same equal-unit-cost toy:
-$$
+
+```math
 (2)(20)(0.195\,\mathrm{ms})=7.8\,\mathrm{ms}\quad\text{of serial work}.
-$$
+```
+
 Candidate count falls $`60\%`$ and serial reranking work falls by $`19.5-7.8=11.7\,\mathrm{ms}`$. This is not automatically an $`11.7`$-millisecond latency saving with parallel/batched scoring; router overhead and route misses also matter. In this serial-only comparison, router overhead below $`11.7\,\mathrm{ms}`$ is necessary to preserve that isolated saving if everything else is equal.
 Skipping tables, scans and slides can also avoid their search work. With heterogeneous per-source candidate costs $`c_i`$, reranking saving is $`1-\sum_{i\in\mathcal A}k_i c_i/\sum_{i\in\mathcal S}k_i c_i`$, not necessarily the unweighted candidate reduction; $`\mathcal A`$ is the selected set and $`\mathcal S`$ the full eligible set.
 RAGRoute reports MMLU call reduction $`13{,}890\to3{,}126`$ (about $`77.494600\%`$) and communication reduction $`73.3\to17.42\,\mathrm{MB}`$ (about $`76.234652\%`$). Its MMLU accuracy is $`43.59\%`$ versus $`43.29\%`$, a $`0.30`$-percentage-point drop; MIRAGE top-32 is separately $`72.22\%`$ versus $`72.24\%`$. Neither experiment validates the toy’s $`60\%`$ multimodal saving or proves identical accuracy.[\[9\]](https://arxiv.org/html/2502.19280v1)
@@ -329,15 +351,19 @@ Reproduce baseline $`m_0`$ and post-deploy $`m_1`$ on matched inputs, versions, 
 Compare old and new retrieval at the same diagnostic cutoff $`k`$, including per-question evidence coverage, rank-sensitive metrics, permissions, duplicates and source quality. A change in cutoff must not be mistaken for a better retriever.
 If retrieval loses evidence, inspect embeddings, corpus snapshots, indexing, filters and candidate assembly. Improvements elsewhere can coexist with that failure, so inspect slices rather than reverting blindly.
 Even when aggregate recall holds or improves, inspect question-level transitions. Define the newly broken set using matched baseline and new answer judgments:
-$$
+
+```math
 D=C_0\setminus C_1,\qquad G=C_1\setminus C_0,\qquad |C_1|-|C_0|=|G|-|D|.
-$$
+```
+
 $`C_0`$ and $`C_1`$ are the same evaluation questions answered correctly before and after. $`D`$ excludes newly fixed cases, so it is a regression-localization sample, not an unbiased sample of all failures or traffic.
 Check the actual serialized prompt, not merely a retriever log: sufficient evidence may be missing, truncated, conflicting, unauthorized or present without all required hops. A gold-chunk flag is only a proxy for usable support.
 For integer rank $`1\le r\le k`$ and $`k\ge1`$, the following chunk-rank bucket lies in $`\{1,\ldots,10\}`$. Absent evidence has no rank and must be a separate group. With fewer than ten chunks some buckets are empty; unequal chunk sizes make rank a poor proxy for token position:
-$$
+
+```math
 d_{\mathrm{rank}}=\left\lceil\frac{10r}{k}\right\rceil,\qquad1\le r\le k,\quad k\ge1.
-$$
+```
+
 Report group counts and intervals across the full matched evaluation, including absent-evidence cases. Control question difficulty and evidence sufficiency, and randomize evidence position while holding content fixed to test a positional explanation.
 #### Why
 Stable or improved aggregate recall does not exonerate retrieval: it can hide lost questions, worse ranks, duplicates, conflicting sources or incomplete multi-hop evidence. Nor does it prove the new reranker should be kept unchanged.
@@ -385,15 +411,19 @@ For self-hosting, CrAM head selection and credibility validation are model- and 
 #### Cost and complexity
 The metadata-only machine-time illustration contains $`2{,}000{,}000`$ chunks. Engineering, lineage recovery, review, rollback planning and source-reliability estimation are separate work.
 Stipulate a sustained join throughput of $`50{,}000`$ rows/s, with compatible keys and no missing-row work:
-$$
+
+```math
 \frac{2{,}000{,}000\,\mathrm{rows}}{50{,}000\,\mathrm{rows/s}}=40\,\mathrm s.
-$$
+```
+
 At a sustained $`2{,}000`$ metadata updates/s, writes take $`1{,}000\,\mathrm s`$. Serial join plus writes is $`1{,}040\,\mathrm s\approx17.333333`$ minutes. This is not a promise of a sub-20-minute production rollout: API limits, retries, replication, checks and contention are omitted.
 The simplified selection toy has $`S_{\mathrm{src}}=40`$ sources and $`k=3`$ documents each, hence $`120`$ candidates. Keeping $`K_{\mathrm{src}}=5`$ sources retains $`15`$ documents. This assumes the per-source candidates exist; obtaining them may add source-filtered retrieval and reranking.
 With equal document lengths, the retained document/evidence-token fraction changes as follows. It is not a complete system cost reduction:
-$$
+
+```math
 1-\frac{15}{120}=0.875=87.5\%\quad\text{of equal-length document payload}.
-$$
+```
+
 At $`500`$ tokens/document and $`\$0.01`$ per $`1{,}000`$ input tokens, one combined prompt has $`60{,}000`$ document tokens costing $`\$0.60`$, versus $`7{,}500`$ costing $`\$0.075`$. Instructions, questions, output tokens, selection and extra calls are excluded; context feasibility must also be checked.
 The isolated document-input saving is $`\$0.525`$ per query or $`\$26{,}250`$ per $`50{,}000`$ queries/day. Full RA-RAG adds source-specific generation/filtering and reliability-estimation costs, so this subtraction is not its measured net saving.
 The checked RA-RAG v1 experiments use three to nine constructed sources, top-three documents/source and $`\kappa=4`$, with $`200`$ queries for reliability estimation and $`1{,}400`$ test queries/dataset. The idealized calculation $`1-4/1{,}000=99.6\%`$ is not a measured 1,000-source token-reduction result from those experiments.[\[13\]](https://arxiv.org/html/2410.22954v1)
@@ -441,7 +471,7 @@ flowchart TB
   D -->|yes| A["Deliver only under validated risk and operating gates"]
   D -->|no or unresolved tie| X
 ```
-**Figure **$`41.3`$**:** Under the simplified loss assumptions, prefer automation when $`(1-p)C_w<C_a`$, equivalently $`p>1-C_a/C_w`$ for $`C_w>0`$. Mandatory review and missing evidence remain separate gates. Calibration uncertainty and residual accepted risk require validation; a confidence threshold is not a clinical or legal safety certificate.
+**Figure **$`41.3`$**:** Under the simplified loss assumptions, prefer automation when $`(1-p)C_w\lt C_a`$, equivalently $`p\gt 1-C_a/C_w`$ for $`C_w\gt 0`$. Mandatory review and missing evidence remain separate gates. Calibration uncertainty and residual accepted risk require validation; a confidence threshold is not a clinical or legal safety certificate.
 ### Figure 41.4
 ```mermaid
 flowchart TB
@@ -510,7 +540,7 @@ flowchart TB
 ### Probe 1: How do 100 million documents, 500 QPS, and a 15-minute freshness SLA change one architecture?
 Answer: Count indexed vectors and all resident structures, measure per-query service demand, and distinguish logical shards from load-sharing replicas. Add version-aware exclusion, asynchronous replacement with verified visibility, background maintenance and serving checks. Capacity nodes do not establish freshness; component minima do not establish the publication-to-answer SLA.
 ### Probe 2: A clinical question is both low-confidence and multi-hop. Which problem do you solve first?
-Answer: If required evidence is missing, obtain it within a safe resource budget or escalate; do not force a clinical system to finish a chain before seeking review. Validate the delivered decision’s probability and expected harm, then apply $`(1-p)C_w<C_a`$ only if automation is otherwise permitted. A disclaimer, a larger top-$`k`$ or a high raw token probability cannot substitute for supported evidence and professional-review requirements.
+Answer: If required evidence is missing, obtain it within a safe resource budget or escalate; do not force a clinical system to finish a chain before seeking review. Validate the delivered decision’s probability and expected harm, then apply $`(1-p)C_w\lt C_a`$ only if automation is otherwise permitted. A disclaimer, a larger top-$`k`$ or a high raw token probability cannot substitute for supported evidence and professional-review requirements.
 ### Probe 3: Why not place text, tables, scanned contracts, photos, and slides in one shared index?
 Answer: A shared index can work if representations, authorization, provenance and fusion are validated. Separate modality routes can reduce expensive work, but their overhead and misses must be measured. Use compatible scorers and ranks/calibrated scores; there is no universal two-source cutoff for a shared space or full broadcast.
 ### Probe 4: Recall improves from $`71\%`$ to $`86\%`$, yet exact match falls from $`68\%`$ to $`59\%`$. Do you revert the reranker?

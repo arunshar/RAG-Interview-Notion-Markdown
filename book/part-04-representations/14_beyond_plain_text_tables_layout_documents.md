@@ -84,7 +84,7 @@ The final lesson is that warehouse geometry is not universal. English reports, A
 | Image fitting | Selecting the correct candidate for a masked image block | It tests cross-modal block association |
 | Block filling | Selecting the correct candidate for a masked text block | It tests document-level text block association |
 | Mean reciprocal rank (MRR) | A rank metric that rewards an earlier correct result | The stated LAMPreT evaluation uses it for block-level tasks |
-| $`\operatorname{recall}@5`$ and $`\operatorname{recall}@10`$ | Whether the correct item appears among the first $`5`$ or $`10`$ results | The source uses $`\operatorname{recall}@5`$ for block evaluation and $`\operatorname{recall}@10`$ for layout transfer |
+| $`\mathop{\mathrm{recall}}\nolimits@5`$ and $`\mathop{\mathrm{recall}}\nolimits@10`$ | Whether the correct item appears among the first $`5`$ or $`10`$ results | The source uses $`\mathop{\mathrm{recall}}\nolimits@5`$ for block evaluation and $`\mathop{\mathrm{recall}}\nolimits@10`$ for layout transfer |
 | LayoutLM | A flat encoder that adds normalized two-dimensional box coordinates | It fits single-page geometry but does not create a block sequence |
 | Two-level hierarchy | Content attention inside blocks plus attention across summaries | Compare attention pairs, not a guaranteed whole-model speedup; all block lengths must fit the lower stage |
 | Layout prior | An assumed map from geometry or typography to meaning | Every linearizer supplies one in code or learned weights |
@@ -119,9 +119,11 @@ Storage uses decimal bytes; fp32 has $`4\,\mathrm B`$ per coordinate. Count chun
 - **Failure without it:** A retrieved value can be assigned the wrong column label.
 - **Cost and complexity:** Preserving the triple requires table detection, row-aware splitting, and repeated labels.
 Let a table have $`C`$ columns, $`R`$ data rows, headers $`h_1,\ldots,h_C`$, and value $`t_{r,c}`$ in one-based data row $`r`$ and column $`c`$. Under the simplifying convention that each serialized cell occupies exactly $`w`$ tokens, the row-key/header/value unit is $`(t_{r,1},h_c,t_{r,c})`$. Comparing corresponding cell starts in a header-first row-major stream gives distance:
-$$
+
+```math
 \Delta(r) = wrC
-$$
+```
+
 The distance grows linearly with $`r`$. It is unbounded as the table becomes taller.
 #### Fixed splitting creates orphan rows
 - **What:** Split a header-first stream with chunk cap $`L`$ and overlap $`o`$.
@@ -129,10 +131,12 @@ The distance grows linearly with $`r`$. It is unbounded as the table becomes tal
 - **Failure without it:** Later row fragments can lose their metric labels despite retaining row keys and period values.
 - **Cost and complexity:** Local overlap is not a substitute for explicit header propagation; whether any later window retains a particular header cell depends on the actual stride and alignment.
 The rows sharing the first chunk with the header number:
-$$
+
+```math
 n_{\mathrm{complete}}=\min\!\left(R,\max\!\left(0,\left\lfloor\frac{L}{wC}\right\rfloor-1\right)\right).
-$$
-The fully labeled-row fraction in the first window is $`n_{\mathrm{complete}}/R`$ for $`R>0`$. At $`L=512,o=64,C=6,w=5`$, a row costs $`30`$ tokens: the header and $`16`$ full rows occupy $`510`$ tokens. Thus $`16/120\approx13.333\%`$ of rows are complete and self-described in that window; $`104`$ rows are not. The header ends at token $`30`$, the second window starts at token $`449`$, and $`64`$ overlap tokens are about $`2.133`$ row-equivalents, not a repeated header. A few cells of row $`17`$ can still appear beside labels; “orphan” here means a row not wholly available with the header.
+```
+
+The fully labeled-row fraction in the first window is $`n_{\mathrm{complete}}/R`$ for $`R\gt 0`$. At $`L=512,o=64,C=6,w=5`$, a row costs $`30`$ tokens: the header and $`16`$ full rows occupy $`510`$ tokens. Thus $`16/120\approx13.333\%`$ of rows are complete and self-described in that window; $`104`$ rows are not. The header ends at token $`30`$, the second window starts at token $`449`$, and $`64`$ overlap tokens are about $`2.133`$ row-equivalents, not a repeated header. A few cells of row $`17`$ can still appear beside labels; “orphan” here means a row not wholly available with the header.
 #### Retrieval fails before generation
 - **What:** The metric phrase, such as gross margin, is a column label; row key and period may occur in later rows.
 - **Why:** Separating the metric label from those values weakens or corrupts the searchable evidence.
@@ -172,22 +176,28 @@ The larger payload can support cross-row comparisons that one isolated row canno
 - **Failure without it:** Same-row but unrelated cells look near. Same-column cells look far.
 - **Cost and complexity:** A structural encoder adds input lookups and a parser that supplies their IDs.
 For token $`w_i`$ at position $`i`$ and segment $`s_i`$, BERT uses:
-$$
+
+```math
 h_i^{(0)} = E_{tok}(w_i) + E_{pos}(i) + E_{seg}(s_i)
-$$
+```
+
 Each lookup returns $`d=768`$ coordinates in the stated base configuration. The learned position table has $`512`$ entries; extensions require a specified method. In this local formula let $`L`$ mean tokens per cell, let $`r=0,\ldots,R-1`$ and $`c=0,\ldots,C-1`$ index data cells, and use zero-based sequence positions. A serializer with $`Q`$ query tokens, two prefix special tokens and one $`CL`$-token header row starts the cell at:
-$$
+
+```math
 i(r,c)=Q+2+CL+(rC+c)L,\qquad r\in\{0,\ldots,R-1\},\ c\in\{0,\ldots,C-1\}.
-$$
+```
+
 For one-based data indices, replace $`rC+c`$ with $`(r-1)C+(c-1)`$. Adjacent cell starts are $`L`$ tokens apart, while consecutive same-column row starts are $`CL`$ apart. At $`C=8,L=3`$, these distances are $`3`$ and $`24`$ tokens. They are sequence distances, not attention-hop counts.
 #### TAPAS adds table fields at the input
 - **What:** A simplified TAPAS-style input sums column, row and numeric-rank lookups with the base fields.
 - **Why:** The added fields expose grid membership and numeric order.
 - **Failure without it:** Flattened sequence distance alone is a poor representation of attribute identity.
 - **Cost and complexity:** Three additional $`256\times768`$ tables would add $`589{,}824`$ parameters in this budget exercise. This is not a claim to enumerate every field of every released TAPAS checkpoint.
-$$
+
+```math
 h_i^{(0)} = E_{tok}(w_i) + E_{pos}(i) + E_{seg}(s_i) + E_{col}(c_i) + E_{row}(r_i) + E_{rank}(k_i)
-$$
+```
+
 In this simplified schema, query tokens use segment $`0`$ and zeros in the table fields. Headers use row ID $`0`$, data row IDs are one-based, and numeric/date ranks are content-derived after parsing. Ties must be handled independently of printed order to preserve rank stability. A comparison such as $`0.42`$ versus $`0.31`$ can be connected by full attention in one layer; being separated by many sequence positions does not require that many attention hops.
 #### Positional assumptions
 - **What:** Token, segment, and rank fields are content-derived or content-stable. Position, column, and row fields depend on rendering.
@@ -197,16 +207,20 @@ In this simplified schema, query tokens use segment $`0`$ and zeros in the table
 A label-preserving row permutation leaves lexical identity, segment and correctly parsed value-rank attached to the same cell, while changing absolute position and row IDs. Column permutations change column IDs. This permits order sensitivity; it does not force every logit or every prediction to change. Key roles and order-bearing queries must be specified separately from arbitrary printed position.
 #### Window and verbalization arithmetic
 Take $`R=20,C=8,L=3,Q=12,W=512`$. With exactly two budgeted special tokens, structural length is $`12+2+24+480=518`$. The complete-row budget is
-$$
+
+```math
 R_{\max}=\max\!\left(0,\left\lfloor\frac{W-Q-2-CL}{CL}\right\rfloor\right)
 =\left\lfloor\frac{474}{24}\right\rfloor=19.
-$$
+```
+
 Add any extra special tokens required by the actual tokenizer before computing this bound. The opening anecdote about $`8`$ segments with $`6`$ visible is separate; it does not follow from this $`20`$-row example. For verbalization, explicitly budget a repeated $`3`$-token row-key prefix plus $`8`$ cells of $`3`$ header, $`1`$ “is,” $`3`$ value and $`1`$ comma token: $`3+8(8)=67`$ tokens per row. Then $`20`$ rows use $`1{,}340`$ table tokens and $`1{,}354`$ total; only $`\lfloor498/67\rfloor=7`$ complete rows fit. Table-text inflation is $`1{,}340/504\approx2.65873`$. If both full sequences could be run, the quadratic attention-term ratio would be $`(1{,}354/518)^2\approx6.83247`$, not a measured whole-model latency ratio; neither full sequence fits this unmodified window.
 #### Parameter and result accounting
 Three $`256 \times 768`$ tables add:
-$$
+
+```math
 3 \times 256 \times 768 = 589{,}824 \approx 0.59\text{ million}
-$$
+```
+
 The three-table increment is one $`768\times768`$ matrix and approximately $`0.5362\%`$ of $`110`$ million parameters. The reported SQA comparison $`55.1\to67.2`$ is a $`12.1`$-percentage-point gain, but the parameter count alone does not causally isolate structure from training and pipeline changes. For $`20`$ distinct rows and $`7`$ movable non-key columns, $`20!\,7!=12{,}261{,}826{,}121{,}210{,}265{,}600{,}000\approx1.22618\times10^{22}`$ serializations exist. Identical rows or columns can reduce the distinct orbit; finite augmentation does not by itself enforce invariance.
 #### TAPAS claim limits
 TAPAS is not a general query engine: the stated head chooses cells and at most one aggregation operator from none, count, sum or average. It does not expose an arbitrary SQL execution plan, even if a model sometimes answers a compound question correctly. Prefer an exact executor for reliable compound numerical reasoning. Numeric ranks also depend on implementation and parsing. The source describes a parser where an invalid entry can disable a column’s rank feature; do not generalize that behavior to every TAPAS parser. Test missing values such as `n/a` and formatted values such as `1,204` under the actual locale, and monitor parse rates.
@@ -232,9 +246,11 @@ A $`10`$-row, $`5`$-column table with distinct rows and columns has $`10!5!=435{
 - **Why:** Attention logits depend on those representations.
 - **Failure without it:** A row swap can perturb logits involving moved cells; a nonzero change is not mathematically inevitable for every pair.
 - **Cost and complexity:** Subsequent layers may amplify or suppress the perturbation. No exact invariance follows merely from using the same BERT weights.
-$$
+
+```math
 \alpha_{ij} = \frac{(W_Q e_i)^T(W_K e_j)}{\sqrt{d_h}}
-$$
+```
+
 Changing a row ID changes the selected lookup vector when those entries differ. Its projections can alter logits, but cancellations or learned invariance can leave some unchanged. The architecture supplies no general rule requiring all such changes to vanish.
 #### TableFormer moves structure into attention
 - **What:** TableFormer deletes global position, row, and column IDs.
@@ -242,17 +258,21 @@ Changing a row ID changes the selected lookup vector when those entries differ. 
 - **Failure without it:** A harmless permutation rewrites token vectors.
 - **Cost and complexity:** It adds one learned relation scalar to each attention logit.
 Position resets inside each cell. Word order within a cell remains real. The structural pair function maps each token pair to 1 of 13 relations. The source names same cell, same row, same column, cell-to-header, header-to-cell, mirrored question-table relations, and a residual class.
-$$
+
+```math
 \alpha_{ij} = \frac{(W_Q e_i)^T(W_K e_j)}{\sqrt{d_h}} + b_{\phi(i,j)}
-$$
+```
+
 For a label-preserving cell-token permutation represented by matrix $`P`$ (query tokens fixed), require the pair relation and every attention mask to permute consistently. Relation invariance is:
-$$
+
+```math
 \begin{aligned}
 \phi(\pi(i),\pi(j))&=\phi(i,j),\\
 A(PE)&=P\,A(E)\,P^{\mathsf T},\\
 F(PE)&=P\,F(E).
 \end{aligned}
-$$
+```
+
 These equations describe attention and token-output equivariance when all retained inputs, within-cell positions and masks obey the permutation, dropout is disabled or coupled appropriately, and no other order-dependent features enter. An invariant aggregation/readout then preserves the answer; cell-selection outputs must be mapped back to original cells. Keeping within-cell order means Palo Alto is not permuted into Alto Palo.
 #### Parameter and compute cost
 The row/column lookup subset has $`2(256)(768)=393{,}216`$ parameters. Relation biases use $`13(12)=156`$ scalars if shared across layers or $`13(12)(12)=1{,}872`$ otherwise; the latter is $`0.476074\%`$ of that removed subset. This comparison excludes other input embeddings, including whatever within-cell positions replace global positions.
@@ -296,13 +316,17 @@ For scans, the source uses Optical Character Recognition (OCR). For born-digital
 - **Failure without it:** Long documents overrun the flat window and non-text blocks lack explicit slots.
 - **Cost and complexity:** The system needs block parsing, two encoders, image encoding, and five objectives.
 Each lower-level block receives its specified text, type, modality and formatting features; a CLS summary represents the block. The upper sequence receives block summaries in layout order, including encoded image blocks. This can represent document relations absent from a flat text-only baseline. For the following pair-count toy, assume exactly $`B=40`$ text blocks of $`n=60`$ tokens, with equal widths and comparable attention accounting. Then $`T=Bn=2{,}400`$.
-$$
+
+```math
 T^2 = 5.76 \times 10^6
-$$
+```
+
 The hierarchy uses:
-$$
+
+```math
 Bn^2 + B^2 = 40 \times 60^2 + 40^2 = 145{,}600 = 1.456 \times 10^5
-$$
+```
+
 The pair counts are $`5.76\times10^6`$ versus $`144{,}000+1{,}600=145{,}600`$, a ratio of $`39.56044`$. This is not a $`39.56`$-fold whole-transformer speedup or an equivalence of the two functions: projections, feed-forward layers, extra summaries, image encoding and different depths remain. For fixed $`T`$ and equal block lengths, the continuous pair-count optimum solves $`-T^2/B^2+2B=0`$, giving $`B_\star=(T^2/2)^{1/3}\approx142.2757`$. Real blocks are semantic units, not an arbitrary compute knob. In this equal-length toy, lower length $`60`$ and upper length $`40`$ fit $`512`$ positions, while $`2{,}400/512=4.6875`$ does not. A mean length alone would not bound the longest block; variable lengths use $`\sum_b n_b^2+B^2`$ before padding.
 #### Five pre-training objectives
 - **What:** Two objectives operate within content and three operate on the block sequence.
@@ -310,9 +334,11 @@ The pair counts are $`5.76\times10^6`$ versus $`144{,}000+1{,}600=145{,}600`$, a
 - **Failure without it:** Masked language modeling can solve one block at a time and ignore the upper encoder.
 - **Cost and complexity:** Five component losses require normalization, hypotheses, weights, and ablations.
 The stated five objectives are masked language modeling, image-text matching, block-order prediction, image fitting and text-block filling. They encourage within-block and document-level learning, but a within-block-only model is not automatically at chance: it may exploit lexical, type or candidate-distribution shortcuts. Chance rates depend on class balance and candidate construction. Ablate access to cross-block context to test what the objectives actually teach. The weighted total is:
-$$
+
+```math
 \mathcal{L} = \sum_j \lambda_j \mathcal{L}_j
-$$
+```
+
 Weights are tunable. Their numerical values are not comparable without the loss definitions, reduction convention and gradient scales. As a hypothetical magnitude example, $`0.1`$ times a loss as large as $`10`$ can outweigh $`1.0`$ times one as large as $`0.5`$; actual cross-entropy losses are not generally bounded by those ranges. Normalize per-token/per-block reductions or measure gradients, then sweep and ablate; equal loss ranges alone do not guarantee balanced training.
 #### LayoutLM trade-off and claim limit
 - **What:** LayoutLM adds normalized box coordinates $`(x_0, y_0, x_1, y_1)`$ to a flat token input.
@@ -324,12 +350,14 @@ For a fitting single-page form, flat box-aware representations can be a strong b
 The corpus has $`40{,}000`$ pages of $`990`$ tokens, $`3.96\times10^7`$ total. Preserving page boundaries with unpadded $`512`$-token windows gives $`40{,}000\lceil990/512\rceil=80{,}000`$ chunks and $`245.76\,\mathrm{MB}`$ of $`768`$-dimensional fp32 payload. Pooling unrelated pages into one stream would instead give $`77{,}344`$ chunks; that is a different segmentation policy.
 For a separately stated serving budget of five full $`512`$-token chunks, take $`50\%`$ distractor text under raster extraction as an assumption: $`1{,}280`$ of $`2{,}560`$ tokens. At $`N=7\times10^9`$ and $`1.5\times10^{14}\,\mathrm{FLOP/s}`$, their incremental prefill proxy is $`119.4667\,\mathrm{ms}`$. On the ideal two-column page, choosing the chunk corresponding to the relevant column after block ordering can leave at most $`17`$ foreign tokens in a full $`512`$-token chunk: $`85`$ over five chunks, or $`3.3203\%`$. Their proxy is $`7.9333\,\mathrm{ms}`$, a difference of $`111.5333\,\mathrm{ms/query}`$. This is conditional on relevant-column selection and the stated geometry, not a bound for arbitrary layouts or total latency.
 Parsing at $`0.4`$ CPU-core-seconds per page costs $`16{,}000`$ core-seconds, $`4.4444`$ core-hours, or $`1{,}000`$ elapsed seconds on $`16`$ perfectly parallel workers. CPU seconds and GPU seconds are different priced resources. With rates $`r_{\mathrm{CPU}}`$ per core-second and $`r_{\mathrm{GPU}}`$ per GPU-second, an idealized financial break-even is
-$$
+
+```math
 Q_{\mathrm{break}}=
 \frac{16{,}000\,r_{\mathrm{CPU}}}
 {(0.111533333\ldots)\,r_{\mathrm{GPU}}}
 \approx143{,}455\,\frac{r_{\mathrm{CPU}}}{r_{\mathrm{GPU}}}.
-$$
+```
+
 The approximately $`143{,}455`$ queries or $`3.985`$ hours of traffic at $`10`$ QPS apply only to an equal-price-per-second illustration. No actual monetary payback follows without prices, utilization and incremental parser cost. Benchmark the parser and serving path.
 #### Operating decisions
 - Sort blocks, not lines or tokens.
@@ -343,7 +371,7 @@ The approximately $`143{,}455`$ queries or $`3.985`$ hours of traffic at $`10`$ 
 - Use hierarchy above 512 tokens or when cross-modal block association matters.
 ### 14.5 Layout priors you should be able to name
 #### A sort key is a bundle of assumptions
-- **What:** Sorting blocks by $`(y, x)`$ means downward first and rightward within a band. The opening transfer case moves $`\operatorname{recall}@10`$ from $`0.83`$ on Securities and Exchange Commission filings to $`0.31`$ on Osaka maintenance manuals while OCR, bounding boxes, and embedding weights remain unchanged.
+- **What:** Sorting blocks by $`(y, x)`$ means downward first and rightward within a band. The opening transfer case moves $`\mathop{\mathrm{recall}}\nolimits@10`$ from $`0.83`$ on Securities and Exchange Commission filings to $`0.31`$ on Osaka maintenance manuals while OCR, bounding boxes, and embedding weights remain unchanged.
 - **Why:** It matches one common left-to-right Manhattan layout.
 - **Failure without it:** It interleaves columns or reverses scripts whose reading direction differs.
 - **Cost and complexity:** The system must classify columns, script, and region structure before sorting.
@@ -367,9 +395,11 @@ Sort keys are local conventions, not complete page-reading algorithms. After reg
 - **Failure without it:** A 14-point threshold misses contract headings and labels every token in a 24-point slide body.
 - **Cost and complexity:** A character-weighted size histogram and emphasis-rate calculation are required per page.
 Let $`s_0`$ be the character-weighted modal type size. A candidate heading rule can be
-$$
-H_i=\mathbf1\!\left[\frac{s_i}{s_0}\ge1.10\ \ \text{or}\ \ (\operatorname{bold}_i\ \text{and}\ p_{\mathrm{bold}}<0.15)\right].
-$$
+
+```math
+H_i=\mathbf1\!\left[\frac{s_i}{s_0}\ge1.10\ \ \text{or}\ \ (\mathop{\mathrm{bold}}\nolimits_i\ \text{and}\ p_{\mathrm{bold}}\lt 0.15)\right].
+```
+
 The bold rule is an alternative to the size rule, not an extra condition every heading must pass. The reported detector transfer from $`95\%`$ to $`40\%`$ is an anecdote, not proved by the threshold arithmetic alone. Separately, if exactly $`12`$ of $`500`$ tokens are true heading tokens, selecting all $`15`$ bold tokens at $`p_{\mathrm{bold}}=0.03`$ has precision at most $`12/15=0.8`$. Selecting $`300`$ at $`p_{\mathrm{bold}}=0.6`$ has precision at most $`12/300=0.04`$. These are token-level ceilings; rarity alone does not guarantee relevance or correctness.
 #### Worked mixed corpus
 The corpus has $`20{,}000`$ documents. Journals are $`60\%`$. They use 10-point body, 12-point subheads, 14-point section heads, and 18-point titles. Slides are $`25\%`$. They use 24-point body and 32-point headings. Contracts are $`15\%`$. They use 11-point body and 11-point bold headings.
@@ -378,7 +408,7 @@ The corpus has $`20{,}000`$ documents. Journals are $`60\%`$. They use 10-point 
 | Rule | Journals | Slides | Contracts | Weighted result |
 | --- | --- | --- | --- | --- |
 | Absolute $`s \ge 14`$ points | Under the constructed template, detects $`5`$ of $`17`$ heading blocks: $`5/17\approx0.294118`$ recall | Detects all blocks, including one title among seven: recall $`1`$, block precision $`1/7\approx0.142857`$ | Recall $`0`$ for $`11`$-point headings | Document-mixture macro recall $`0.6(5/17)+0.25\approx0.426471`$, not pooled heading-level recall |
-| Relative size $`\ge1.10`$ OR bold with $`p_{\mathrm{bold}}<0.15`$ | All assumed heading size ratios $`1.2,1.4,1.8`$ pass | $`32/24=4/3`$ passes; body ratio $`1`$ fails | Same-size bold headings pass the alternative rarity branch if the assumed $`12`$ bold tokens among $`450`$ are exactly the heading tokens | Recall $`1`$ only under this constructed template and correct mode/bold assumptions |
+| Relative size $`\ge1.10`$ OR bold with $`p_{\mathrm{bold}}\lt 0.15`$ | All assumed heading size ratios $`1.2,1.4,1.8`$ pass | $`32/24=4/3`$ passes; body ratio $`1`$ fails | Same-size bold headings pass the alternative rarity branch if the assumed $`12`$ bold tokens among $`450`$ are exactly the heading tokens | Recall $`1`$ only under this constructed template and correct mode/bold assumptions |
 
 
 Assume additionally $`12`$ pages per document and $`2{,}400`$ character records per page. The histogram scan processes $`20{,}000(12)(2{,}400)=5.76\times10^8`$ records; at an assumed $`10^7`$ increments per second, the arithmetic timing proxy is $`57.6\,\mathrm s`$, excluding extraction and other work. The source’s modular type-scale examples are $`9/8=1.125`$, $`6/5=1.2`$, $`5/4=1.25`$ and $`4/3\approx1.3333`$. A $`1.10`$ rule deliberately excludes $`16/15\approx1.0667`$, but small size differences can still mark real headings when other features support them. Modal size need not be body size on every page. A larger threshold such as $`1.20`$ is a domain heuristic under OCR uncertainty, not a guaranteed robust cutoff.
@@ -588,7 +618,7 @@ Global line sorting by $`(y,x)`$ can interleave columns, and an absolute $`14`$-
 
 | Topic | Value or model estimate | Meaning or limit |
 | --- | --- | --- |
-| Table geometry and retention | $`\Delta(r)=wrC`$; $`n=\min(R,\max(0,\lfloor L/(wC)\rfloor-1))`$ | Complete rows with the header in the first aligned window; $`R>0`$ for fractions |
+| Table geometry and retention | $`\Delta(r)=wrC`$; $`n=\min(R,\max(0,\lfloor L/(wC)\rfloor-1))`$ | Complete rows with the header in the first aligned window; $`R\gt 0`$ for fractions |
 | Opening split | $`L = 512`$, $`o = 64`$, $`C = 6`$, $`w = 5`$, $`\mathrm{row} = 30`$ tokens | $`16`$ of $`120`$ rows retain labels, $`13.3\%`$ retained, $`104`$ orphaned, $`86.7\%`$ orphan rate |
 | Overlap and original size | $`3{,}630`$ unique tokens; $`8`$ windows, $`4{,}078`$ unpadded embedded tokens at stride $`448`$ | $`64`$ overlap tokens do not carry the header from tokens $`1`$–$`30`$ to the second start at $`449`$ |
 | Header repetition | $`42`$ tokens per labeled row, $`12`$ whole rows/chunk, $`10`$ chunks, $`5{,}040`$ tokens | $`38.843\%`$ serialization inflation but $`23.590\%`$ extra versus overlapped embedding; $`25\%`$ more vectors |

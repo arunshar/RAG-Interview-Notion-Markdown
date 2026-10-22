@@ -46,8 +46,8 @@ The reference desk succeeds when it chooses the smallest repair that matches the
 | Best Matching 25 (BM25) | The stated Lucene-style nonnegative lexical score | The union proof also requires positive added weights, retained old weights and OR matching |
 | Inverse document frequency (IDF) | A log rarity weight | Rarity is not relevance or proved semantic information |
 | Term frequency | The count of a term inside one document | BM25 saturates its contribution |
-| BM25: $`N`$, $`n_t`$, $`f_{t,d}`$, $`k_1`$, $`b`$, $`\|d\|`$, and $`\bar L`$ | Corpus size, document frequency, term frequency, saturation, length control and average length | Use positive lengths and a declared term/boost policy |
-| Recall | Relevant returned documents divided by all relevant documents | At a filled cutoff, recall cannot exceed $`\min(k,\|R\|)/\|R\|`$ for $`\|R\|>0`$ |
+| BM25: $`N`$, $`n_t`$, $`f_{t,d}`$, $`k_1`$, $`b`$, $`\vertd\vert`$, and $`\bar L`$ | Corpus size, document frequency, term frequency, saturation, length control and average length | Use positive lengths and a declared term/boost policy |
+| Recall | Relevant returned documents divided by all relevant documents | At a filled cutoff, recall cannot exceed $`\min(k,\vertR\vert)/\vertR\vert`$ for $`\vertR\vert\gt 0`$ |
 | Precision | Relevant returned documents divided by returned documents | Undefined for an empty result without a stated convention; pool purity is not a top-k ceiling |
 | Recall at $`k`$ | Recall measured within the first $`k`$ results | Expansion has no monotone guarantee at a fixed cutoff |
 | Precision at $`k`$ | Relevant fraction in a declared top result list | Preservation at fixed size compares entrants with evictees, not necessarily with old mean precision |
@@ -145,48 +145,66 @@ The resource estimates stipulate full weight streaming and exclude attention, KV
 HyDE geometry, pooling perturbations and sampling variance are separate models. Token fractions do not bound normalized embedding influence or hallucination probability. A $`1/\sqrt m`$ RMS reduction requires independent zero-mean fluctuations around a fixed mean; shared bias remains. Batch amortization requires matched compute, prefix handling and KV capacity. Cache-hit rate must be evaluated against the latency distribution, not substituted for a p95 calculation.
 ### 24.1 Why queries fail: misspelling, synonymy, polysemy
 **What it is.** Fix a uniformly sampled document from the evaluation population. Let $`C`$ mean that it is relevant to concept $`c`$, and let $`F`$ mean that it contains the searched form $`f`$. This makes the two conditionals comparable; mention-level form frequencies would require a different sampling model.
-$$
+
+```math
 \Pr(F\mid C)=\text{fraction of relevant documents containing the form}
-$$
-$$
+```
+
+
+```math
 \Pr(C\mid F)=\text{relevant fraction of all form-matching documents}
-$$
+```
+
 Searching only that form admits set $`D_f`$. For nonempty relevant and matching sets, its full-pool metrics are identities. A selected subset $`S\subseteq D_f`$ has a recall ceiling, but its precision can exceed the pool average:
-$$
-\operatorname{Recall}(D_f)=\Pr(F\mid C),\qquad \operatorname{Recall}(S)\le\Pr(F\mid C).
-$$
-$$
-\operatorname{Precision}(D_f)=\Pr(C\mid F),\qquad \operatorname{Precision}(S)\text{ need not be bounded above by }\Pr(C\mid F).
-$$
+
+```math
+\mathop{\mathrm{Recall}}\nolimits(D_f)=\Pr(F\mid C),\qquad \mathop{\mathrm{Recall}}\nolimits(S)\le\Pr(F\mid C).
+```
+
+
+```math
+\mathop{\mathrm{Precision}}\nolimits(D_f)=\Pr(C\mid F),\qquad \mathop{\mathrm{Precision}}\nolimits(S)\text{ need not be bounded above by }\Pr(C\mid F).
+```
+
 Bayes connects the conditionals, but it does not make them move together.
-$$
-\Pr(C\mid F)=\frac{\Pr(F\mid C)\Pr(C)}{\Pr(F)},\qquad \Pr(F)>0.
-$$
+
+```math
+\Pr(C\mid F)=\frac{\Pr(F\mid C)\Pr(C)}{\Pr(F)},\qquad \Pr(F)\gt 0.
+```
+
 The marginal $`\Pr(F)`$ is not independent of the other quantities, but can vary across corpora and forms. A common form can have broad concept coverage and low pool purity. The source uses “single” as a bed-related example: other senses can dominate its matching pool, while a contextual ranker can still select a high-precision subset.
 **Why it exists.** Synonymy can leave relevant documents outside a single-form pool; polysemy can add other senses. A zero-postings typo contributes no lexical match through that term. Other query terms, correction rules or a fallback retriever may still retrieve relevant documents; this is not a universal zero-recall claim.
 **Failure without diagnosis.** One generic synonym lever can raise recall while lowering every shallow quality measure. Dense retrieval absorbs synonymy, but it does not structurally remove polysemy. A short query supplies little context for sense resolution.
 Dense retrieval also changes observability. A lexical index exposes a zero-postings term. A dense encoder can return high-similarity but irrelevant neighbors; similarity is not a calibrated confidence. A document with $`400`$ tokens may supply more sense context than a one-token query. The chapter reports Zhuang and Zuccon (2021) finding degradation on typo-perturbed BERT retrieval/ranking tasks and recovery from typo-aware training, not a guarantee for every encoder.
 **Cost and complexity.** A missing rare term can remove most query discrimination. Lucene’s IDF formula in the source is:
-$$
+
+```math
 I(t)=\ln\!\left(1+\frac{N-n_t+0.5}{n_t+0.5}\right)=\ln\frac{N+1}{n_t+0.5}.
-$$
+```
+
 For $`N = 10^{7}`$ chunks, $`n(\mathrm{bed}) = 10^{5}`$, and $`n(\mathrm{twin}) = 10^{4}`$:
-$$
+
+```math
 I(\mathrm{bed})=\ln\frac{10{,}000{,}001}{100{,}000.5}\approx4.605165286.
-$$
-$$
+```
+
+
+```math
 I(\mathrm{twin})=\ln\frac{10{,}000{,}001}{10{,}000.5}\approx6.907705380.
-$$
+```
+
 The two IDF weights sum to $`11.512870666`$. Keeping only bed retains $`4.605165286`$ and removes about $`59.999852\%`$ of that weight sum. This is not an entropy decomposition or a proved fraction of semantic discrimination. The smoothed values are only approximately $`\ln100`$ and $`\ln1000`$.
 BM25’s term-frequency factor is:
-$$
+
+```math
 F(f,\ell_d)=\frac{f(k_1+1)}{f+k_1(1-b+b\ell_d)},\qquad \ell_d=\frac{|d|}{\bar L}.
-$$
-Take $`k_1=1.2`$, $`0\le b\le1`$, positive document lengths and positive average length. For $`f>0`$ and positive length factor, $`F(f,\ell_d)<2.2`$ and tends to $`2.2`$ as $`f`$ grows. A bed-only document therefore has score below $`10.131363629`$. An average-length document with each of bed and twin once scores $`11.512870666`$, about $`13.635944\%`$ above that supremum. In this declared two-term example, stuffing bed alone **cannot** overtake that reference document. Different lengths, boosts or extra query terms require a new comparison.
+```
+
+Take $`k_1=1.2`$, $`0\le b\le1`$, positive document lengths and positive average length. For $`f\gt 0`$ and positive length factor, $`F(f,\ell_d)\lt 2.2`$ and tends to $`2.2`$ as $`f`$ grows. A bed-only document therefore has score below $`10.131363629`$. An average-length document with each of bed and twin once scores $`11.512870666`$, about $`13.635944\%`$ above that supremum. In this declared two-term example, stuffing bed alone **cannot** overtake that reference document. Different lengths, boosts or extra query terms require a new comparison.
 #### Worked lodging example
 The index has $`N = 10^{7}`$ chunks. Posting counts are $`n(\mathrm{bed}) = 10^{5}`$, $`n(\mathrm{twin}) = 10^{4}`$, $`n(\mathrm{single}) = 3 \times 10^{5}`$, and $`n(\mathrm{cot}) = 9 \times 10^{4}`$.
 The relevant set contains $`1{,}000`$ chunks: $`550`$ use twin bed, $`300`$ use single bed without twin, and $`150`$ use cot without bed or twin. These are assumed relevance groups. For the next OR-scoring comparison, additionally suppose all $`10{,}000`$ twin documents also contain bed, and every twin-bed document has average length with each query term once. Document frequencies alone do not imply these intersections or term frequencies.
-With twn bed, the typo has no postings, leaving the $`100{,}000`$-document bed pool with $`850`$ relevant items. If its top one hundred is a relevance-independent uniform sample, expected true positives are $`100(850/100{,}000)=0.85`$, so expected $`\operatorname{Recall}@100=0.00085=0.085\%`$. This is a sampling assumption, not a prediction from BM25 or document frequencies alone.
+With twn bed, the typo has no postings, leaving the $`100{,}000`$-document bed pool with $`850`$ relevant items. If its top one hundred is a relevance-independent uniform sample, expected true positives are $`100(850/100{,}000)=0.85`$, so expected $`\mathop{\mathrm{Recall}}\nolimits@100=0.00085=0.085\%`$. This is a sampling assumption, not a prediction from BM25 or document frequencies alone.
 After correction, ordinary two-term OR BM25 still admits the same bed pool in this containment toy, with full-pool recall $`85\%`$. The stipulated twin-bed matches outrank bed-only matches by the score bound above. With uniform tie-breaking among the $`10{,}000`$ twin-bed documents, expected top-one-hundred true positives are $`100(550/10{,}000)=5.5`$, so recall is $`0.55\%`$, about $`6.47`$ times the typo expectation. Any top-one-hundred list has recall at most $`100/1{,}000=10\%`$, not $`55\%`$; even its best possible ratio to the typo expectation is about $`117.65`$, not three orders of magnitude.
 A **different** policy can use a mandatory twin-and-bed seed arm. Its $`10{,}000`$ candidates contain $`550`$ relevant chunks: full-pool recall $`55\%`$ and precision $`5.5\%`$. These are admitted-pool metrics, not recall or a precision ceiling at one hundred. In a positive-score-only retriever, zero-score items are excluded; a system that fills with zero-score ties or another retrieval leg can still return them.
 For a separate, explicit disjoint-arm expansion toy, keep that strict seed and add broad single and cot arms with $`300{,}000`$ and $`90{,}000`$ candidates. Assume these arms are mutually disjoint, with $`300`$ and $`150`$ newly relevant items. The logical policy is `(twin AND bed) OR single OR cot`; it is not the narrower `(single AND bed)` branch. Then the full union has $`400{,}000`$ candidates and contains all $`1{,}000`$ relevant items. Candidate-count work is forty times the seed only under equal per-candidate costs. Without the disjoint assumption these counts are an upper bound, and actual posting scans, overlaps and Boolean execution must be measured.
@@ -202,36 +220,46 @@ For a stable corpus, doc2query-style document expansion from Nogueira et al. (2
 Route polysemy to disambiguation. Distinct result clusters can motivate diversification or a clarifying question. When interaction is unavailable, use available metadata, an intent model, abstention or diversification; diversification is not the only remaining option and has no universal precision guarantee.
 An illustrative twelve-token RAG question supplies more context than a one-word query, but its effect on sense resolution and typo sensitivity must be tested. Adding low-IDF function words does not divide or reduce the original terms' raw BM25 contributions. It can change a normalized weight share, matching, query processing or truncation; these are separate mechanisms.
 ### 24.2 Expansion: lexical, semantic, signal-based
-**What it is.** Let $`q`$ be the original term set and $`E`$ a set of $`m`$ additional distinct terms not already in its $`n`$ terms. Write $`q^\prime=q\cup E`$. Define $`D(q)=\{d:s(q,d)>0\}`$ before cutoffs, filters or approximate pruning, and let $`R`$ be the fixed, nonempty relevance set. Bag weights and repeated query terms need an explicit scoring policy.
+**What it is.** Let $`q`$ be the original term set and $`E`$ a set of $`m`$ additional distinct terms not already in its $`n`$ terms. Write $`q^\prime=q\cup E`$. Define $`D(q)=\{d:s(q,d)\gt 0\}`$ before cutoffs, filters or approximate pruning, and let $`R`$ be the fixed, nonempty relevance set. Bag weights and repeated query terms need an explicit scoring policy.
 Lexical expansion conditions $`E`$ on word form. It includes thesaurus synonyms, morphology, acronyms, and spelling corrections.
 Semantic expansion conditions $`E`$ on query meaning. It includes entity links, ontology neighbors, and generated subqueries.
 Signal-based expansion uses observed behavior such as co-clicked or same-session queries. Metadata filtering is a distinct narrowing operation, not an add-only expansion arm.
 **Why it exists.** Under the positive Lucene-style IDF above, nonnegative additional term weights, retained original weights and disjunctive matching, $`s(q^\prime,d)\ge s(q,d)`$. Thus every old positive-score candidate remains admitted. Mandatory new clauses, negative boosts, filters, query-length normalization, pruning and a returned top-$`k`$ list need not preserve this set.
-$$
+
+```math
 D(q) \subseteq D(q^\prime)
-$$
-$$
+```
+
+
+```math
 \lvert D(q^\prime)\cap R\rvert \ge \lvert D(q)\cap R\rvert
-$$
-These inclusions prove only unpruned admitted-set recall monotonicity for $`|R|>0`$. They do not imply fixed-cutoff or dense-retrieval monotonicity.
-**Failure without precision accounting.** Let $`a=|D(q)\cap R|`$ and $`n_D=|D(q)|>0`$, so $`P=a/n_D`$. For a genuine add-only expansion, let $`\Delta=|D(q^\prime)\setminus D(q)|>0`$ and let $`\rho`$ be the newly admitted cohort's relevant fraction. This denominator excludes overlaps with old candidates.
-$$
+```
+
+These inclusions prove only unpruned admitted-set recall monotonicity for $`|R|\gt 0`$. They do not imply fixed-cutoff or dense-retrieval monotonicity.
+**Failure without precision accounting.** Let $`a=|D(q)\cap R|`$ and $`n_D=|D(q)|\gt 0`$, so $`P=a/n_D`$. For a genuine add-only expansion, let $`\Delta=|D(q^\prime)\setminus D(q)|\gt 0`$ and let $`\rho`$ be the newly admitted cohort's relevant fraction. This denominator excludes overlaps with old candidates.
+
+```math
 P^\prime = \frac{a+\rho\Delta}{n_D+\Delta}
-$$
+```
+
 The precision break-even is:
-$$
-P^\prime-P=\frac{\Delta(\rho-P)}{n_D+\Delta},\qquad P^\prime\ge P\ \Longleftrightarrow\ \rho\ge P\quad(n_D>0,\ \Delta>0).
-$$
+
+```math
+P^\prime-P=\frac{\Delta(\rho-P)}{n_D+\Delta},\qquad P^\prime\ge P\ \Longleftrightarrow\ \rho\ge P\quad(n_D\gt 0,\ \Delta\gt 0).
+```
+
 The sign test is independent of the positive expansion size, although the magnitude of the precision change is not. If $`\Delta=0`$, precision is unchanged and the relevance fraction of an empty added cohort is undefined. If the baseline pool is empty, its precision needs a declared convention; this derivation does not divide by zero.
 Lexical, semantic and behavioral expansion can have different relevance rates, but no universal ordering follows from their names. Click relevance needs evaluation for position, exposure and selection bias. For a filter, precision improves only when the removed cohort is less relevant than the original pool; a perfectly targeted filter can remove only irrelevant items and lose no recall.
 Global query-independent expansion often admits the wrong sense with $`\rho`$ approximately zero. Voorhees (1994) found WordNet relations helped only the shortest Text Retrieval Conference (TREC) topics and degraded the rest. Xu and Croft (1996) found locally drawn expansion terms beat global corpus terms. The source limits these claims to the reported settings.
 **Cost and complexity.** With equal mean IDF, equal term weights and a common term-frequency factor, the original terms have fraction $`n/(n+m)`$ of the total IDF-weight budget. More generally use the ratio of weighted IDF sums. A common BM25 saturation factor cancels in that ratio, but the budget is neither a confidence nor each document's actual score. Added terms do not reduce the old terms' raw contributions; they can change relative ranks.
-Down-weight additions with $`0\le\alpha_E<1`$, or retrieve variants separately and fuse their lists with RRF. Fusion avoids directly summing incomparable variant scores but does not guarantee preserved top-$`k`$ quality. Appending dense-query text can move its embedding in either a useful or harmful direction; fusion is an option, not a mathematical requirement.
+Down-weight additions with $`0\le\alpha_E\lt 1`$, or retrieve variants separately and fuse their lists with RRF. Fusion avoids directly summing incomparable variant scores but does not guarantee preserved top-$`k`$ quality. Appending dense-query text can move its embedding in either a useful or harmful direction; fusion is an option, not a mathematical requirement.
 The admitted-set guarantee does not imply recall at $`k`$. With filled lists of the same size and fixed relevance set, let $`g`$ be relevant entrants and $`\ell`$ relevant evictees. Then
-$$
+
+```math
 P_k^\prime-P_k=\frac{g-\ell}{k},\qquad
 R_k^\prime-R_k=\frac{g-\ell}{|R|}.
-$$
+```
+
 The correct non-degradation test is $`g\ge\ell`$, or entrant relevance rate at least the evicted cohort's rate when both cohorts have the same positive size. It is not automatically $`\rho\ge P_k`$. Evidence at one thousand results does not establish quality at five.
 #### Worked support-search example
 The illustrative corpus has $`2\times10^6`$ chunks. For the following conversion assume **exactly four** relevant chunks for every query, not merely four on average, and filled lists of size $`k`$. Mean recall at five is $`0.31`$ and at fifty is $`0.58`$. With varying relevant-set sizes, macro mean recall times mean relevant count need not equal mean true positives.
@@ -253,30 +281,36 @@ For $`2\times10^6`$ chunks, three predicted queries of sixty generated tokens re
 ### 24.3 Rewriting: Rocchio to sequence-to-sequence to reinforcement learning
 **What it is.** The three generations differ in their learning signal.
 Rocchio’s 1971 algorithm moves a query vector using judged documents.
-$$
+
+```math
 \begin{aligned}
-\bar d_A&=\begin{cases}|A|^{-1}\sum_{d\in A}\vec d,&|A|>0,\\0,&|A|=0,\end{cases}\\
+\bar d_A&=\begin{cases}|A|^{-1}\sum_{d\in A}\vec d,&|A|\gt 0,\\0,&|A|=0,\end{cases}\\
 \vec q_m&=\alpha_R\vec q_0+\beta_R\bar d_{D_r}-\gamma_R\bar d_{D_{nr}}.
 \end{aligned}
-$$
+```
+
 The source reports Manning et al. (2008) recommending $`\alpha_R=1`$, $`\beta_R=0.75`$, $`\gamma_R=0.15`$. The negative centroid coefficient is one fifth of the positive one; actual term effects also depend on the centroid values. Positive-only PRF can treat the top ten as relevant and set $`\gamma_R=0`$. Omit an empty centroid before division rather than writing zero times an undefined fraction. Sparse implementations often clamp negative weights; specify that policy.
 Supervised sequence-to-sequence training maps original $`q_0`$ to target $`q^*`$. Wang et al. (2023) mine weak pairs for their GenQR and GenPRF systems. Two queries are paired when their top-ranked documents overlap substantially. The more effective query becomes the target, and stopwords are removed. Their ablation found all three filters together beat any subset.
 Their contextual variant concatenated feedback documents into the generation prompt. It helped on only one dataset, and only the instruction-tuned model benefited there. The source does not claim that more prompt context generally helps.
 The supervised token objective is:
-$$
-L = -\sum_t \log p_\theta(q_t^* \mid q_{<t}^*,q_0)
-$$
+
+```math
+L = -\sum_t \log p_\theta(q_t^* \mid q_{\lt t}^*,q_0)
+```
+
 The shipped metric is $`R(q^\prime) = \mathrm{Recall}@k`$ for the rewritten query. Similar token loss can hide large recall differences because one discriminative term moves documents across the cutoff.
 A hard ranking metric is piecewise constant in continuous document scores away from ranking boundaries, so its ordinary pathwise derivative there is zero. Rewritten token strings are discrete, so a derivative with respect to their string value is not defined. Neither fact makes the expected reward gradient with respect to the sampling policy zero. Differentiable ranking surrogates are another possible approach.
 REINFORCE treats the rewriter as policy $`p_\theta(q^\prime\mid q_0)`$ and uses the score-function estimator.
-$$
+
+```math
 \begin{aligned}
 J(\theta)&=\mathbb E_{q^\prime\sim p_\theta(\cdot\mid q_0)}[R(q^\prime)],\\
 \nabla_\theta J&=\mathbb E\!\left[(R(q^\prime)-b(q_0))\nabla_\theta\log p_\theta(q^\prime\mid q_0)\right],\\
 \hat g&=\frac1m\sum_{i=1}^m(R(q_i^\prime)-b(q_0))\nabla_\theta\log p_\theta(q_i^\prime\mid q_0),\\
-\theta&\leftarrow\theta+\eta\hat g,\qquad \eta>0.
+\theta&\leftarrow\theta+\eta\hat g,\qquad \eta\gt 0.
 \end{aligned}
-$$
+```
+
 For the fixed reward/index, suitable support/differentiability and expectation-interchange conditions, this score-function estimator does not differentiate the index. An action-independent baseline has zero expected score contribution. A past running mean or leave-one-out baseline can satisfy that condition. Subtracting the **same sampled batch's** reward mean instead yields expected gradient factor $`1-1/m`$ for IID samples; at $`m=8`$ the factor is $`0.875`$. Stop gradients through a learned baseline in this policy-gradient term; it can have a separate fitting loss. Variance reduction depends on the baseline, not every constant being better.
 Nogueira and Cho (2017) implement a term-selection model that keeps candidate terms above a probability threshold and a sequence-generation model that decodes with an LSTM. Both use REINFORCE against retrieval reward. They report that the RL reformulator beat supervised learning on the same task.
 **Why it exists.** Rocchio offers a no-training baseline. Sequence generation can delete, reword, correct, and resolve. RL aligns the learning signal with the metric the system reports.
@@ -297,37 +331,49 @@ The source anchors these volumes against web search fan-out of roughly twenty re
 #### Practical decisions and limits
 Start with the source's top-ten PRF and $`\alpha_R=1`$, $`\beta_R=0.75`$, $`\gamma_R=0`$ only as tunable defaults. Below roughly $`0.5`$ measured top-ten precision, test shallower feedback, a relevance gate or no PRF. An absolute raw retrieval-score threshold is not portable or automatically calibrated across queries, corpora and model versions.
 Mine supervision through co-retrieval overlap. Use real gold rewrites when the setting already has them.
-Reward the retrieval metric you report; do not substitute fluency, reference overlap or BLEU without validating the trade-off. If constraining policy drift, a term such as $`\zeta\operatorname{KL}(p_\theta\Vert p_{\mathrm{ref}})`$ with $`\zeta\ge0`$ compares policies on the same inputs. It does not prove readable or faithful rewrites; those require explicit evaluation, especially when the reference policy is weak.
+Reward the retrieval metric you report; do not substitute fluency, reference overlap or BLEU without validating the trade-off. If constraining policy drift, a term such as $`\zeta\mathop{\mathrm{KL}}\nolimits(p_\theta\Vert p_{\mathrm{ref}})`$ with $`\zeta\ge0`$ compares policies on the same inputs. It does not prove readable or faithful rewrites; those require explicit evaluation, especially when the reference policy is weak.
 Retain the original-query leg as a diagnostic and possible fallback. A union protects candidate membership before truncation, but rank fusion, reranking and finite contexts can still harm the original query's top results. Report per-query gains and regressions as well as mean recall.
 Freeze and version the index during RL training. For hourly corpus updates, train against periodic snapshots and pin each rewriter to its snapshot.
 ### 24.4 Retrieval-specific embeddings: why context similarity can mislead expansion
 **What it is.** General word2vec training predicts context, not relevance. Skip-gram with negative sampling maximizes:
-$$
+
+```math
 \max_{\vec w,\vec c}\sum_{(w,c)\in D}\left[\log\sigma(\vec w\cdot\vec c)+k\,\mathbb E_{c_n\sim P_n}\log\sigma(-\vec w\cdot\vec c_n)\right]
-$$
+```
+
 Here $`\vec w`$ is the center-word vector, $`\vec c`$ is the context-word vector, $`D`$ contains observed word-context pairs, and $`k`$ is the sampled negatives per positive.
 Under an idealized unconstrained score matrix and positive pair/noise probabilities, optimize the scalar score $`s_{wc}=\vec w^{\mathsf T}\vec c`$ for each pair. With negative sampling distribution $`P_n`$, the stationary optimum is:
-$$
-s_{wc}^\star=\ln\frac{p(c\mid w)}{kP_n(c)}=\operatorname{PMI}(w,c)-\ln k+\ln\frac{p(c)}{P_n(c)}.
-$$
-$$
-\operatorname{PMI}(w,c)=\ln\frac{p(c\mid w)}{p(c)};\qquad P_n(c)=p(c)\ \Longrightarrow\ s_{wc}^\star=\operatorname{PMI}(w,c)-\ln k.
-$$
+
+```math
+s_{wc}^\star=\ln\frac{p(c\mid w)}{kP_n(c)}=\mathop{\mathrm{PMI}}\nolimits(w,c)-\ln k+\ln\frac{p(c)}{P_n(c)}.
+```
+
+
+```math
+\mathop{\mathrm{PMI}}\nolimits(w,c)=\ln\frac{p(c\mid w)}{p(c)};\qquad P_n(c)=p(c)\ \Longrightarrow\ s_{wc}^\star=\mathop{\mathrm{PMI}}\nolimits(w,c)-\ln k.
+```
+
 Finite-dimensional, regularized or incompletely optimized SGNS need not attain every scalar optimum. The familiar PMI shift specifically assumes context-marginal negative sampling; another noise distribution adds the displayed context-dependent shift. Identical context distributions imply identical target score rows, **not uniquely identical learned vectors or their cosine**. An invertible nonorthogonal change of factorization can preserve every center-context dot product while changing center-center cosines. Antonyms can nevertheless share predictive contexts, which exposes an objective mismatch rather than proving one universal embedding geometry.
 **Why retrieval-specific training exists.** The chapter reports Zamani and Croft (2017) targeting a query-conditioned term distribution from relevant documents rather than a center-word context distribution. For the probability and KL formulas, assume a nonempty judged relevant set with nonzero token mass and normalize its term counts into $`p(w\mid R_q)`$. Empty or unjudged cases need a separate policy.
 For vocabulary $`V`$, the learned query-conditioned distribution is:
-$$
+
+```math
 \hat p(w\mid q) = \frac{\exp(\vec w\cdot\vec q)}{\sum_{w^\prime\in V}\exp(\vec w^\prime\cdot\vec q)}
-$$
+```
+
 The first variant minimizes:
-$$
-L = \sum_q \operatorname{KL}\left(p(\cdot\mid R_q)\,\Vert\,\hat p(\cdot\mid q)\right)
-$$
+
+```math
+L = \sum_q \mathop{\mathrm{KL}}\nolimits\left(p(\cdot\mid R_q)\,\Vert\,\hat p(\cdot\mid q)\right)
+```
+
 The source's second variant uses a binary relevance classifier with terms from relevant sets as positives and synthetic negative vectors that need not name vocabulary items. This is not the same objective as a normalized vocabulary softmax. Judge its actual word-ranking behavior rather than interpreting every hidden dot product as a probability.
 For the following mixture, the learned vocabulary scores must first be converted into a nonnegative distribution $`\hat p(\cdot\mid q)`$ summing to one. A raw dot-product score is not such a distribution. Let $`p^{\mathrm{ML}}(w\mid q)`$ be normalized query-term frequency on a nonempty query; then:
-$$
+
+```math
 p^*(w\mid q)=\lambda\hat p(w\mid q)+(1-\lambda)p^{\mathrm{ML}}(w\mid q),\qquad 0\le\lambda\le1.
-$$
+```
+
 One can append the top-$`k`$ scored vocabulary terms and retrieve again. Relevance-derived targets can favor budget language, but relevant cheap-laptop documents may mention expensive alternatives or negation. Such words can receive positive target mass, and imperfect fitting adds error. The objective alone does not guarantee polarity preservation or that expensive is pushed away.
 **Failure without it.** An in-domain word2vec model can be perfectly trained and still return the wrong neighbor. A larger model fitting the same context objective does not repair the mismatch.
 Antonym lexicons, syntax/polarity constraints, attribute filters, contextual models and relevance feedback have different coverage limits. Requiring occurrence in a relevant document is one signal, not the only possible general filter and not a sufficient intent test: a relevant document can explicitly reject the term it mentions.
@@ -335,21 +381,29 @@ Antonym lexicons, syntax/polarity constraints, attribute filters, contextual mod
 #### Toy context-distribution example
 The toy supplies context marginals $`(0.2,0.5,0.3)`$ for price, laptop and deal. Cheap and expensive each have ten thousand occurrences and conditional row $`(0.3,0.4,0.3)`$; budget has $`(0.1,0.5,0.4)`$. Interpret the next vectors as **explicit PMI-row coordinates**, not uniquely recovered word2vec parameters. Equivalently, they are an unshifted score-coordinate example with $`k=1`$ and $`P_n=p`$. Other words in the corpus can supply the remaining marginal mass.
 The PMI rows are:
-$$
+
+```math
 v_{\mathrm{cheap}}=v_{\mathrm{expensive}}=(\ln1.5,\ln0.8,0)\approx(0.405465,-0.223144,0).
-$$
-$$
+```
+
+
+```math
 v_{\mathrm{budget}}=(\ln0.5,0,\ln(4/3))\approx(-0.693147,0,0.287682).
-$$
+```
+
 Using the unrounded PMI coordinates gives $`\cos(v_{\mathrm{cheap}},v_{\mathrm{expensive}})=1`$ and $`\cos(v_{\mathrm{cheap}},v_{\mathrm{budget}})\approx-0.809166`$. This constructed representation ranks the antonym nearest. A different factorization, negative distribution or learned representation need not have these same cosines; the example shows possibility, not inevitability.
 #### Worked BM25 example
 The product index has $`N = 1,000,000`$ documents with $`k_1 = 1.2`$ and $`b = 0.75`$.
-$$
-\operatorname{BM25}(q,d) = \sum_{t\in q}\operatorname{IDF}(t)\,\frac{f_{t,d}(k_1+1)}{f_{t,d}+k_1\left(1-b+b\frac{\lvert d\rvert}{\mathrm{avgdl}}\right)}
-$$
-$$
-\operatorname{IDF}(t) = \ln\left(1+\frac{N-n_t+0.5}{n_t+0.5}\right)
-$$
+
+```math
+\mathop{\mathrm{BM25}}\nolimits(q,d) = \sum_{t\in q}\mathop{\mathrm{IDF}}\nolimits(t)\,\frac{f_{t,d}(k_1+1)}{f_{t,d}+k_1\left(1-b+b\frac{\lvert d\rvert}{\mathrm{avgdl}}\right)}
+```
+
+
+```math
+\mathop{\mathrm{IDF}}\nolimits(t) = \ln\left(1+\frac{N-n_t+0.5}{n_t+0.5}\right)
+```
+
 The document frequencies for affordable, cheap, budget, expensive and laptop are $`5{,}000`$, $`30{,}000`$, $`40{,}000`$, $`20{,}000`$ and $`50{,}000`$. Their smoothed IDFs are approximately $`5.298218`$, $`3.506542`$, $`3.218864`$, $`3.911999`$ and $`2.995723`$. Use full precision when calculating scores.
 Let the original query be affordable laptop with each term once. Both candidates have average length, so $`F(f,1)=2.2f/(f+1.2)`$. A contains affordable once, budget three times and laptop five times. B contains expensive four times and laptop six times. Assume cheap and discount occur in neither, and the unlisted query/expansion terms have zero frequency.
 Without expansion, $`S_A\approx10.613211`$ and $`S_B\approx5.492159`$, giving margin $`5.121052`$. These are BM25 scores, not probabilities or a general product-relevance model.
@@ -365,9 +419,11 @@ Parse hard constraints such as under $`\$500`$, dates, negation, and required at
 The source suggests a few thousand relevance pairs as a specialist-training starting point. The crossover depends on label quality, domain shift, model size and validation; no fixed pair count proves a specialist beats a strong general encoder with reranking.
 ### 24.5 Conversational rewriting: five operations
 **What it is.** At turn $`t`$, conversation history is:
-$$
+
+```math
 C_{t-1}=\big((q_1,r_1),\ldots,(q_{t-1},r_{t-1})\big).
-$$
+```
+
 The system needs passages relevant to current query $`q_t`$ given $`C_{t-1}`$. It can train a query encoder over the whole history, or emit a standalone text query $`q_t^*`$. The chapter develops $`q_t^*`$ because plain text works with BM25, dual encoders, and hosted search interfaces.
 The illustrative transcript starts with an e-commerce-company question about Elon Musk, then asks when he started the company. The scenario stipulates that the intended referent is PayPal and that a raw search returns Tesla material. Without enough dialogue evidence the referent or intended milestone can remain ambiguous; ask or preserve that uncertainty rather than silently inventing a unique standalone interpretation.
 The 2024 CHIQ conversational-rewriting line decomposes the task into five operations:
@@ -388,9 +444,11 @@ Conversational rewriting repairs an under-specified request using dialogue; iter
 **Cost and complexity.** Declare a dependency graph. The next latency scenario uses a gated serial schedule: topic detection determines retained history, then expansion, summary, disambiguation and pseudo response run in order. A fused call, cached history operation, proven independent branch or parallel requests have different critical paths and resource costs.
 #### Worked latency example
 The worked rewriter has $`8\times10^9`$ parameters at two bytes each, a $`16\,\mathrm{GB}`$ weight payload. Stipulate a batch-one full weight read per decode step and effective bandwidth $`0.7(2.0)=1.4\,\mathrm{TB/s}`$. The seventy-percent factor is an assumed utilization, not a guaranteed realistic achievement for every A100 workload.
-$$
+
+```math
 t_{\mathrm{weight/token}}=\frac{16\times10^9\,\mathrm B}{1.4\times10^{12}\,\mathrm{B/s}}\approx11.428571\,\mathrm{ms}.
-$$
+```
+
 Stipulate prompt processing at $`10^4\,\mathrm{tokens/s}`$. The five operations emit $`3`$, $`80`$, $`60`$, $`20`$ and $`100`$ tokens, summing to $`263`$. Their prompt budgets are $`590`$, $`355`$, $`435`$, $`90`$ and $`90`$, totaling $`1{,}560`$. Actual prompts and accepted outputs are workload-dependent.
 Using the unrounded token component gives $`263(80/7)\approx3{,}005.714286\,\mathrm{ms}`$ decode plus $`156\,\mathrm{ms}`$ prefill, total $`3{,}161.714286\,\mathrm{ms}`$. Rounding to $`11.4\,\mathrm{ms/token}`$ before multiplying caused the earlier inconsistent total. These partial resource-time components omit extra attention/cache/serving costs; benchmark real latency.
 In the declared gated schedule, the three-token topic decision lies **on** the critical path. Subtracting it to claim a $`260`$-token path and a $`34\,\mathrm{ms}`$ overlap saving is unjustified. If a different implementation speculates or caches operations, its branch, wasted-work and prefill costs need a separate dependency analysis.
@@ -408,39 +466,51 @@ An additive one-second target with $`120\,\mathrm{ms}`$ retrieval and $`600\,\ma
 All $`263`$ output tokens take $`375.714286\,\mathrm{ms}`$ in that weight-stream model, already above the rewrite allowance. Dropping the final one-hundred-token pseudo-response call leaves $`163`$ outputs and, retaining the other prompt budgets, $`1{,}470`$ prompt tokens. Decode takes $`232.857143\,\mathrm{ms}`$. At the same $`10^4\,\mathrm{prompt\ tokens/s}`$, prefill adds $`147\,\mathrm{ms}`$, so the total is $`379.857143\,\mathrm{ms}`$ and **does not fit**.
 To fit before other overhead, prefill must take at most $`47.142857\,\mathrm{ms}`$, requiring at least approximately $`31{,}181.82\,\mathrm{prompt\ tokens/s}`$ for those prompts. If a measured smaller-model implementation instead achieves the source's separately assumed $`18\,\mathrm{ms}`$ prefill, total becomes $`250.857143\,\mathrm{ms}`$; that implies about $`81{,}666.67\,\mathrm{prompt\ tokens/s}`$ and is an added assumption, not derived from the weight size. The trimmed twenty-three-output, $`950`$-prompt path on this small model is $`127.857143\,\mathrm{ms}`$ at the original prompt rate, before omitted costs.
 ### 24.6 HyDE: searching with a hypothetical answer
-**What it is.** The source motivates HyDE with a document-crop-trained encoder. As a conditional geometry toy, take unit vectors $`q`$, $`u`$ and $`n`$, with $`u\perp n`$ and $`0<\gamma\le1`$, and decompose the query into a topical direction and a residual:
-$$
+**What it is.** The source motivates HyDE with a document-crop-trained encoder. As a conditional geometry toy, take unit vectors $`q`$, $`u`$ and $`n`$, with $`u\perp n`$ and $`0\lt \gamma\le1`$, and decompose the query into a topical direction and a residual:
+
+```math
 q = \gamma u + \sqrt{1-\gamma^2}\,n
-$$
+```
+
 The unit residual $`n`$ represents whatever orthogonal content the toy assigns to question register. This is an assumed decomposition, not a measured universal separation of syntax, topic and length. At $`\gamma=1`$ the residual coefficient is zero; at $`\gamma=0`$ pure scaling cannot preserve a meaningful topical ranking.
 For a unit document vector $`d`$, if $`n^{\mathsf T}d=0`$ exactly, then:
-$$
+
+```math
 \cos(q,d)=\gamma\cos(u,d).
-$$
+```
+
 Positive uniform scaling preserves ranks only when the compared documents have identical zero residual alignment. If residual alignments are merely near zero, use an approximation and compare their errors with the margin. Estimating $`\gamma`$ from mean query-gold similarity divided by mean document-pair similarity additionally requires matched topical-pair expectations; arbitrary cohorts need not identify this coefficient.
-$$
+
+```math
 \hat\gamma=\frac{0.42}{0.71}\approx0.591549296,\qquad \sqrt{1-\hat\gamma^2}\approx0.806268833.
-$$
+```
+
 Treat the source's one-thousand query-gold and one-thousand document-pair counts as the stated illustration, not a reproduced experiment. No uncertainty interval follows without the scores or their variance and dependence. Under the matched toy, a document-space margin of $`0.06`$ becomes approximately $`0.035492958`$.
-A question-shaped distractor can instead have $`n^{\mathsf T}d^-=\phi>0`$. If the relevant document has zero residual alignment, this adds a distractor-only bonus:
-$$
+A question-shaped distractor can instead have $`n^{\mathsf T}d^-=\phi\gt 0`$. If the relevant document has zero residual alignment, this adds a distractor-only bonus:
+
+```math
 \cos(q,d^-)=\gamma\cos(u,d^-)+\sqrt{1-\gamma^2}\,\phi.
-$$
-At $`\phi=0.05`$, the bonus is about $`0.040313442`$, greater than the $`0.035492958`$ topical margin. In this matched toy the distractor wins by $`0.004820484`$; the inversion threshold is $`\phi>\gamma(0.06)/\sqrt{1-\gamma^2}\approx0.044021245`$. If both candidates have residual alignment, use their difference instead.
+```
+
+At $`\phi=0.05`$, the bonus is about $`0.040313442`$, greater than the $`0.035492958`$ topical margin. In this matched toy the distractor wins by $`0.004820484`$; the inversion threshold is $`\phi\gt \gamma(0.06)/\sqrt{1-\gamma^2}\approx0.044021245`$. If both candidates have residual alignment, use their difference instead.
 HyDE generates an answer-like passage, embeds it and searches with that probe. It may better match document register and vocabulary, but there is no guarantee that its topical coefficient becomes one or that all register effects disappear. A fluent wrong passage can point at the wrong topic.
 **Why it exists.** The method aligns the probe with the comparison the encoder learned. It does not merely improve query wording. It changes a question-shaped object into a document-shaped object.
 **Failure without it.** A rewrite can remain interrogative or can be instructed to use document style; its register is not fixed by definition. The chapter reports LameR comparisons favoring richer pseudo-answer generation in its tested settings, not a proof that document generation always beats rewriting or addresses every encoder mismatch.
 The source describes query2doc combining a pseudo-document with the original query. Retaining the lexical query can help preserve anchors, but concatenation can still change scores, embeddings or truncation; it is not a monotone quality guarantee.
 A generated document can fabricate details. Eight of one hundred twenty positions is $`6.666667\%`$, while thirty positions is $`25\%`$. These are **position fractions**, not fractions of embedding magnitude, semantic influence or error probability. In a fixed-vector mean-pooling perturbation model, if only $`s`$ token vectors change by at most $`K`$ in norm, then
-$$
+
+```math
 \left\|\frac1L\sum_{j=1}^L x_j-\frac1L\sum_{j=1}^L x'_j\right\|\le\frac{sK}{L}.
-$$
+```
+
 For vectors bounded by norm $`M`$, one may take $`K=2M`$. But changing eight input tokens in a contextual encoder can alter **all** token vectors, and normalization can amplify a perturbation when the mean norm is small. No universal $`6.7\%`$ probe-influence bound follows.
 For a separate sampling model, let unnormalized probe embeddings be $`h_i=\mu+\varepsilon_i`$, with zero-mean independent fluctuations and common covariance $`\Sigma`$. Then
-$$
+
+```math
 \bar h=\frac1m\sum_{i=1}^m h_i,\qquad
-\mathbb E\|\bar h-\mu\|^2=\frac{\operatorname{tr}\Sigma}{m}.
-$$
+\mathbb E\|\bar h-\mu\|^2=\frac{\mathop{\mathrm{tr}}\nolimits\Sigma}{m}.
+```
+
 RMS deviation, not a deterministic fabrication share, scales as $`1/\sqrt m`$. With common pairwise covariance $`\rho\Sigma`$, the variance factor becomes $`[1+(m-1)\rho]/m`$; at $`m=8`$, $`\rho=0.5`$ leaves RMS factor $`0.75`$, not $`1/\sqrt8`$. Shared bias in $`\mu`$ never vanishes by this argument. The same statement applies to independently sampled normalized embeddings around their mean, but renormalizing their average adds a nonlinear step.
 Only if one **additionally stipulates** single-sample RMS noise scale $`8/120`$ and signal scale $`30/120`$ do eight independent samples give noise scale $`0.023570226`$, or $`2.357023\%`$ in those chosen units, and signal-to-noise ratio $`3.75\sqrt8\approx10.606602`$ rather than $`3.75`$. These numbers are not measured hallucination rates or certified embedding bounds.
 A shared false detail or wrong topic is bias, not zero-mean noise, and averaging can preserve or reinforce it. The chapter reports sensitivity to instruction-model and language quality. Sampling independence for a fixed query is a generation-policy assumption; it does not make systematic errors zero-mean or guarantee independent correctness events.
@@ -448,31 +518,39 @@ A shared false detail or wrong topic is bias, not zero-mean noise, and averaging
 #### Worked clinical-search example
 The planning corpus has $`2\times10^6`$ clinical documents at $`250`$ tokens each, or $`5\times10^8`$ tokens. Contriever width is $`768`$, and queries average eleven tokens. The service target is p95 below $`800\,\mathrm{ms}`$, which requires an empirical latency distribution; the following resource calculations alone cannot establish it.
 Stipulate a $`7\times10^9`$-parameter fp16 generator with $`14\,\mathrm{GB}`$ weights, effective bandwidth $`2.0\,\mathrm{TB/s}`$ and generation compute $`1.56\times10^{14}\,\mathrm{FLOP/s}`$. A full batch-one weight read per step is the assumed regime, not a universal execution fact for a named accelerator.
-$$
+
+```math
 \frac{14\,\mathrm{GB}}{2.0\,\mathrm{TB/s}} = 7.0\,\mathrm{ms}\text{ per decoded token}
-$$
+```
+
 The clinical example stipulates a duration question, an answer-bearing protocol and a lexical FAQ distractor. To compare term frequencies, assume a common normalized indexed term or phrase represents the wisdom-tooth variants; raw tooth/teeth strings need not be identical lexical features. The example does not establish medical advice or a real clinical ranking from title wording alone.
 At average length and equal positive IDF for that one indexed feature, its BM25 factors are $`F(15,1)=33/16.2\approx2.037037`$ for the FAQ and $`F(1,1)=1`$ for the protocol. This one-feature ratio favors the FAQ, but full query terms, phrase processing, lengths and field boosts could change the actual rank.
 Query encoding uses the linear proxy $`2(110\times10^6)(11)=2.42\times10^9`$ FLOPs. At $`5.0\times10^{13}\,\mathrm{FLOP/s}`$ this is $`0.0484\,\mathrm{ms}`$ of compute work, not measured encoder latency. Stipulate $`5\,\mathrm{ms}`$ HNSW search and a common $`7\,\mathrm{ms}`$ RPC allowance: the partial retrieval-only sum is $`12.0484\,\mathrm{ms}`$. The rates omit attention, model reads, kernels and other costs.
 If the earlier geometry toy is also imposed on these candidates, the distractor's $`0.040313442`$ bonus beats the $`0.035492958`$ topical margin. This is a constructed example, not a measured claim that raw Contriever ranks every such FAQ first.
 For $`m = 1`$, prefill of the 60-token instruction and query costs:
-$$
+
+```math
 t_{\mathrm{prefill},1}\approx\frac{2(7\times10^9)(60)}{1.56\times10^{14}}\,\mathrm s\approx5.384615\,\mathrm{ms}.
-$$
+```
+
 A one-hundred-twenty-token decode has a $`840\,\mathrm{ms}`$ weight-stream component. The encoder work proxy for that probe is $`0.528\,\mathrm{ms}`$. Including the stipulated search but not RPC gives
-$$
+
+```math
 t_1^{\mathrm{no\ RPC}}\approx5.384615+840+0.528+5=850.912615\,\mathrm{ms}.
-$$
+```
+
 Adding the **same** $`7\,\mathrm{ms}`$ RPC budget used for the raw path gives $`857.912615\,\mathrm{ms}`$, about $`71.205522`$ times the raw partial sum. Both this estimate and decode alone exceed the $`800\,\mathrm{ms}`$ allowance under the declared streaming regime; neither is a measured p95. Extra generation-service RPCs, queues or kernels are not priced.
 For eight equal-length samples in one batch, shared weight reads may amortize. The linear compute per decode step is $`8(2P)/F\approx0.717949\,\mathrm{ms}`$, below the stipulated $`7\,\mathrm{ms}`$ weight component; this partial roofline supports, but does not guarantee, a memory-bound batch. KV traffic, attention and actual achieved rates still matter. Eight probe encodes use $`4.224\,\mathrm{ms}`$ of the work proxy.
 If the common sixty-token prompt is computed once and reused, the no-RPC sum is $`854.608615\,\mathrm{ms}`$, or $`861.608615\,\mathrm{ms}`$ with the common RPC budget. If it is prefilled independently for each sample, prefill work is $`43.076923\,\mathrm{ms}`$ and the corresponding sums are $`892.300923`$ and $`899.300923\,\mathrm{ms}`$. Simply retaining the single-sample prefill without specifying reuse understates batch work.
 The source's nominal cache rate $`0.5\,\mathrm{MB}`$ per sequence-token is an extra architecture assumption. With replicated $`180`$-token contexts, eight sequences budget $`720\,\mathrm{MB}=0.72\,\mathrm{GB}`$ total, versus $`90\,\mathrm{MB}`$ for one—an increment of $`0.63\,\mathrm{GB}`$, not $`0.72\,\mathrm{GB}`$. Actual KV payload depends on layers, KV heads, head width, precision and sharing. Weights plus cache fitting an eighty-GB device does not prove admission once activations, workspaces and other traffic are counted.
 The ideal shared-prefix partial difference is $`3.696\,\mathrm{ms}`$, but without prefix reuse it is $`41.388308\,\mathrm{ms}`$ before other costs. Eight samples also produce $`960`$ generated tokens rather than $`120`$ and consume sample slots that could serve other queries. No universal “four extra milliseconds buys a certified fabrication reduction” or free-batch recommendation follows.
 For one explicitly reserved GPU allocated exclusively throughout the single-query no-RPC partial job, with price $`\$2`$ per hour, the allocation proxy is
-$$
+
+```math
 C_1\approx\frac{0.850912615\,\mathrm s}{3{,}600\,\mathrm{s/h}}\frac{\$2}{\mathrm h}
 \approx\$4.727292\times10^{-4}.
-$$
+```
+
 At $`10^6`$ such queries/day this is approximately $`\$472.73`$ per day or $`\$14{,}181.88`$ per thirty-day month. It is not a complete invoice: separate CPU search/RPC resources, embedding/index storage, idle reserve, batching policy and final answer generation differ. The allocation is about $`9.848526`$ GPU-days of work per day, so one device cannot serve that workload; even ideal exclusive serial scheduling needs at least ten available devices in this exclusive serial-job model, before headroom. Comparing these generation-dominated costs with a cheap search component is not a measured all-in two-orders-of-magnitude price ratio.
 Gao et al. (2023) report HyDE beating BM25 and bare Contriever by a wide margin and matching or exceeding fine-tuned retrievers on several tasks. Their reported result concerns retrieval quality rather than p95 latency. The source uses this to explain why HyDE looks free on a leaderboard but expensive in a service.
 #### Practical decisions and limits
@@ -484,9 +562,11 @@ Cache normalized, resolved queries only when the key preserves intent and the ca
 Do not ship HyDE in an unmeasured language. Fall back to the chapter’s hybrid dense and lexical approach when the generator is weak.
 A twenty-five-token decode has a $`175\,\mathrm{ms}`$ weight-stream component, leaving $`75\,\mathrm{ms}`$ of a $`250\,\mathrm{ms}`$ budget for all other work. It does not itself establish p95 feasibility. An eight-position span is $`32\%`$ of those positions, not a bound on error influence. Short declarative probes need not remain interrogative; test their retrieval behavior rather than deducing register from length alone.
 Caching, distillation or relevance-trained retrieval can avoid repeated generation. The source's roughly sixty-percent cache-hit decision point is a product heuristic, **not a p95 guarantee**. For cache-hit rate $`h`$ and conditional latency CDFs,
-$$
+
+```math
 F_T(b)=hF_{\mathrm{hit}}(b)+(1-h)F_{\mathrm{miss}}(b).
-$$
+```
+
 If all hits meet $`b=250\,\mathrm{ms}`$ and all HyDE misses exceed it, meeting $`F_T(b)\ge0.95`$ requires $`h\ge0.95`$. With $`h=0.6`$, the overall ninety-fifth percentile lies at the miss distribution's $`87.5`$th percentile under this separated-latency case. If some misses are faster or some hits slower, evaluate the mixture with actual distributions. Distillation also needs quality validation; it does not automatically preserve the teacher's retrieval gains.
 ## Diagrams
 ### Figure 24.1
@@ -520,7 +600,7 @@ flowchart TB
   U --> K["fixed top-k: compare relevant entrants with relevant evictees"]
   K --> X["reranking and finite context need their own evaluation"]
 ```
-Figure $`24.2`$: For $`n_D>0`$ and $`\Delta>0`$, append-only pool precision holds iff $`\rho\ge P`$. At a fixed filled cutoff, the exact test is $`g\ge\ell`$, not an incoming-rate threshold copied from the old list average. In the constant-four example, list precisions are $`4.64\%`$ at fifty and $`24.8\%`$ at five. They are not automatically the relevance rates of documents evicted by expansion. Filters and dense displacement do not satisfy the sparse superset proof.
+Figure $`24.2`$: For $`n_D\gt 0`$ and $`\Delta\gt 0`$, append-only pool precision holds iff $`\rho\ge P`$. At a fixed filled cutoff, the exact test is $`g\ge\ell`$, not an incoming-rate threshold copied from the old list average. In the constant-four example, list precisions are $`4.64\%`$ at fifty and $`24.8\%`$ at five. They are not automatically the relevance rates of documents evicted by expansion. Filters and dense displacement do not satisfy the sparse superset proof.
 ### Figure 24.3
 ```mermaid
 flowchart LR
@@ -630,7 +710,7 @@ Avoid or gate HyDE when measured incremental retrieval value does not justify it
 | PRF defaults | Top-ten feedback; source suggests depth three to five below roughly $`0.5`$ precision | Heuristic requiring measured feedback quality, not a universal drift threshold |
 | PRF drift example | Weight sums $`4.635`$, $`4.545`$; firmware shares $`2.588997\%`$, $`5.280528\%`$ | Second mixture has firmware $`0.240`$ vs session $`0.225`$; coordinate ordering, not guaranteed ranking damage |
 | RL training | $`100{,}000(8)(3)=2.4\times10^6`$ calls | $`13.333333`$ hours of serial index work; twenty-five ideal minutes at thirty-two-way capacity, excluding policy work |
-| Rewriter opportunity | Source scenario: hand-edited $`\operatorname{Recall}@20=61\%`$ | Reported motivation, not a causal estimate that all misses come from wording |
+| Rewriter opportunity | Source scenario: hand-edited $`\mathop{\mathrm{Recall}}\nolimits@20=61\%`$ | Reported motivation, not a causal estimate that all misses come from wording |
 | Rewrite serving | PRF index work $`40\,\mathrm{ms}`$; learned partial path $`64+20=84\,\mathrm{ms}`$ | Feedback extraction and learned-rewrite prefill/other serving work are omitted |
 | Context toy model | Marginals $`(0.2,0.5,0.3)`$; explicit PMI-row cosines $`1`$ and $`-0.809166`$ | A constructed coordinate representation, not uniquely identified learned word2vec vectors |
 | Embedding incident | Source incident: $`\$2{,}399`$ item in slot two; three neighbors above cosine $`0.8`$ | Reported example; similarity is not calibrated relevance probability |

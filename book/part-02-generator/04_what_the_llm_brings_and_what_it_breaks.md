@@ -108,7 +108,7 @@ So the practical lesson is to assign each job to the right component: train for 
 | Approximate nearest-neighbor (ANN) lookup | A fast index search for candidate passages | It is the inference-time alternative to buying more parameter decades |
 | Cross-encoder reranker | A model that scores query-passage pairs after broad retrieval | It can retrieve many candidates while feeding only a few to the generator |
 | Black-box generator | A model whose internal cause is not visible from its output | Verification can observe samples but cannot directly localize faults |
-| Sampling temperature $`T`$ | A control over generation randomness | At $`T>0`$, one test run is only one draw |
+| Sampling temperature $`T`$ | A control over generation randomness | At $`T\gt 0`$, one test run is only one draw |
 | Bernoulli draw | One yes-or-no observation of whether a claim appeared | Repeated draws are needed to estimate an emission probability |
 | Normal approximation | The sample-size estimate applied to repeated Bernoulli draws | It produces the 385-sample worst-case requirement |
 | Emission rate | The probability that a generator produces a claim | It is more informative than one pass or fail |
@@ -137,9 +137,11 @@ Use decimal bytes unless a binary unit is explicit. Forward and training compute
 ### 4.1 Pre-training, SFT, post-training: which stage owns which failure
 #### Stage ownership
 The opening assistant was shipped last quarter with a 27-billion-parameter open-weight model fine-tuned on $`40{,}000`$ internal tickets. It names a vice president who left in March, returns prose when the frontend expects JSON, and invents a refund window for a product line launched six weeks earlier. The stale name, wrong output form, and absent new fact belong to different owners. Pre-training maximizes the next-token objective over collected text:
-$$
-\sum_t \log P_\theta\!\left(x_t \mid x_{<t}\right)
-$$
+
+```math
+\sum_t \log P_\theta\!\left(x_t \mid x_{\lt t}\right)
+```
+
 Here $`\theta`$ is the full parameter vector. Next-token targets are derived from the text rather than human-written task labels; that does not make curation irrelevant. Pre-training supplies broad capability and uneven factual memory. SFT maximizes $`\log P_\theta(Y\mid X)`$ over curated input-output examples, shaping instruction following, output format and context use. Preference and verifiable-reward methods further change behavior. The source's view that later stages mainly elicit pre-existing competence is a working hypothesis, not a theorem that SFT or post-training cannot add facts or skills. Test the base checkpoint to diagnose the starting limitation, then measure what the chosen adaptation actually changes. No stage label by itself proves a hard downstream capability ceiling.
 #### What training cannot own
 The stale vice president is not a capability, shape, or preference failure. The model learned the fact correctly; then the world changed after the cutoff. Continual pre-training can refresh it, but models with only a few hundred million parameters can suffer substantial catastrophic forgetting. Each refresh then needs replay data that may no longer exist. Model editing changes named associations, but it inherits the enumeration problem of unlearning. You must know every future fact or sequence that will need a change. It also cannot guarantee complete removal and can damage neighboring associations. Scale cannot close the tail economically. Kandpal et al. (2023) extrapolated competitive accuracy on sparsely supported facts to about $`10^{18}`$ parameters. At two bytes per weight, storage is $`2\times10^{18}`$ bytes. Dividing by $`8\times10^{10}`$ bytes per $`80\,\mathrm{GB}`$ accelerator gives $`2.5\times10^{7}`$ accelerators before processing one token. The datastore owns facts that outlive gradient descent because it supports freshness, provenance, and deletion. Deleting a datastore row removes future retrieved exposure, but it cannot erase text the base model already memorized during pre-training. Domain SFT loses as a knowledge patch. It raises $`P_\theta(Y \mid X)`$ for written examples but does not erase far more frequent contradictory pre-training evidence. It creates internal conflict and returns the bill when the fact changes again.
@@ -156,10 +158,12 @@ For behavior repair, supervised examples can target format and context-use failu
 ### 4.2 Memorization: three laws and their consequences
 #### Definition and laws
 A probe samples $`3{,}000`$ training documents, supplies $`50`$ tokens, greedily decodes $`50`$ more and finds two exact matches. The observed sample hit rate is $`2/3000\approx0.0667\%`$. It describes that sampling scheme, model, prefix length and decoding rule, with sampling uncertainty; it is not a certified upper bound on extractability under other prompts. Define a sequence as extractable when some specified allowed prefix and decoding procedure reproduce the target continuation. The reported family-level trends can be written as a local empirical regression:
-$$
-\Pr\!\left[k\text{-extractable}\right] \approx \alpha\log N + \beta\log d + \gamma\log k + \delta,\qquad \alpha,\beta,\gamma > 0
-$$
-The positive fitted coefficients describe trends within the tested model families, duplication ranges and matching-prefix lengths, not universal laws for every aligned model. The linear-in-log form requires $`N,d,k>0`$ and can predict values outside $`[0,1]`$ if extrapolated, so it is not a globally valid probability model. Repetition can strengthen memorization, and a longer matching prefix can better identify a document. Shared copying mechanisms also support in-context behavior, but that observation is not an impossibility proof that every useful intervention must destroy in-context learning.
+
+```math
+\Pr\!\left[k\text{-extractable}\right] \approx \alpha\log N + \beta\log d + \gamma\log k + \delta,\qquad \alpha,\beta,\gamma \gt  0
+```
+
+The positive fitted coefficients describe trends within the tested model families, duplication ranges and matching-prefix lengths, not universal laws for every aligned model. The linear-in-log form requires $`N,d,k\gt 0`$ and can predict values outside $`[0,1]`$ if extrapolated, so it is not a globally valid probability model. Repetition can strengthen memorization, and a longer matching prefix can better identify a document. Shared copying mechanisms also support in-context behavior, but that observation is not an impossibility proof that every useful intervention must destroy in-context learning.
 #### Why the short audit fails
 The $`50`$-token result covers only a short matching-prefix regime. A long production prompt is not automatically a long prefix of one training document: five unrelated $`400`$-token chunks do not form a contiguous $`2{,}000`$-token prefix of a single source. Audit both the actual prompt structure and targeted contiguous-prefix extraction. Alignment refusal behavior is not a deletion guarantee. The cited divergence attack recovered more than $`10{,}000`$ unique training examples for roughly $`\$200`$ in its tested setting; those observations do not supply the extraction rate for this assistant.
 #### Audit cost
@@ -174,22 +178,28 @@ Take a $`7`$B generator and $`100{,}000`$ sampled sequences. A $`500`$-token pre
 ### 4.3 Long-tail knowledge and co-occurrence bias
 #### Support and wrong-answer selection
 A 70-billion-parameter model correctly names Microsoft’s founders, their birth years, and the company’s founding date while missing an internal product rule documented across 40 pages. For stock keeping unit (SKU) 4471, it says 30 days instead of the true 14 days with equal confidence. This gap can produce 90 percent accuracy on head-heavy public benchmarks and 40 percent on tail-heavy product traffic. Represent a fact as subject $`s`$, relation $`r`$, and object $`o`$. Let $`d(f)`$ count pre-training documents containing both $`s`$ and $`o`$. Question-answering accuracy follows:
-$$
+
+```math
 A(d) \approx \beta\log_{10} d + c
-$$
-The fitted log form applies only for $`d>0`$ in the observed regime; $`\log 0`$ is undefined. Absence of direct support does not mathematically rule out correct compositional inference or later learning. A local two-variable fit $`A(N,d)\approx\alpha\log_{10}N+\beta\log_{10}d+c`$ gives the following constant-accuracy relation, assuming positive fitted $`\alpha,\beta`$:
-$$
+```
+
+The fitted log form applies only for $`d\gt 0`$ in the observed regime; $`\log 0`$ is undefined. Absence of direct support does not mathematically rule out correct compositional inference or later learning. A local two-variable fit $`A(N,d)\approx\alpha\log_{10}N+\beta\log_{10}d+c`$ gives the following constant-accuracy relation, assuming positive fitted $`\alpha,\beta`$:
+
+```math
 \alpha\,\Delta\log_{10}N+\beta\,\Delta\log_{10}d=0,
 \qquad
 \Delta\log_{10}N=-\frac{\beta}{\alpha}\,\Delta\log_{10}d.
-$$
+```
+
 If support falls by a positive number of decades $`u=-\Delta\log_{10}d`$, the fitted compensation is $`\Delta\log_{10}N=(\beta/\alpha)u`$. The source's long-tail extrapolation compares models near $`2\times10^{11}`$ parameters with a projected $`10^{18}`$ and support from $`10^{0.5}`$ to $`10^4`$ documents. That spans far beyond measured model sizes; the implied slope ratio is a schematic extrapolation, not a validated engineering exchange rate:
-$$
+
+```math
 \frac{\beta}{\alpha}
 \approx\frac{\log_{10}(10^{18}/(2\times10^{11}))}{4-0.5}
 =\frac{6.69897}{3.5}\approx1.91399.
-$$
-At fixed training-token count and precision, a tenfold parameter increase multiplies the $`6ND`$ training proxy and parameter memory by ten; serving latency still depends on hardware and batching. A larger datastore can expand factual coverage, but incurs index, search and retrieved-token costs—it is not literally free beyond one lookup. Fivefold support is $`\log_{10}5\approx0.699`$ decades, and repeated crawls need not provide independent new evidence. A co-occurrence sketch $`P_\theta(o\mid\operatorname{context}(s))\propto\operatorname{count}(s,o)`$ illustrates a possible bias, not the actual decoder's full conditional distribution: relation words and wider context matter. A frequent companion can outvote a rare true relation object. The cited study reports roughly $`30\%`$ of its measured failures selecting a high-co-occurrence word; that percentage is not a universal error decomposition.
+```
+
+At fixed training-token count and precision, a tenfold parameter increase multiplies the $`6ND`$ training proxy and parameter memory by ten; serving latency still depends on hardware and batching. A larger datastore can expand factual coverage, but incurs index, search and retrieved-token costs—it is not literally free beyond one lookup. Fivefold support is $`\log_{10}5\approx0.699`$ decades, and repeated crawls need not provide independent new evidence. A co-occurrence sketch $`P_\theta(o\mid\mathop{\mathrm{context}}\nolimits(s))\propto\mathop{\mathrm{count}}\nolimits(s,o)`$ illustrates a possible bias, not the actual decoder's full conditional distribution: relation words and wider context matter. A frequent companion can outvote a rare true relation object. The cited study reports roughly $`30\%`$ of its measured failures selecting a high-co-occurrence word; that percentage is not a universal error decomposition.
 #### Retrieval crossover
 A retrieved passage can override a memorized association, but no universal ratio says that one prompt occurrence defeats $`10^5`$ training occurrences. Wrong context can also disturb a correct answer. The cited PopQA result reports retrieval harm in a particular evaluation; a pointwise crossover depends on conditional rescue and harm rates as well as closed-book competence. Traffic weights set the value of a routing policy and capacity trade-off, not the pointwise crossover by themselves. Repeated domain training can affect freshness and retained behavior, but catastrophic forgetting is a risk to measure, not an inevitable result of every update. Route on fact/relation support, not entity popularity alone.
 #### Routing example
@@ -214,23 +224,29 @@ Selective routing adds approximately $`10.106`$ million retrieved input tokens p
 ### 4.4 Hallucination taxonomy: factuality versus faithfulness, intrinsic versus extrinsic
 #### Two oracles and three source relations
 One reviewer compares a claim with supplied evidence and measures faithfulness; another checks an authoritative current source and measures factuality. These are different oracles. Classify each atomic claim as entailed, contradicted or unaddressed by the supplied context. Let $`f=P(E)`$ be the entailed fraction, $`q=P(T\mid E)`$ the probability that an entailed generated claim is true, and $`p_U=P(T\mid\neg E)`$ the probability that an unentailed generated claim is true. Staleness alone does not determine $`q`$: old claims can remain true and fresh sources can be wrong. Closed-book task accuracy is not automatically $`p_U`$. With these claim-level conditional definitions, the law of total probability gives:
-$$
+
+```math
 \Pr(T)=f q+(1-f)p_U.
-$$
+```
+
 Grounding changes factuality at rate:
-$$
+
+```math
 \left.\frac{\partial\Pr(T)}{\partial f}\right|_{q,p_U\ \mathrm{fixed}}
 =q-p_U.
-$$
-If $`q`$ and $`p_U`$ remain fixed, increasing the entailed share improves factuality when $`q>p_U`$. Real grounding interventions can change claim composition and both conditional rates, so this is not an unconditional causal guarantee. The metric gap is:
-$$
+```
+
+If $`q`$ and $`p_U`$ remain fixed, increasing the entailed share improves factuality when $`q\gt p_U`$. Real grounding interventions can change claim composition and both conditional rates, so this is not an unconditional causal guarantee. The metric gap is:
+
+```math
 \Pr(T)-f=(1-f)p_U-f(1-q).
-$$
+```
+
 The first term is true but unsupported content; the second is false but entailed content. As $`f\to1`$ with fixed $`q,p_U`$, the signed gap tends to $`-(1-q)`$, not $`+(1-q)`$. Perfect faithfulness can still reproduce a source error. Intrinsic hallucinations contradict supplied evidence; extrinsic ones are unaddressed by it. Their causes need diagnosis rather than automatic assignment to retrieval or generation. Instruction and arithmetic errors also need separate checks.
 #### Worked example
 Audit $`200`$ questions. The first setup emits $`1{,}000`$ claims: $`700`$ entailed, $`80`$ contradicted and $`220`$ unaddressed. Suppose direct truth checking establishes $`q=0.96`$ for the entailed cohort and $`p_U=0.30`$ for the unentailed cohort. Then $`672`$ entailed and $`90`$ unentailed claims are true, totaling $`762`$ or $`76.2\%`$. Faithfulness is $`70\%`$, understating truth by $`6.2`$ percentage points. These conditional rates are explicit scenario measurements, not quantities inferred from corpus staleness or closed-book accuracy.
 The grounded-or-abstain setup declines $`50`$ questions and emits $`750`$ claims: $`700`$ entailed, $`10`$ contradicted and $`40`$ unaddressed. Assuming the same conditional truth rates, factuality is $`(700/750)(0.96)+(50/750)(0.30)=0.916`$, giving $`687`$ true claims. Faithfulness is $`700/750\approx93.333\%`$, exceeding factuality by approximately $`1.733`$ percentage points. Across all $`200`$ questions, true claims fall from $`3.81`$ to $`3.435`$ per question and false claims from $`1.19`$ to $`0.315`$. Answer coverage falls from $`100\%`$ to $`75\%`$; this differs from the source's separate $`20`$-point compliance illustration.
-This removes $`175`$ false claims while losing $`75`$ true claims. If costs per false and missing-true claim are $`C_{\mathrm{wrong}}`$ and $`C_{\mathrm{missing}}`$, the change reduces linear expected loss when $`175C_{\mathrm{wrong}}>75C_{\mathrm{missing}}`$, or $`C_{\mathrm{wrong}}/C_{\mathrm{missing}}>3/7\approx0.428571`$. The reciprocal $`175/75=7/3`$ is false claims removed per true claim lost, not the required wrong-to-missing cost ratio.
+This removes $`175`$ false claims while losing $`75`$ true claims. If costs per false and missing-true claim are $`C_{\mathrm{wrong}}`$ and $`C_{\mathrm{missing}}`$, the change reduces linear expected loss when $`175C_{\mathrm{wrong}}\gt 75C_{\mathrm{missing}}`$, or $`C_{\mathrm{wrong}}/C_{\mathrm{missing}}\gt 3/7\approx0.428571`$. The reciprocal $`175/75=7/3`$ is false claims removed per true claim lost, not the required wrong-to-missing cost ratio.
 At $`200`$ judge calls and an assumed $`440{,}000`$ input tokens, the input-only check costs $`\$0.132`$ at $`\$0.30`$ per million. The outside summarization study's hallucination and truth rates describe its own cohorts; they do not establish this assistant's $`p_U`$ or closed-book accuracy.
 #### Practical decisions
 - Report faithfulness, sampled factuality, and the intrinsic-extrinsic split. If no world oracle exists, make faithfulness the contract and corpus freshness the service obligation.
@@ -241,15 +257,19 @@ At $`200`$ judge calls and an assumed $`440{,}000`$ input tokens, the input-only
 ### 4.5 The five causes of factual error
 #### Cause model
 The paired evaluation has closed-book error $`\varepsilon_0=0.38`$ and RAG error $`0.235`$. Diagnose five operational causes: outdated data, ambiguity, retention failure, over-generalization and integration. For outcome accounting, let $`S=P(\text{RAG wrong}\mid\text{closed-book wrong})`$ and $`\varphi=P(\text{RAG wrong}\mid\text{closed-book correct})`$. These paired conditional probabilities lie in $`[0,1]`$. The valid error identity is:
-$$
+
+```math
 \varepsilon_R=\varepsilon_0 S+(1-\varepsilon_0)\varphi,
 \qquad 0\le S,\varphi\le1.
-$$
-Cause-specific diagnostic counts can change labels after retrieval. If $`n_i`$ initially wrong claims are assigned cause $`i`$ and $`b_i`$ remaining-wrong claims are reclassified after retrieval, the descriptive ratio $`m_i=b_i/n_i`$ may exceed one because claims can move between labels. Then $`S=\sum_i(n_i/\sum_j n_j)m_i`$, but $`m_i`$ is not the survival probability of the original cause-$`i`$ cohort. A joint cause-transition table is needed to infer that. Retrieval recall $`r`$ alone does not imply $`S=1-r`$ or $`m_1=m_3=1-r`$: retrieving evidence and successfully using it differ. With $`S,\varphi`$ held fixed and $`1-S+\varphi>0`$, retrieval helps above the break-even error:
-$$
+```
+
+Cause-specific diagnostic counts can change labels after retrieval. If $`n_i`$ initially wrong claims are assigned cause $`i`$ and $`b_i`$ remaining-wrong claims are reclassified after retrieval, the descriptive ratio $`m_i=b_i/n_i`$ may exceed one because claims can move between labels. Then $`S=\sum_i(n_i/\sum_j n_j)m_i`$, but $`m_i`$ is not the survival probability of the original cause-$`i`$ cohort. A joint cause-transition table is needed to infer that. Retrieval recall $`r`$ alone does not imply $`S=1-r`$ or $`m_1=m_3=1-r`$: retrieving evidence and successfully using it differ. With $`S,\varphi`$ held fixed and $`1-S+\varphi\gt 0`$, retrieval helps above the break-even error:
+
+```math
 \varepsilon_0^{*} = \frac{\varphi}{1-S+\varphi}
-$$
-The threshold follows from $`\varepsilon_0(1-S)>(1-\varepsilon_0)\varphi`$. It is a comparative-static calculation with fixed paired rates; a new retriever or prompt can change both. Possible pairwise source comparisons are $`\binom{k+1}{2}=k(k+1)/2`$, or $`15`$ at $`k=5`$ and $`210`$ at $`k=20`$, when weights are treated as one additional source. These are counts of potential comparisons, not conflict probabilities. Operational cause labels can overlap, and an ordered diagnostic cascade makes the reported labels mutually exclusive by policy rather than proving unique causal ownership.
+```
+
+The threshold follows from $`\varepsilon_0(1-S)\gt (1-\varepsilon_0)\varphi`$. It is a comparative-static calculation with fixed paired rates; a new retriever or prompt can change both. Possible pairwise source comparisons are $`\binom{k+1}{2}=k(k+1)/2`$, or $`15`$ at $`k=5`$ and $`210`$ at $`k=20`$, when weights are treated as one additional source. These are counts of potential comparisons, not conflict probabilities. Operational cause labels can overlap, and an ordered diagnostic cascade makes the reported labels mutually exclusive by policy rather than proving unique causal ownership.
 #### Audit and alternatives
 Of $`1{,}000`$ questions, $`380`$ are initially wrong. Their diagnostic counts are $`140,60,120,40,20`$ across the five causes. Suppose paired testing finds $`173`$ still wrong after RAG, reclassified as $`21,78,18,16,40`$. The ambiguity and integration counts can exceed their original counts only because these are post-retrieval labels, not survivors confined to the same original buckets. The ratios $`0.15,1.30,0.15,0.40,2.00`$ are descriptive count ratios; they cannot be used as independent survival probabilities. The aggregate $`S=173/380\approx0.455263`$ is valid. A separate $`\varphi=0.10`$ produces $`62`$ newly wrong answers from the $`620`$ initially correct, so total error is $`(173+62)/1000=23.5\%`$ and net improvement is $`14.5`$ percentage points.
 For a counterfactual budgeting illustration only, reducing the first and third post-RAG counts from $`21,18`$ to $`7,6`$ while keeping everything else fixed gives $`147+62=209`$ wrong answers, a $`2.6`$-point improvement. Raising recall from $`0.85`$ to $`0.95`$ does not by itself guarantee these count changes. A hypothetical clarification removing $`26`$ of the $`78`$ ambiguity-labeled errors gives the same arithmetic improvement; the new descriptive ratio is $`52/60\approx0.866667`$, not an exact $`0.87`$ product. A user clarification and an automated rewrite are different interventions with different costs.
@@ -263,17 +283,23 @@ Increasing generator presentation from five to twenty $`400`$-token chunks adds 
 ### 4.6 Why verification is hard: black box, moving truth, biased verifiers
 #### Three structural difficulties
 The radiology example illustrates a judge sharing the generator's mistaken impression; an expert with the right evidence can disagree. A faithfulness percentage is meaningful only with its reference, scoring unit and judge error understood. For a fixed prompt, decoder and claim-emission event, repeated trials can be modeled as Bernoulli draws only if the event is binary and the sampling assumptions hold. Positive temperature alone does not guarantee independent or varying outcomes. For nominal $`95\%`$ planning precision within an absolute $`\pm0.05`$ on that event probability, use:
-$$
+
+```math
 n = \frac{z^{2}p(1-p)}{\Delta^{2}}
-$$
+```
+
 For independent Bernoulli repetitions of a specified event, the normal-approximation planning formula at $`p=0.5`$, $`z=1.96`$ and absolute half-width $`\Delta=0.05`$ gives $`n_{\mathrm{plan}}=384.16`$, rounded upward to $`385`$. This is not an exact finite-sample coverage guarantee, and correlated samples can require a different design. Model resampling measures variation under the chosen prompt and decoder; it does not directly establish truth or locate the faulty stage. Separately, suppose changes follow a Poisson process with mean lifetime $`\tau`$. The probability of no change by age $`t`$ is $`e^{-t/\tau}`$, giving a maximum-age rule for tolerated probability $`\delta`$ of at least one change:
-$$
+
+```math
 t^{*} = \tau\ln\!\left(\frac{1}{1-\delta}\right)
-$$
+```
+
 With $`\tau=2`$ years and $`\delta=1\%`$, $`t^\star=-2\ln(0.99)\approx0.0201007`$ years, or approximately $`7.34`$ days at $`365.25`$ days per year. This bounds the probability that a fact has changed since its last check under the model, not the probability that every old answer is wrong. Production truth can change at different rates or change back, so validity dates and authoritative sources still matter.
-$$
+
+```math
 \varepsilon_{\mathrm{post}} = \varepsilon\left[s+(1-s)\mu_0\right] \ge s\varepsilon
-$$
+```
+
 In this verifier scenario, $`s`$ is the fraction of initially false claims in a diagnosed blind-spot cohort that the verifier always misses; $`\mu_0`$ is its conditional miss probability on the remainder. The formula assumes detected false claims are blocked and verification introduces no new false claims. Its denominator is all original claims, not only accepted claims. A better judge may change both $`s`$ and $`\mu_0`$ in practice; holding $`s`$ fixed illustrates a structural floor, not a universal limit on model upgrades. False-positive rejection and emitted-claim coverage need separate measurement. Unsettleable claims should be excluded from both scored numerator and denominator, with their share reported, rather than silently marked true or false.
 #### Verifier audit and costs
 Audit $`1{,}000`$ claims, $`200`$ of which are false. Suppose an independent diagnostic—not the judge's pass count alone—identifies $`120`$ structural blind spots, giving $`s=0.60`$. Assume miss probability $`\mu_0=0.15`$ on the other $`80`$ false claims. Expected false passes are $`120+80(0.15)=132`$, or $`13.2\%`$ of all original claims. A single observed pass fraction cannot separately identify $`s`$ and $`\mu_0`$: if only $`120`$ of $`200`$ passed and $`\mu_0=0.15`$, the implied scenario value would instead be $`(0.60-0.15)/(1-0.15)\approx0.5294`$.
@@ -490,7 +516,7 @@ Measure the verifier's actual blind spots and conditional misses before upgradin
 | Grounded scores | $`700/750\approx93.333\%`$ faithful; $`687/750=91.6\%`$ factual | Approximately $`1.733`$ points of faithfulness overstatement |
 | Compliance variant | 20-point answer-coverage drop and 30-day refresh | Perfect support does not repair stale truth |
 | Claims per question | $`3.81`$ true and $`1.19`$ false versus $`3.435`$ true and $`0.315`$ false | All 200 questions remain in the per-question denominator |
-| Exchange rate | $`175/75=7/3`$ false claims removed per true claim lost | Linear loss falls when $`C_{\mathrm{wrong}}/C_{\mathrm{missing}}>3/7`$, not $`7/3`$ |
+| Exchange rate | $`175/75=7/3`$ false claims removed per true claim lost | Linear loss falls when $`C_{\mathrm{wrong}}/C_{\mathrm{missing}}\gt 3/7`$, not $`7/3`$ |
 | Faithfulness audit cost | Five claims per call, 200 calls, $`440{,}000`$ tokens, about $`\$0.13`$ | Online-available metric cost |
 | Summarization audit | More than 70 percent contained hallucinations and about 90 percent were false | Outside comparison |
 | Unsupported truth comparison | Not transferable from the outside summarization cohort | Hallucination truth rates do not establish this assistant's $`p_U`$ or task accuracy |

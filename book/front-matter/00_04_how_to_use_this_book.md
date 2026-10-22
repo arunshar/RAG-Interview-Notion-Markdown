@@ -68,7 +68,7 @@ Six cross-cutting threads act like transfer stations. The recurring section form
 | Hypothetical document embeddings (HyDE) | A Chapter 24 query-reformulation topic | Study it after reranking on Path 1. |
 | Mean reciprocal rank (MRR) | A Chapter 32 metric and Appendix A formula | Derive it rather than merely quoting it. |
 | Normalized discounted cumulative gain (nDCG) | A Chapter 32 metric and Appendix A formula | Derive it rather than merely quoting it. |
-| $`\operatorname{Recall}@k`$ | A retrieval metric | State judged/ANN reference, eligibility, aggregation and zero-relevant policy |
+| $`\mathop{\mathrm{Recall}}\nolimits@k`$ | A retrieval metric | State judged/ANN reference, eligibility, aggregation and zero-relevant policy |
 | HNSW | A layered proximity-graph index | Skip lists supply an analogy, not an inherited exact HNSW search bound |
 | Inverted file (IVF) | A Chapter 15 index topic | Study it with HNSW. |
 | Product quantization (PQ) | A Chapter 16 memory topic and Appendix A sizing formula | Work its index-memory arithmetic end to end. |
@@ -137,7 +137,7 @@ Use this path for search-relevance and applied-science roles where the interview
 6. Chapter 21 on SPLADE, ColBERT, and hybrid fusion with RRF.
 7. Chapter 22 on reranking, cross-encoders, and rerank depth.
 8. Chapter 24 on query reformulation and HyDE.
-9. Chapter 32 on deriving MRR, nDCG and $`\operatorname{Recall}@k`$.
+9. Chapter 32 on deriving MRR, nDCG and $`\mathop{\mathrm{Recall}}\nolimits@k`$.
 10. Section $`41.4`$, the multi-hop question-answering drill.
 #### Path 2: Vector Search and Platform Infrastructure
 Use this path for roles that own index capacity, recall targets, latency budgets, and the on-call pager.

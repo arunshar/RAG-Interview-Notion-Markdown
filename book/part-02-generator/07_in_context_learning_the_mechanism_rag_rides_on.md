@@ -129,13 +129,17 @@ Use ICL while the task specification still moves. Switch toward SFT after behavi
 A cheap baseline embeds the live input and every candidate, then takes the nearest $`k`$ examples. Liu et al.’s KATE baseline beat random selection and became standard. The score never consults the generator that must consume the result. Min et al. replaced gold demonstration labels with random labels and saw only a marginal drop. Their result says demonstrations mainly communicate label space, input distribution, and format. Peng et al. shuffled increasing fractions of the test input while holding demonstrations fixed. Accuracy fell at one shot and three shots. Embedding-style lexical content stayed similar, but readability fell. This result locates a bottleneck on the test-input side.
 #### Conditional entropy criterion
 For one observed $`m`$-token test input $`x`$ after candidate $`c`$, compute mean negative log likelihood. The source calls this a conditional-entropy (ConE) score; mathematically it is empirical cross-entropy or surprisal on that fixed input, not the full entropy of the model's conditional distribution.
-$$
-H_\theta(x \mid c) = -\frac{1}{m}\sum_{t=1}^{m}\log p_\theta(x_t \mid c, x_{<t})
-$$
+
+```math
+H_\theta(x \mid c) = -\frac{1}{m}\sum_{t=1}^{m}\log p_\theta(x_t \mid c, x_{\lt t})
+```
+
 Compare it with the empty-prefix value:
-$$
+
+```math
 \Delta(c) = H_\theta(x \mid c) - H_\theta(x \mid \varnothing)
-$$
+```
+
 Choose the candidate with minimum $`\Delta(c)`$. The empty-prefix term is constant across candidates and therefore does not change their ranking. A negative value means the candidate improves test-input likelihood under this scoring model; it does not prove improved answer accuracy, safety or multi-example compatibility. Serving zero-shot when no candidate improves the score is a policy heuristic to validate on held-out answers.
 #### Why a two-stage funnel exists
 ConE reads only the test input. It needs no reference output, so it can score live traffic. A reference-output likelihood signal, as used to train retrieval in REPLUG, needs an observed output. That particular signal is unavailable for an unknown live answer; this does not mean the trained REPLUG system cannot retrieve at inference. ConE needs one generator forward pass per candidate. It cannot scan a corpus. Use BM25 or embedding search to build a pool, then use ConE to rerank that pool. Peng et al. reported gains over random, BM25, and embedding top-$`k`$ pools. The gain is therefore complementary to first-stage retriever quality.
@@ -190,7 +194,7 @@ Remove the softmax from one attention head. For context representation $`x_i`$, 
 #### Evidence for the mechanism
 Von Oswald et al. constructed weights for which one linear self-attention layer executes exactly one gradient step on least squares. Models trained on those tasks converged toward that construction. Akyurek et al. found small trained transformers matching one gradient step. At larger scale, their models matched closed-form ridge regression. Garg et al. trained transformers from scratch to learn linear functions in context at accuracy comparable with ordinary least squares. The targets were continuous and unavailable for direct copying.
 #### Limits and failure modes
-An exact gradient-step implementation requires specially constructed or learned weights for the specified linear-attention task; matching outer-product shapes alone proves no such identity in a served softmax transformer. If demonstration-level logits are comparable and token masses are balanced, each of $`k`$ demonstrations gets about $`1/k`$ of that attention mass: $`12.5\%`$ at $`k=8`$ and $`3.125\%`$ at $`k=32`$. This does not imply a corresponding accuracy loss. For the linear head operator, $`\operatorname{rank}(\Delta W_{\mathrm{ICL}})\le\min(m,d_h)`$ is an upper bound; reaching $`m=d_h`$ merely makes full rank possible, not certain, and further examples can change the operator even at fixed rank. A one-step-per-layer construction has one such step per layer; it is not a universal bound on a transformer's learning algorithm, task difficulty or autoregressive reasoning steps. Shen et al. and Deutch et al. motivate testing proposed mechanisms rather than treating gradient similarity as proof.
+An exact gradient-step implementation requires specially constructed or learned weights for the specified linear-attention task; matching outer-product shapes alone proves no such identity in a served softmax transformer. If demonstration-level logits are comparable and token masses are balanced, each of $`k`$ demonstrations gets about $`1/k`$ of that attention mass: $`12.5\%`$ at $`k=8`$ and $`3.125\%`$ at $`k=32`$. This does not imply a corresponding accuracy loss. For the linear head operator, $`\mathop{\mathrm{rank}}\nolimits(\Delta W_{\mathrm{ICL}})\le\min(m,d_h)`$ is an upper bound; reaching $`m=d_h`$ merely makes full rank possible, not certain, and further examples can change the operator even at fixed rank. A one-step-per-layer construction has one such step per layer; it is not a universal bound on a transformer's learning algorithm, task difficulty or autoregressive reasoning steps. Shen et al. and Deutch et al. motivate testing proposed mechanisms rather than treating gradient similarity as proof.
 #### Worked capacity and residency
 The worked grouped-query model has width $`4{,}096`$, $`32`$ layers, $`32`$ query heads of width $`128`$, and $`8`$ KV heads. Eight $`180`$-token demonstrations use $`1{,}440`$ tokens, approximately $`67.76\,\mathrm{ms}`$ of uncached parameter-work proxy. A head's $`128\times128`$ linear-attention operator has rank at most $`128`$; after $`128`$ tokens full rank is possible but not guaranteed. The one-step-per-layer toy construction would supply $`32`$ steps, while full SFT on $`1{,}000`$ examples for three epochs with batch size $`8`$ has $`375`$ optimizer steps. Their ratio $`11.71875`$ compares counts, not equivalent optimization capacity. The KV payload is $`2\times8\times128\times32\times2=131{,}072\,\mathrm{B/token}=128\,\mathrm{KiB/token}`$. The demonstration block therefore uses $`188{,}743{,}680\,\mathrm B\approx188.74\,\mathrm{MB}`$ without cache sharing. Rank-$`16`$ LoRA on full query and output projections in all layers has $`32\times2\times16(4{,}096+4{,}096)=8{,}388{,}608`$ parameters, or $`16{,}777{,}216\,\mathrm B\approx16.78\,\mathrm{MB}`$ at two bytes each. The payload ratio is exactly $`11.25`$ under these scopes; KV states and trained adapter weights are different objects, and prefix-sharing can change residency.
 #### Operating rule
@@ -377,7 +381,7 @@ Keep a house template for maintainability unless a per-model override clears sam
 | Topic | Number, formula, or threshold | Meaning |
 | --- | --- | --- |
 | InstructGPT SFT scale | order $`10^{4}`$ prompts | Approximate size of the labeler-written supervised split |
-| SFT objective | $`\max_\theta \sum_i \sum_t \log p_\theta(y_{i,t} \mid x_i, y_{i,<t})`$ | Maximum-likelihood update over labeled pairs |
+| SFT objective | $`\max_\theta \sum_i \sum_t \log p_\theta(y_{i,t} \mid x_i, y_{i,\lt t})`$ | Maximum-likelihood update over labeled pairs |
 | ICL prediction | $`\hat y = \arg\max_y p_\theta\!\left(y \mid (x_i,y_i)_{i=1}^{k}, x\right)`$ | Frozen-weight conditioning rule |
 | SFT compute | about $`6ND_{\mathrm{SFT}}`$ FLOPs | One-time training cost |
 | Serving compute | about $`2N`$ FLOPs per token | Approximate prefill and decode cost |
@@ -415,8 +419,8 @@ Keep a house template for maintainability unless a per-model override clears sam
 | Selection story | 3 examples from $`20{,}000`$ tickets | Initial triage example |
 | Embedding gain | half a point | Change described as inside the noise band |
 | Test-input probe | 1 shot and 3 shots | Both degrade as shuffled-word fraction rises |
-| ConE zero-shot gate | $`\min_c\Delta(c)<0`$ | Input-likelihood policy heuristic; validate against answer quality |
-| Conditional entropy | $`\widehat H_\theta(x\mid c)=-m^{-1}\sum_{t=1}^m\log p_\theta(x_t\mid c,x_{<t})`$ | Empirical cross-entropy on a fixed input, not a distributional entropy |
+| ConE zero-shot gate | $`\min_c\Delta(c)\lt 0`$ | Input-likelihood policy heuristic; validate against answer quality |
+| Conditional entropy | $`\widehat H_\theta(x\mid c)=-m^{-1}\sum_{t=1}^m\log p_\theta(x_t\mid c,x_{\lt t})`$ | Empirical cross-entropy on a fixed input, not a distributional entropy |
 | ConE score | $`\Delta(c) = H_\theta(x \mid c) - H_\theta(x \mid \varnothing)`$ | Candidate ranking and zero-shot gate |
 | Figure $`7.2`$ funnel | $`20{,}000`$ to 50 to 3 | Pool size, candidate count, and selected count |
 | Selection input lengths | 120-token test, 180-token demonstration, 40-token answer | Worked ConE sizes |
@@ -511,8 +515,8 @@ Keep a house template for maintainability unless a per-model override clears sam
 | Key-value heads | 8 | Grouped-query attention configuration |
 | Prefill cost per token | $`4.71 \times 10^{-5}`$ seconds or $`0.0471\,\mathrm{ms}`$ | From $`1.6 \times 10^{10}`$ FLOPs at stated throughput |
 | Demonstration block | $`8 \times 180 = 1{,}440`$ tokens | $`67.8\,\mathrm{ms}`$ per uncached request |
-| Temporary update rank | $`\operatorname{rank}(\Delta W_{\mathrm{ICL}})\le128`$ | Upper bound for the specified linear head; saturation is not guaranteed |
-| General rank bound | $`\operatorname{rank}(\Delta W_{\mathrm{ICL}}) \leq \min(m, d_h)`$ | Demonstration tokens and head width limit expressive rank |
+| Temporary update rank | $`\mathop{\mathrm{rank}}\nolimits(\Delta W_{\mathrm{ICL}})\le128`$ | Upper bound for the specified linear head; saturation is not guaranteed |
+| General rank bound | $`\mathop{\mathrm{rank}}\nolimits(\Delta W_{\mathrm{ICL}}) \leq \min(m, d_h)`$ | Demonstration tokens and head width limit expressive rank |
 | Rank saturation | $`128/180\approx71.11\%`$ | Earliest point full rank becomes possible, not a proof it is reached |
 | Implicit steps | $`32`$ in a one-step-per-layer construction | Not a universal bound on ICL or autoregressive reasoning |
 | Explicit steps | $`\frac{1{,}000 \times 3}{8} = 375`$ | $`11.7\times`$ the implicit bound |

@@ -46,9 +46,10 @@ This is a documentation collection, not an executable RAG framework or a live No
 
 ```text
 book/          The complete collection, grouped into 12 parts and appendices
-docs/         Full content map, import instructions, and export notes
+docs/         Content map, import instructions, export notes, and math examples
 exports/      Ready-to-import ZIP and SHA-256 checksum
 scripts/      Dependency-free validation and reproducible packaging
+tests/        Math-syntax regression tests
 .github/      Repository checks and contribution templates
 ```
 
@@ -67,11 +68,12 @@ The import ZIP contains the 60 book pages, a landing-page index, and a short imp
 ## Quality checks
 
 ```sh
+python3 -m unittest discover -s tests
 python3 scripts/validate_repository.py
 python3 scripts/build_import.py --check
 ```
 
-Checks cover the complete page inventory, file checksums, relative file links, source-conversion markers, and the import archive. Fenced code and Mermaid blocks were preserved byte-for-byte during export. No third-party Python packages are required. See [export notes](docs/EXPORT_NOTES.md) for scope and limitations.
+Checks cover the complete page inventory, file checksums, relative file links, source-conversion markers, math delimiters and compatibility rules, and the import archive. Fenced code and Mermaid blocks were preserved byte-for-byte during export. No third-party Python packages are required. See [math compatibility](docs/MATH_COMPATIBILITY.md) for rendered examples and [export notes](docs/EXPORT_NOTES.md) for scope and limitations.
 
 ## Contributing and source rights
 

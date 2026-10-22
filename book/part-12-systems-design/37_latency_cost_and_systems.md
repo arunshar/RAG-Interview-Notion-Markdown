@@ -102,18 +102,24 @@ Measure every stage. Only convert arithmetic/bytes into an optimistic resource f
 #### Why
 The chapter uses an H100 PCIe $`80\,\mathrm{GB}`$ reference with an assumed $`340\,\mathrm{TFLOP/s}`$ processing rate and $`2{,}000\,\mathrm{GB/s}`$ HBM rate. These are not simultaneously measured rates for every small encoder, cached query or kernel. The compute rate is about $`44.97\%`$ of the cited $`756\,\mathrm{TFLOP/s}`$ dense peak; model FLOPs utilization is not established by a page calculation.
 At these declared rates, the ridge is:
-$$
+
+```math
 R=\frac{P_F}{\beta_H}=\frac{3.4\times10^{14}\,\mathrm{FLOP/s}}{2.0\times10^{12}\,\mathrm{B/s}}=170\,\mathrm{FLOP/B}.
-$$
+```
+
 If the parameter-linear pass reads the weights once and other traffic is ignored, its prefill intensity is:
-$$
+
+```math
 I_{\mathrm{prefill,lin}}\approx\frac{2N_gs}{N_gb_w}=\frac{2s}{b_w}.
-$$
-At $`b_w=2`$, this weight-only approximation equals the ridge at $`s=170`$ and exceeds it for $`s>170`$. That is a useful crossover heuristic, not a guarantee of compute-bound prefill: attention/activation traffic, padding, small GEMMs and implementation efficiency can change the regime.
+```
+
+At $`b_w=2`$, this weight-only approximation equals the ridge at $`s=170`$ and exceeds it for $`s\gt 170`$. That is a useful crossover heuristic, not a guarantee of compute-bound prefill: attention/activation traffic, padding, small GEMMs and implementation efficiency can change the regime.
 A single incremental decode pass has one fresh position per stream. Its parameter-linear, weight-only intensity is:
-$$
+
+```math
 I_{\mathrm{decode,lin}}\approx\frac{2N_g}{N_gb_w}=\frac{2}{b_w}.
-$$
+```
+
 At bfloat16 this is $`1\,\mathrm{FLOP/B}`$, $`170`$ times below the stated ridge. Parameter count cancels only in this weight-only approximation, not in total attention/cache traffic or measured latency. An eight-billion- and a seventy-billion-parameter model need not have the same total intensity or throughput.
 For $`B`$ streams sharing one weight read, the corresponding expression is $`2N_gB/(N_gb_w+Bq_{\mathrm{KV}})`$ when private KV reads are included. Ignoring them gives $`2B/b_w`$, an optimistic simplification rather than unlimited linear throughput scaling.
 #### Failure without it
@@ -125,28 +131,36 @@ The rounded $`0.28\,\mathrm{GB}`$ private-cache term is $`0.28/16.28\approx1.719
 The toy uses the Llama-3.1-8B-style dimensions stated in the conventions, with parameter count rounded to $`8\times10^9`$. Keys and values occupy $`2L_g(8)(128)(2)=131{,}072\,\mathrm{B/position}=128\,\mathrm{KiB/position}`$. These dimensions define storage; they do not make the FLOP proxy a benchmark of that released checkpoint.
 The illustrative $`10^7`$-chunk store returns $`50`$ candidates. Retain the chapter-reported input budgets of $`8\,\mathrm{ms}`$ for embedding and $`6\,\mathrm{ms}`$ for search without claiming independent measurement or that they are stage medians.
 For $`50`$ bidirectional rerank pairs of $`256`$ positions, parameter-linear work is exactly $`2.816\times10^{12}\,\mathrm{FLOP}`$. Add both dense attention matrix products in each of $`12`$ layers of width $`768`$:
-$$
+
+```math
 \begin{aligned}
 W_{\mathrm{rerank}}&\approx50\left[2N_r(256)+4L_rd_r(256)^2\right]\\
 &=2.9367959552\times10^{12}\,\mathrm{FLOP}.
 \end{aligned}
-$$
-$$
+```
+
+
+```math
 \frac{W_{\mathrm{rerank}}}{P_F}\approx8.637635\,\mathrm{ms}.
-$$
+```
+
 Five $`400`$-token chunks plus $`200`$ query/instruction tokens total $`2{,}200`$, not $`2{,}048`$. For a consistent worked layout, stipulate five such chunks ($`s_c=2{,}000`$) plus $`s_f=48`$ fresh query/instruction positions, totaling $`s=2{,}048`$. Do not call the original sum a rounding operation.
 In an ideal causal-attention FLOP model, each of the $`s`$ queries attends its prefix including itself. Counting both score and value matrix products adds $`4L_gd_g\sum_{j=1}^{s}j`$ beyond the parameter-linear proxy:
-$$
+
+```math
 \begin{aligned}
 W_{\mathrm{prefill}}&\approx2N_gs+2L_gd_gs(s+1)\\
 &=3.3868048498688\times10^{13}\,\mathrm{FLOP}.
 \end{aligned}
-$$
+```
+
 The compute quotient is $`99.611907\,\mathrm{ms}`$. The chapter's $`2L_gd_gs^2`$ approximation omits the diagonal correction and is close here. Full-square masked kernels may execute extra work; activations, softmax, normalization and other overhead are not fully modeled. Treat this as an optimistic component estimate.
 The weights occupy $`16\,\mathrm{GB}`$ in the toy. For $`150`$ planned incremental passes, a simple average past length $`2{,}048+(150-1)/2=2{,}122.5`$ gives about $`0.2782\,\mathrm{GB}`$ of KV reads per pass; retain $`0.28\,\mathrm{GB}`$ as an explicitly rounded planning input. With that input:
-$$
+
+```math
 t_{\mathrm{decode/pass}}\approx\frac{(16+0.28)\times10^9\,\mathrm B}{2.0\times10^{12}\,\mathrm{B/s}}=8.14\,\mathrm{ms}.
-$$
+```
+
 The $`150`$-pass decode allocation is $`150(8.14)=1{,}221\,\mathrm{ms}`$. This bandwidth model omits dequantization, launches, sampling, cache writes and any nonresident weights. For exactly $`150`$ answer tokens when prefill already supplies the first token, replacing $`150`$ by $`149`$ reduces this particular ledger by one $`8.14\,\mathrm{ms}`$ pass.
 The revised serial planning sum is $`8+6+8.637635\ldots+99.611907\ldots+1{,}221\approx1{,}343.249543\,\mathrm{ms}`$. Decode is about $`90.8990\%`$ of that sum. This is neither an observed $`p_{50}`$ nor a sum of independently measured percentiles.
 Decode's parameter-linear work is $`2N_g(150)=2.4\times10^{12}\,\mathrm{FLOP}`$, excluding its attention work. Full prefill has about $`14.11`$ times that count, yet the decode bandwidth budget takes about $`12.26`$ times the prefill compute budget. The different resource limits, not FLOP count alone, explain this modeled contrast.
@@ -169,12 +183,14 @@ The motivating support workload has thousands of paraphrases, roughly twenty rec
 An exact response cache keys a request/response context; a semantic response cache can also match paraphrases, with its own correctness risks. Chunk KV reuse keys a model computation and can help distinct requests sharing evidence. Their hit rates and invalidation rules differ.
 Use the reconciled layout $`s_c=2{,}000`$, $`s_f=48`$, $`s=s_c+s_f=2{,}048`$. Fresh queries attend all cached positions plus the lower-triangular fresh segment. The fresh attention rectangle must not be halved as though every query attended only half the cached context.
 In the same causal-pair model, the fresh online work is:
-$$
+
+```math
 \begin{aligned}
 W_{\mathrm{fresh}}&\approx2N_gs_f+4L_gd_g\left(s_fs_c+\frac{s_f(s_f+1)}2\right)\\
 &=8.18948210688\times10^{11}\,\mathrm{FLOP}.
 \end{aligned}
-$$
+```
+
 This gives a $`2.408671\,\mathrm{ms}`$ compute floor and about $`97.5819\%`$ fewer modeled prefill FLOPs, not $`97.7\%`$ under the source's undercounted rectangle. It is not a $`2.4\,\mathrm{ms}`$ single-request latency prediction: the weights still have to be read for the fresh pass.
 The cached $`2{,}000`$ positions occupy $`262{,}144{,}000\,\mathrm B=262.144\,\mathrm{MB}=250\,\mathrm{MiB}`$ at $`128\,\mathrm{KiB/position}`$. Merely reading this payload once from HBM has a $`0.131072\,\mathrm{ms}`$ byte floor, but adding that to the FLOP-only time omits the $`16\,\mathrm{GB}`$ weight read.
 For HBM-resident caches with no additional materializing copy, an optimistic fresh-pass floor is $`\max(2.408671\,\mathrm{ms},(16\times10^9+262{,}144{,}000)/\beta_H)\approx8.131072\,\mathrm{ms}`$. The intensity is only about $`50.36\,\mathrm{FLOP/B}`$, below $`170`$. Relative to the $`99.611907\,\mathrm{ms}`$ full-prefill proxy, this is about $`12.25`$-fold, not a justified forty-fold latency saving. Offset rotation, extra reads/writes, launch overhead and small-shape efficiency can raise actual time.
@@ -220,26 +236,34 @@ A request cache-hit rate below $`5\%`$ means over $`95\%`$ of eligible lookup re
 #### Cost and complexity
 For a separate hypothetical causal reranker, use $`N_r=110\times10^6`$, $`L_r=12`$, $`d_r=768`$, two-byte full-width keys/values, a $`400`$-position document and $`24`$-position query. These are BERT-base-sized dimensions with a changed causal mask, not an assertion that unmodified BERT or the paper's decoder backbone supports this exact cache.
 The parameter-linear full-pair term and compute floor are:
-$$
+
+```math
 \begin{aligned}
 W_{\mathrm{pair,lin}}&=2N_r(424)=9.328\times10^{10}\,\mathrm{FLOP},\\
 W_{\mathrm{pair,lin}}/P_F&\approx0.274353\,\mathrm{ms}.
 \end{aligned}
-$$
+```
+
 The parameter-linear document-build term is:
-$$
+
+```math
 W_{\mathrm{doc,lin}}=2N_r(400)=8.8\times10^{10}\,\mathrm{FLOP},\qquad W_{\mathrm{doc,lin}}/P_F\approx0.258824\,\mathrm{ms}.
-$$
+```
+
 The parameter-linear fresh-query term is:
-$$
+
+```math
 W_{\mathrm{query,lin}}=2N_r(24)=5.28\times10^9\,\mathrm{FLOP},\qquad W_{\mathrm{query,lin}}/P_F\approx0.015529\,\mathrm{ms}.
-$$
+```
+
 The $`424/24\approx17.6667`$ ratio compares only parameter-linear work, not measured latency. Adding causal attention as in section $`37.1`$ gives full, document-build and fresh-query compute floors about $`0.284122`$, $`0.267519`$ and $`0.016603\,\mathrm{ms}`$, respectively. The FLOP counts partition exactly into build plus fresh work. But $`220\,\mathrm{MB}`$ of weights plus $`14.7456\,\mathrm{MB}`$ of document KV imply an optimistic warm fresh-pass byte floor $`0.1173728\,\mathrm{ms}`$ at batch one, already above the compute floor. Full-pair versus warm roofline proxies differ by about $`2.42`$-fold, not a justified $`17.7`$-fold latency saving.
-For $`m`$ total uses, build cost $`T_b`$, full uncached cost $`T_f`$ and warm fresh-plus-load cost $`T_q`$, this explicit amortization model saves service time only when $`T_b+mT_q<mT_f`$. If $`T_f>T_q`$, then:
-$$
-m>\frac{T_b}{T_f-T_q}\quad(T_f>T_q).
-$$
-Under the linear-only no-I/O partition, the threshold is exactly $`m>1`$, so the second use is the first strict saving; “one repeat” and “one total use” are different. With the optimistic attention/byte floors above it becomes $`m>1.604321`$, still two total uses. At $`31.5\,\mathrm{GB/s}`$, transferring this document cache from host adds about $`0.468114\,\mathrm{ms}`$, making warm time about $`0.585487\,\mathrm{ms}`$—above the full-pair compute floor, so that particular model has no positive amortization crossing. Batching/overlap can change it. The document and query comprise $`94.3396\%`$ and $`5.6604\%`$ of positions, not necessarily the same shares of actual work or latency.
+For $`m`$ total uses, build cost $`T_b`$, full uncached cost $`T_f`$ and warm fresh-plus-load cost $`T_q`$, this explicit amortization model saves service time only when $`T_b+mT_q\lt mT_f`$. If $`T_f\gt T_q`$, then:
+
+```math
+m\gt \frac{T_b}{T_f-T_q}\quad(T_f\gt T_q).
+```
+
+Under the linear-only no-I/O partition, the threshold is exactly $`m\gt 1`$, so the second use is the first strict saving; “one repeat” and “one total use” are different. With the optimistic attention/byte floors above it becomes $`m\gt 1.604321`$, still two total uses. At $`31.5\,\mathrm{GB/s}`$, transferring this document cache from host adds about $`0.468114\,\mathrm{ms}`$, making warm time about $`0.585487\,\mathrm{ms}`$—above the full-pair compute floor, so that particular model has no positive amortization crossing. Batching/overlap can change it. The document and query comprise $`94.3396\%`$ and $`5.6604\%`$ of positions, not necessarily the same shares of actual work or latency.
 #### Decisions and limits
 - Use document-first causal formatting when document-side reuse is the chosen design, and validate/fine-tune its ranking quality.
 - Measure lookup hits and end-to-end amortization including build, load, invalidation, memory pressure and warm/cold mixes; do not infer unique-document reuse from a request hit rate.
@@ -270,21 +294,25 @@ For a separate traffic illustration, use a twelve-layer, width-$`768`$ stack wit
 Assume $`24`$ fresh query positions per layer, with a valid document cache. Actual fresh-query latency still has the weight/cache floors in section $`37.3`$.
 The FFN intermediate width is $`3{,}072`$. This example stipulates two otherwise materialized write-read round trips of that activation that a suitable fusion can eliminate.
 Its intermediate activation is:
-$$
+
+```math
 A=24(3{,}072)(2\,\mathrm B)=147{,}456\,\mathrm B=144\,\mathrm{KiB}.
-$$
+```
+
 Two write-read round trips mean four transfers, $`4A=589{,}824\,\mathrm B=576\,\mathrm{KiB}`$ per layer, if each really reaches HBM. Already-cached traffic or a different fusion pattern changes this count.
 Across twelve layers this is $`7{,}077{,}888\,\mathrm B=7.077888\,\mathrm{MB}=6.75\,\mathrm{MiB}`$. At $`\beta_H`$, the byte quotient is $`3.538944\,\mu\mathrm s=0.003538944\,\mathrm{ms}`$. The source's $`0.00347\,\mathrm{ms}`$ conversion is not consistent with these exact inputs.
 Adding that quotient to the $`0.015529\,\mathrm{ms}`$ parameter-linear compute floor would give $`0.019068\,\mathrm{ms}`$ and an $`18.5593\%`$ bookkeeping reduction. It is not a justified latency prediction: it omits the larger warm weight/cache floor, assumes the traffic is not overlapped, and assumes the fusion removes it all. Neither $`0.0190\to0.0155\,\mathrm{ms}`$ nor an eighteen-percent wall-time gain has been independently measured here.
 Fusion may still help through reduced IO, launches and better execution, but those effects require an actual benchmark. A traffic floor cannot establish an additive penalty or a percentage speedup on its own.
 FlashAttention's BERT-large training table reports $`20.0\to17.4`$ minutes on its eight-A100 setup: $`13\%`$ less elapsed time, equivalently $`20/17.4-1\approx14.94\%`$ higher speed. That is the basis for its roughly fifteen-percent speed claim, not validation of the different cached-query FFN example or a guarantee of a fifteen-percent latency reduction.[\[4\]](https://arxiv.org/html/2205.14135v2)
 If an uncached bidirectional rerank implementation really executes all $`2{,}000`$ padded positions for each of $`50`$ pairs, parameter-linear work alone is:
-$$
+
+```math
 \begin{aligned}
 W_{\mathrm{pad,lin}}&=2(110\times10^6)(2{,}000)(50)=2.2\times10^{13}\,\mathrm{FLOP},\\
 W_{\mathrm{pad,lin}}/P_F&\approx64.705882\,\mathrm{ms}.
 \end{aligned}
-$$
+```
+
 That is $`2{,}000/256=7.8125`$ times the original parameter-linear work. Including the same bidirectional attention terms as section $`37.1`$ yields $`2.93728\times10^{13}\,\mathrm{FLOP}`$ and an $`86.390588\,\mathrm{ms}`$ compute floor, about ten times its $`8.637635\,\mathrm{ms}`$ baseline. This is not the cost of merely reserving a long static cache buffer while computing a short query.
 #### Decisions and limits
 - Compile/capture stable, repeated paths where startup amortizes. Benchmark dynamic-shape support instead of assuming every changed length retraces.
@@ -301,9 +329,11 @@ TeleRAG v1 predicts likely IVF clusters from the pre-retrieval input query and t
 A DMA copy engine permits host-device transfer to overlap computation, but writes and retrieval can still contend for HBM, interconnects, CPU memory and destination buffers. The whole GPU is not necessarily idle, and overlap is not automatically free.
 #### Why
 For the raw fp32 vector payload alone, with corpus size and vector width kept separate from generator parameters:
-$$
+
+```math
 M_{\mathrm{vec}}=N_{\mathrm{vec}}d_v(4\,\mathrm B).
-$$
+```
+
 The Faiss wiki gives $`4\sqrt{N_{\mathrm{vec}}}`$ to $`16\sqrt{N_{\mathrm{vec}}}`$ as a heuristic in its below-one-million-vector branch, with different example index recipes for larger ranges. Do not present it as a proved universal sizing rule or the official recommendation specifically for ten million vectors.[\[7\]](https://github.com/facebookresearch/faiss/wiki/Guidelines-to-choose-an-index)
 Extrapolating the lower heuristic to $`10^7`$ gives $`12{,}649.110641\ldots`$, but $`\mathrm{nlist}=16{,}384`$ is merely a chosen toy configuration. Benchmark training sample size, assignments, list imbalance, search time and recall instead of calling that rounding an optimal cluster count.
 At that chosen list count, the mean is $`10^7/16{,}384\approx610.351563`$ vectors per list. Under an equal-size average approximation, prefetching sixteen lists moves exactly $`30{,}000{,}000\,\mathrm B=30\,\mathrm{MB}`$ of raw vectors. Actual selected-list sizes are integer and can be highly skewed; IDs and other metadata add traffic.
@@ -327,12 +357,14 @@ Coalesce transfers only when reduced launch/driver overhead outweighs added dela
 In a growth scenario, $`10^7`$ chunks become $`2\times10^8`$ after more sources arrive, a twentyfold count increase. HNSW often has favorable empirical scaling, but logarithmic search cost or an unchanged $`p_{50}`$ is not a distribution-free guarantee. Fixed-depth recall can worsen as similar distractors, source distributions and graph construction change; corpus growth alone does not quantify that loss.
 For a stage explicitly scoring $`k`$ candidates at constant per-item service cost $`c_r`$, its scorer work is $`kc_r`$. Batched wall time, early exits, token lengths and shared kernels can make actual time non-linear in $`k`$. Search cost is not always a full scan with constant per-corpus-item cost.
 At a fixed granularity, successive reductions can be multiplied. With changing granularity, let stage $`i`$ retain fraction $`\rho_i`$ of its input count and let each survivor expand to an average $`e_i`$ finer units before the next stage:
-$$
+
+```math
 \begin{aligned}
 n_i^{\mathrm{out}}&=\rho_i n_i^{\mathrm{in}},\qquad n_{i+1}^{\mathrm{in}}=e_i n_i^{\mathrm{out}},\\
 n_m^{\mathrm{out}}&=n_1^{\mathrm{in}}\left(\prod_{i=1}^m\rho_i\right)\left(\prod_{i=1}^{m-1}e_i\right).
 \end{aligned}
-$$
+```
+
 FunnelRAG v3 uses BM25 on clustered documents (maximum cluster size about $`4`$K tokens), bge-reranker-v2-m3 as a document pre-ranker, and FiD-based post-ranking with finer passage selection. The middle step is not simply a dense bi-encoder search. The paper combines changing granularity, candidate quantity and model capacity; the dense-middle-stage arithmetic toy below is a related cascade variant, not its exact experimental recipe.[\[8\]](https://arxiv.org/html/2410.10293v3)
 #### Why
 A cheap early selector can keep later model inputs bounded as the corpus grows. Its own index, postings/search, rebuild and expansion costs still depend on corpus scale; cost is not determined solely by the narrowest stage.
@@ -361,9 +393,11 @@ RAPTOR repeatedly embeds, clusters, summarizes and re-embeds, producing multi-re
 RAPTOR v1 uses approximately $`100`$-token, sentence-preserving leaves, SBERT embeddings, reduced-space soft Gaussian-mixture clustering and GPT-3.5-turbo summaries. It recurses until further clustering is infeasible; it does not promise a perfectly balanced tree or exactly one root. Overlapping membership can produce shared-source/DAG-like structure rather than a disjoint partition.[\[9\]](https://arxiv.org/html/2401.18059v1)
 Soft membership can let a passage support multiple themes, but can duplicate input and increase summary/storage work. It invalidates a simple disjoint-tree node bound unless overlap is explicitly controlled.
 Only for a balanced, disjoint grouping toy with integer $`c\ge2`$, $`N_\ell\ge1`$ leaves, one parent per group of at most $`c`$ children and recursion to one root, let $`n_0=N_\ell`$ and:
-$$
+
+```math
 n_{j+1}=\left\lceil\frac{n_j}{c}\right\rceil,\qquad h=\left\lceil\log_c N_\ell\right\rceil+1.
-$$
+```
+
 #### Why
 A shared encoder allows the same similarity function to score leaves and summaries. It does not guarantee that score distributions across abstraction levels are calibrated or that a thematic query will prefer the appropriate level. Test relevance and provenance across levels.
 Collapsed-tree retrieval ranks nodes across all levels in one pool. The paper's main setting caps selected text at $`2{,}000`$ tokens, roughly twenty nodes, rather than imposing exactly twenty regardless of summary length; its UnifiedQA setting uses a smaller context budget.[\[9\]](https://arxiv.org/html/2401.18059v1)
@@ -387,36 +421,42 @@ Treat construction and refresh as background work only when the freshness/permis
 For a complete disjoint $`c`$-ary tree, internal count is $`(N_\ell-1)/(c-1)`$, so the internal-to-leaf ratio approaches $`1/(c-1)`$. Ceilings/partial groups alter the exact count; variable fan-in and soft overlap can invalidate that estimate entirely. Larger fan-in can reduce node count but may lose detail or require longer input/output, so the storage-quality trade-off must be evaluated.
 ### 37.8 Cost per query, end to end
 #### What
-For resources $`j`$ with hourly price $`\pi_j`$ and provisioned count $`g_j`$, achieved end-to-end throughput $`\lambda>0`$ queries per second gives allocated infrastructure cost $`C_q=\sum_jg_j\pi_j/(3{,}600\lambda)`$ before other bills. For one paid resource with active service allocation $`u`$ seconds per query and utilization $`U`$, this becomes $`\pi u/(3{,}600U)`$ when $`\lambda u=U`$. Idle time, replication and separate CPU/network/storage capacity do not disappear from the invoice.
+For resources $`j`$ with hourly price $`\pi_j`$ and provisioned count $`g_j`$, achieved end-to-end throughput $`\lambda\gt 0`$ queries per second gives allocated infrastructure cost $`C_q=\sum_jg_j\pi_j/(3{,}600\lambda)`$ before other bills. For one paid resource with active service allocation $`u`$ seconds per query and utilization $`U`$, this becomes $`\pi u/(3{,}600U)`$ when $`\lambda u=U`$. Idle time, replication and separate CPU/network/storage capacity do not disappear from the invoice.
 The chapter's simple sum is valid only for the specified same-price resource allocation, with $`u_i`$ in milliseconds per request and full utilization or equivalent elastic billing. The $`u_i`$ must be occupied resource-time allocations, not arbitrary end-to-end latency spans:
-$$
+
+```math
 C_{q,\mathrm{allocation}}=\frac{\pi}{3{,}600{,}000}\sum_i u_i\qquad\text{(milliseconds per request at the stated utilization).}
-$$
+```
+
 At a fixed achieved FLOP rate, a saturated compute-bound batch of similar requests has roughly proportional work and similar compute allocation per request. Actual batching can still improve small-kernel utilization, change padding and kernel efficiency, or add queues. Do not assume every prefill/rerank is already saturated or that batching never helps it.
 At the stated memory-bound operating point, decode can share one weight read across streams while reading their private KV states. The whole batch’s step latency and the per-request hardware allocation must both be reported.
 Let $`Q_w=N_gb_w`$ and $`q_{\mathrm{KV}}`$ be bytes, use $`n_d`$ equal-length planned passes and $`B\ge1`$ streams, and assume one shared weight read per batch step plus private KV reads. The byte-only expressions are:
-$$
+
+```math
 \begin{aligned}
 T_{\mathrm{decode,batch}}(B)&\approx\frac{n_d(Q_w+Bq_{\mathrm{KV}})}{\beta_H},\\
 u_{\mathrm{decode}}(B)&=\frac{T_{\mathrm{decode,batch}}(B)}{B}\approx\frac{n_d}{\beta_H}\left(\frac{Q_w}{B}+q_{\mathrm{KV}}\right).
 \end{aligned}
-$$
+```
+
 The amortized $`u_{\mathrm{decode}}`$ falls toward a $`21\,\mathrm{ms}`$ private-KV floor as $`B`$ grows in this toy, while batch wall time increases with private traffic. At $`B=32`$, the per-step wall quotient is $`12.48\,\mathrm{ms}`$ versus $`8.14\,\mathrm{ms}`$ at $`B=1`$. Compute floors, capacity, varying sequence lengths, attention kernels and scheduling must also be checked before extrapolating.
 #### Why
 The revised nondecode allocation is $`8+6+8.637635\ldots+99.611907\ldots\approx122.249543\,\mathrm{ms}`$. For this illustrative bookkeeping model only, charge all these allocations at one $`\$2.50/\mathrm{GPU\!-\!hour}`$ rate. If ANN is on CPU or GPU work overlaps, a real multi-resource ledger must charge its actual resources instead of treating all wall spans as GPU time.
 At $`B=1`$ and full utilization/equivalent elastic allocation, $`1{,}343.249543\,\mathrm{ms}`$ gives about $`\$0.000932812`$ per request, or $`\$932.81`$ per million. These are optimistic allocation costs, not a measured invoice or the cost of reserving idle capacity.
 At $`B=32`$, keep the same nondecode per-request allocation for the saturated-compute toy. Decode's allocation and its corresponding batch wall time are:
-$$
+
+```math
 \begin{aligned}
 u_{\mathrm{decode}}(32)&\approx150\frac{(16/32+0.28)\times10^9}{2.0\times10^{12}}\,\mathrm s=58.5\,\mathrm{ms},\\
 T_{\mathrm{decode,batch}}(32)&=32u_{\mathrm{decode}}(32)=1{,}872\,\mathrm{ms}.
 \end{aligned}
-$$
+```
+
 Total allocated hardware time is about $`180.749543\,\mathrm{ms/request}`$, giving $`\$0.0001255205`$ per request or $`\$125.52`$ per million, about $`7.4316`$ times cheaper than the $`B=1`$ allocation. It does not mean a request completes in $`180.75\,\mathrm{ms}`$: batched decode alone takes the modeled $`1{,}872\,\mathrm{ms}`$ wall time, plus its prefill/scheduling/waiting.
 Within that specific cost allocation, decode is $`58.5/180.749543\ldots\approx32.3652\%`$, prefill $`55.1105\%`$, and the remaining stages $`12.5243\%`$. These cost shares are not the individual response's wall-time shares at batch thirty-two.
 #### Failure without it
 Using an unbatched serial latency share as a production cost share can overstate or understate a component once resources, concurrency, utilization and queues change. Use actual billed resource-hours and achieved completed throughput, not a latency chart alone.
-At $`B=32`$, weights contribute $`16/32=0.50\,\mathrm{GB}`$ per request/pass versus $`0.28\,\mathrm{GB}`$ private KV, so weights are still $`64.1026\%`$ of decode's byte allocation. Cache bytes exceed the shared weight term only for $`B>16/0.28\approx57.1429`$, or integer $`B\ge58`$ under this model. Halving only weight bytes with every other stage fixed saves about $`10.3735\%`$ of total allocation. But a real $`8`$B-to-$`4`$B model change also changes prefill and often layers/KV/quality: holding the toy attention/KV geometry fixed while halving parameter-linear generator work gives about $`37.0337\%`$ total allocation saving. That is an isolated sensitivity model, not an actual $`4`$B benchmark, but it shows the decode-only argument cannot rule out a proposed thirty-percent total saving.
+At $`B=32`$, weights contribute $`16/32=0.50\,\mathrm{GB}`$ per request/pass versus $`0.28\,\mathrm{GB}`$ private KV, so weights are still $`64.1026\%`$ of decode's byte allocation. Cache bytes exceed the shared weight term only for $`B\gt 16/0.28\approx57.1429`$, or integer $`B\ge58`$ under this model. Halving only weight bytes with every other stage fixed saves about $`10.3735\%`$ of total allocation. But a real $`8`$B-to-$`4`$B model change also changes prefill and often layers/KV/quality: holding the toy attention/KV geometry fixed while halving parameter-linear generator work gives about $`37.0337\%`$ total allocation saving. That is an isolated sensitivity model, not an actual $`4`$B benchmark, but it shows the decode-only argument cannot rule out a proposed thirty-percent total saving.
 Batch availability is not free. For an isolated fixed-size batch starting with its first request, assume independent interarrival times of mean $`1/\lambda`$ (for example, Poisson arrivals), with no existing backlog or service interference. The expected wait averaged over its $`B`$ members is $`(B-1)/(2\lambda)`$. For $`B=32`$, it is $`0.31\,\mathrm s`$ at $`50`$ QPS but about $`51.67\,\mathrm s`$ at $`0.3`$ QPS, before service queues. A continuous scheduler can admit requests without waiting to assemble every full batch; its achieved $`B`$, deadlines and inter-token tails must be measured rather than assuming every request waits for exactly thirty-one peers.
 #### Cost and complexity
 The $`10^7`$-vector, $`768`$-wide fp32 payload is $`30.72\,\mathrm{GB}`$ before graph, IDs, text and metadata. Memory-resident index provision, CPU/search and index builds can all have separate bills.
@@ -430,7 +470,8 @@ A $`50`$ QPS workload may justify dedicated batched capacity, while a $`0.3`$ QP
 For a hosted API, use metered input, cached-input, output, reasoning/tool and other invoiced units under its actual rates. One blended rate does not uniquely identify separate input/output prices; obtain them or report the blended bill and usage assumptions instead of inventing a split. The provider’s internal fleet amortization is not directly observable from that rate.
 ## Diagrams
 ### Figure 37.1
-$$
+
+```math
 \begin{array}{lrr}
 \text{Serial planning component}&\text{Budget (ms)}&\text{Share of sum}\\
 \text{Embed}&8&0.596\%\\
@@ -440,7 +481,8 @@ $$
 \text{Decode}&1{,}221&90.899\%\\
 \text{Total}&1{,}343.250&100\%
 \end{array}
-$$
+```
+
 **Figure **$`37.1`$**:** One consistent serial planning ledger, not a measured latency percentile or a sum of stage medians. Rounded shares may not sum to exactly $`100\%`$. Decode dominates this specific unbatched proxy despite much larger prefill arithmetic. The former character bars did not provide a faithful common linear scale; the native equation ledger reports the quantities directly.
 ### Figure 37.2
 ```mermaid
@@ -528,7 +570,8 @@ flowchart TB
 ```
 **Figure **$`37.7`$**:** A schematic, not the $`1{,}200`$-leaf worked tree or a guarantee that soft RAPTOR clustering yields a disjoint single-root tree. Collapsed retrieval pools all eligible levels and chooses within a context-token budget; it does not automatically calibrate scores across levels or verify summaries. Source links, overlap, permissions and update dependencies remain necessary.
 ### Figure 37.8
-$$
+
+```math
 \begin{array}{lrr}
 \text{Optimistic per-request allocation}&B=1&B=32\\
 \text{Decode share}&90.8990\%&32.3652\%\\
@@ -538,7 +581,8 @@ $$
 \text{Cost per million requests (USD)}&932.812182&125.520516\\
 \text{Decode batch wall time (ms)}&1{,}221&1{,}872
 \end{array}
-$$
+```
+
 **Figure **$`37.8`$**:** Cost allocation, not a comparison of individual response times. Weight reuse lowers per-request decode allocation at $`B=32`$, while the modeled decode batch wall time grows. The $`55.1105\%`$ prefill share assumes its saturated compute allocation is unchanged; utilization, dynamic batches, queues and separate resource prices change real cost shares. Rounded shares can differ slightly from $`100\%`$.
 ## Whiteboard pack
 ### What to draw
@@ -579,7 +623,7 @@ Answer: only under this toy's unbatched, same-price, fully utilized allocation. 
 | HBM reuse | Cache-only HBM-read floor $`0.131072\,\mathrm{ms}`$, but weight-plus-cache fresh floor about $`8.131072\,\mathrm{ms}`$; about $`12.25`$-fold stage ratio under the optimistic model, not forty-fold. Extra traffic/rotation can raise it. |
 | Host reuse | At $`31.5\,\mathrm{GB/s}`$, cache host transfer $`8.322032\,\mathrm{ms}`$. With no overlap, fresh floor plus copy is about $`16.453104\,\mathrm{ms}`$, stage ratio about $`6.05`$. HBM/link rate ratio about $`63.49`$, not an end-to-end speedup. |
 | TurboRAG checks | Reported LongBench TTFT: average $`8.6`$-fold, peak $`9.4`$-fold, A100/FlashAttention2 setup. Reported $`98.46\%`$ compute cut is a separate $`8{,}192`$-context/$`128`$-query experiment. This chapter's corrected toy prefill FLOP cut is $`97.5819\%`$; fixed-other-stage end-to-end planning reductions are $`6.1909\%`$ host or $`6.8104\%`$ HBM. |
-| Causal reranker | Toy linear floors: full $`0.274353\,\mathrm{ms}`$, build $`0.258824\,\mathrm{ms}`$, query $`0.015529\,\mathrm{ms}`$; linear count ratio $`17.6667`$. Attention-inclusive floors: full $`0.284122\,\mathrm{ms}`$, build $`0.267519\,\mathrm{ms}`$, fresh $`0.016603\,\mathrm{ms}`$. Warm byte floor $`0.1173728\,\mathrm{ms}`$; resident proxy ratio about $`2.42`$. Strict total-use threshold $`m>1.604321`$ in that proxy; host cache adds $`0.468114\,\mathrm{ms}`$ and removes this crossing. A low lookup hit rate does not determine one-use document frequency. |
+| Causal reranker | Toy linear floors: full $`0.274353\,\mathrm{ms}`$, build $`0.258824\,\mathrm{ms}`$, query $`0.015529\,\mathrm{ms}`$; linear count ratio $`17.6667`$. Attention-inclusive floors: full $`0.284122\,\mathrm{ms}`$, build $`0.267519\,\mathrm{ms}`$, fresh $`0.016603\,\mathrm{ms}`$. Warm byte floor $`0.1173728\,\mathrm{ms}`$; resident proxy ratio about $`2.42`$. Strict total-use threshold $`m\gt 1.604321`$ in that proxy; host cache adds $`0.468114\,\mathrm{ms}`$ and removes this crossing. A low lookup hit rate does not determine one-use document frequency. |
 | Fusion | Activation $`147{,}456\,\mathrm B`$ or $`144\,\mathrm{KiB}`$; stipulated two round trips $`576\,\mathrm{KiB/layer}`$; twelve layers $`7.077888\,\mathrm{MB}`$ or $`6.75\,\mathrm{MiB}`$. Byte floor $`3.538944\,\mu\mathrm s`$; no established eighteen-percent cached-query latency gain. FlashAttention's separate $`20.0\to17.4`$ minute training table means $`13\%`$ less time or about $`14.94\%`$ greater speed. |
 | Global padding warning | Actually executing all $`2{,}000`$ positions for $`50`$ uncached pairs gives $`2.2\times10^{13}`$ parameter-linear FLOP and $`64.705882\,\mathrm{ms}`$; factor $`7.8125`$. Including the same bidirectional attention gives $`86.390588\,\mathrm{ms}`$, about tenfold the $`256`$-position baseline. Merely reserving a long KV buffer is not this computation. |
 | Index scale | Raw fp32 vectors: $`10`$M cost $`30.72\,\mathrm{GB}`$; $`500`$M cost $`1.536\,\mathrm{TB}`$, $`19.2`$ times $`80\,\mathrm{GB}`$. Scalar int4 still costs $`192\,\mathrm{GB}`$ at that scale, but hypothetical $`64`$-byte PQ codes plus eight-byte IDs cost $`36\,\mathrm{GB}`$ before other overhead/raw refinement. Compression is not mathematically excluded. |

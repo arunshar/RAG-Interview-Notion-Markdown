@@ -29,8 +29,8 @@ The three blocks below preserve the source layout and all 57 primary symbol-mean
 | $`x`$ | User input | Marks the pipeline input before encoding |
 | $`q=\Phi(x)`$ | Query issued to the retriever | Connects user input to retrieval geometry |
 | $`g(x)`$ | Retrieval gate with values $`\{0,1\}`$ | Decides whether retrieval runs |
-| $`\operatorname{RET}`$ | Retriever | Names the evidence-selection component |
-| $`\operatorname{GEN}_{\theta}`$ | Generator | Names the answer-producing component |
+| $`\mathop{\mathrm{RET}}\nolimits`$ | Retriever | Names the evidence-selection component |
+| $`\mathop{\mathrm{GEN}}\nolimits_{\theta}`$ | Generator | Names the answer-producing component |
 | $`c_1,\ldots,c_k`$ | Retrieved contexts | Identifies evidence passed downstream |
 | $`y`$ | Generated answer | Marks the pipeline output |
 | $`k`$ | Contexts reaching the generator | Sets the final context depth |
@@ -53,20 +53,20 @@ The three blocks below preserve the source layout and all 57 primary symbol-mean
 | Symbol | Meaning | Why it matters |
 | --- | --- | --- |
 | $`s(q,d)`$ | Relevance score | Orders a document for a query |
-| $`\operatorname{rank}(d)`$ | Position in a ranked list | Connects a score to rank-based metrics |
+| $`\mathop{\mathrm{rank}}\nolimits(d)`$ | Position in a ranked list | Connects a score to rank-based metrics |
 | $`f`$ | Term frequency | Controls lexical evidence strength |
 | $`k_1,b`$ | Best Matching 25 (BM25) saturation and length normalization | Control repetition and document-length effects |
-| $`\operatorname{avgdl}`$ | Mean document length | Anchors BM25 length normalization |
+| $`\mathop{\mathrm{avgdl}}\nolimits`$ | Mean document length | Anchors BM25 length normalization |
 | $`E_Q,E_P`$ | Query and passage encoders | Map both sides into retrieval space |
 | $`L_q,L_p`$ | Query and passage token lengths | Set encoder and interaction cost |
-| $`\operatorname{MaxSim}`$ | Late-interaction operator | Aggregates token-level similarity |
-| $`\operatorname{MRR}`$ | Mean reciprocal rank of the first relevant hit | Permits multiple relevant items; zero when none appears within cutoff |
-| $`\operatorname{DCG}`$ | Discounted Cumulative Gain | Discounts useful results by rank |
-| $`\operatorname{nDCG}@k`$ | Normalized discounted cumulative gain at a declared cutoff | State gain, judgment universe, tie and zero-IDCG policies |
+| $`\mathop{\mathrm{MaxSim}}\nolimits`$ | Late-interaction operator | Aggregates token-level similarity |
+| $`\mathop{\mathrm{MRR}}\nolimits`$ | Mean reciprocal rank of the first relevant hit | Permits multiple relevant items; zero when none appears within cutoff |
+| $`\mathop{\mathrm{DCG}}\nolimits`$ | Discounted Cumulative Gain | Discounts useful results by rank |
+| $`\mathop{\mathrm{nDCG}}\nolimits@k`$ | Normalized discounted cumulative gain at a declared cutoff | State gain, judgment universe, tie and zero-IDCG policies |
 | $`P@k`$ | Precision at $`k`$ | Measures useful-result density |
 | $`P_k`$ | Segmentation error | Measures chunk-boundary error rather than precision |
-| $`\operatorname{IoU}`$ | Intersection over Union for chunk-span overlap | Measures overlap between predicted and reference spans |
-| $`F_1`$ | $`2PR/(P+R)`$ when $`P+R>0`$ | State zero-denominator and macro/micro averaging policies |
+| $`\mathop{\mathrm{IoU}}\nolimits`$ | Intersection over Union for chunk-span overlap | Measures overlap between predicted and reference spans |
+| $`F_1`$ | $`2PR/(P+R)`$ when $`P+R\gt 0`$ | State zero-denominator and macro/micro averaging policies |
 
 
 ### Block 3: Training, serving, and graph notation
@@ -75,7 +75,7 @@ The three blocks below preserve the source layout and all 57 primary symbol-mean
 | Symbol | Meaning | Why it matters |
 | --- | --- | --- |
 | $`\mathcal{L}`$ | Training loss | Defines the optimization target |
-| $`\tau`$ | Positive softmax temperature $`\tau>0`$ | Relative to fixed scores: smaller sharpens, larger flattens |
+| $`\tau`$ | Positive softmax temperature $`\tau\gt 0`$ | Relative to fixed scores: smaller sharpens, larger flattens |
 | $`D^{\prime}`$ | Retrieved subset in training | Separates training evidence from the full store |
 | $`\lambda(d,x)`$ | Normalized document weight for a stated ensemble | Define candidate support and normalization; not every mixture uses this same convention |
 | $`P_R`$ | Retriever distribution | Describes retrieval preferences |
@@ -114,7 +114,7 @@ The calligraphic symbol $`\mathcal{L}`$ is training loss. Plain $`L`$ counts Tra
 | $`b`$ | BM25 length-normalization parameter | Sub-code bits, total code bits and bytes/parameter must be distinguished by scope |
 | $`N`$ | Vectors in the index | Model parameter count |
 | $`P`$ | Model parameter count | Instance price per hour |
-| $`G`$ | Knowledge graph | Use $`\operatorname{schema}(G)`$ for its schema where confusion is possible |
+| $`G`$ | Knowledge graph | Use $`\mathop{\mathrm{schema}}\nolimits(G)`$ for its schema where confusion is possible |
 
 
 The overload table is a scope rule. It does not authorize swapping meanings within one derivation. Use the surrounding topic to select the intended meaning.
@@ -150,7 +150,7 @@ The overload table is a scope rule. It does not authorize swapping meanings with
 | $`M`$, $`M_0`$, $`m`$ | HNSW upper/base slot parameters and this reference’s PQ subquantizer count |
 | $`b`$ | Distinguish BM25 normalization, bits per sub-code, total code bits and bytes per parameter |
 | $`P@k`$, $`P_k`$, $`P_R`$, $`P`$ | Precision at $`k`$, segmentation error, retriever distribution, and an overloaded parameter or price symbol |
-| $`R@k`$, $`\operatorname{MRR}`$, $`\operatorname{DCG}`$, $`\operatorname{nDCG}@k`$, $`F_1`$ | Distinct evaluation quantities |
+| $`R@k`$, $`\mathop{\mathrm{MRR}}\nolimits`$, $`\mathop{\mathrm{DCG}}\nolimits`$, $`\mathop{\mathrm{nDCG}}\nolimits@k`$, $`F_1`$ | Distinct evaluation quantities |
 | $`s(q,d)`$, $`s`$ | Relevance score and token count |
 | $`\mathcal{L}`$, $`L`$, $`L_q`$, $`L_p`$ | Training loss, Transformer layer count, and query or passage token lengths |
 | $`E_Q`$, $`E_P`$, $`E_q`$, $`E_d`$ | Query and passage encoders versus shared-space embeddings |
@@ -165,7 +165,7 @@ The manifest records 0 numbered figures and 0 numbered tables. The source contai
 3. Conventions text: 8 rules covering bases, units, orientation, and the recurring default.
 ## Whiteboard pack
 ### What to draw
-1. Draw system flow $`x\to q=\Phi(x)\to\operatorname{RET}\to c_{1:k}\to\operatorname{GEN}_\theta\to y`$.
+1. Draw system flow $`x\to q=\Phi(x)\to\mathop{\mathrm{RET}}\nolimits\to c_{1:k}\to\mathop{\mathrm{GEN}}\nolimits_\theta\to y`$.
 2. Separate index, evaluation, training, serving and graph symbols.
 3. Mark local overloads and library-specific parameter names.
 4. Distinguish PQ sub-code bits from total bits and HNSW slots from realized degree.
@@ -179,7 +179,7 @@ Not within one locally defined derivation. This reference uses $`m`$ for PQ and 
 ### 2. Does $`k`$ always mean the same retrieval depth?
 No. $`k`$ can mean contexts reaching the generator or PQ centroids per sub-quantizer, while $`k^{\prime}`$ is retrieval depth before reranking. $`k_1`$ is the BM25 saturation parameter, so the exact mark and local scope choose the meaning.
 ### 3. Which metric symbols are easy to collapse incorrectly?
-$`R@k`$ is Recall at $`k`$, while $`P@k`$ is Precision at $`k`$. $`P_k`$ is segmentation error. $`\operatorname{MRR}`$, $`\operatorname{DCG}`$, $`\operatorname{nDCG}@k`$, $`\operatorname{IoU}`$, and $`F_1`$ also retain separate meanings, so similar letters do not make them interchangeable.
+$`R@k`$ is Recall at $`k`$, while $`P@k`$ is Precision at $`k`$. $`P_k`$ is segmentation error. $`\mathop{\mathrm{MRR}}\nolimits`$, $`\mathop{\mathrm{DCG}}\nolimits`$, $`\mathop{\mathrm{nDCG}}\nolimits@k`$, $`\mathop{\mathrm{IoU}}\nolimits`$, and $`F_1`$ also retain separate meanings, so similar letters do not make them interchangeable.
 ### 4. What defaults apply when a derivation omits units?
 Do not repair a missing definition by guessing. State $`\ln`$ for natural-log quantities such as nats and the displayed BM25 IDF, and $`\log_2`$ for DCG and bit counts. Use explicitly decimal $`\mathrm{GB}`$ or binary $`\mathrm{GiB}`$. Milliseconds, QPS and dollars/query are convenient defaults only when dimensionally appropriate; stage wall time is not automatically billable device time.
 ### 5. Is $`d=768`$ a universal requirement?
