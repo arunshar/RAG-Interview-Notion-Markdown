@@ -347,7 +347,7 @@ The source scenario reports recall flat through a measured $`6\%`$ tombstone fra
 6. Compare end-to-end $`p_{95}`$ and TTFT with index-only $`p_{50}`$ and $`p_{95}`$ at production concurrency.
 7. Compare card freshness with datasheet freshness to verify one source-to-retrieval path.
 8. Read store ownership, write access, review status, and poisoned-chunk blast radius together.
-9. Read vector compression, link share, fleet memory, and payload on separate lines.
+9. Read vector compression, link share, fleet memory, and payload on separate lines. Correction: the memory line to read here is the reserved index budget $`M_{\mathrm{index,budget}}`$, because Appendix A Section A.8 defines fleet memory $`M_{\mathrm{fleet}}`$ to include payload copies and runtime.
 10. Assign every missing quantity to an owner rather than leaving the field silently blank.
 #### Cross-record consistency matrix
 

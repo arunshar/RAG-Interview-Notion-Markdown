@@ -2,7 +2,9 @@
 
 This repository packages a Notion study edition of **The RAG Interview**. The imported title page identifies **Hao Hoang**, **AI Interview Prep**, and **First edition, 2026** as source metadata. Those statements are preserved from the source; they are not an independent verification of identity, edition status, or publication rights.
 
-The GitHub account hosting this export is not presented as the author of the original book.
+This repository and its website edition are unofficial study notes. No affiliation with or endorsement by the author is claimed. The GitHub account hosting this export is not presented as the author of the original book.
+
+Corrections made after the October 2026 review are labeled in the text with "Correction:" and keep the original statement beside them. The author's personal email address is replaced with his public website as the contact route.
 
 - [Original title-page information](book/front-matter/00_01_title_page.md)
 - [Acknowledgments](book/front-matter/00_08_acknowledgments.md)

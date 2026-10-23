@@ -342,7 +342,7 @@ For $`K`$ passage-conditioned candidate segments, a schematic decode-time rankin
 f\!\left(\hat y_t^{(i)}\right)=\log p_\theta\!\left(\hat y_t^{(i)}\mid x,d_i,y_{\lt t}\right)+\sum_G w_Gs_G^{(i)}.
 ```
 
-The weights $`w_G`$ are decode-time choices. Group-normalized model scores are not automatically calibrated truth probabilities. Use a consistent sequence-likelihood or length-normalized convention across candidates; otherwise unequal segment lengths can distort the ranking. This schematic is not a claim that every Self-RAG implementation uses exactly this score.
+The weights $`w_G`$ are decode-time choices. Correction: Self-RAG’s Eq. 3 adds the critique sum to the segment probability $`p`$, and the official code uses the length-normalized probability, the exponential of the mean token log probability, plus the weighted IsRel, IsSup and IsUse scores, so the $`\log p_\theta`$ term above should be that normalized probability (Asai, Wu, Wang, Sil, and Hajishirzi, 2023, arXiv 2310.11511). Group-normalized model scores are not automatically calibrated truth probabilities. Use a consistent sequence-likelihood or length-normalized convention across candidates; otherwise unequal segment lengths can distort the ranking. This schematic is not a claim that every Self-RAG implementation uses exactly this score.
 Why:
 Reflection tokens allow structured decisions without a second free-form critique prompt or string parser, and can place retrieval/support checks within generation. They still require decoding, supervision and validation. FLARE’s ordinary token-confidence gate and a learned support-token score are different signals, neither a factuality guarantee.
 Training and claim limit:

@@ -187,7 +187,7 @@ The worked prior odds are 50 to 1 against the intended concept. To push wrong-co
 #### Duplicate weights
 The worked block has eight demonstrations. Three near-duplicates labeled A have attention logit $`4.0`$. Five diverse examples have logit $`2.0`$ and labels B, B, C, D, A. The unnormalized weights are $`e^{4} = 54.60`$ and $`e^{2} = 7.389`$. Their sum is $`200.74`$. Each duplicate receives $`0.272`$ of the mass. Label A receives $`85.3\%`$ in total. ESS falls to $`4.4`$ despite paying for eight demonstrations. Capping the duplicate cluster at one drops A to $`67.7\%`$. The figure reports $`\mathrm{ESS} = 2.6`$ of 6 after that cap.
 #### Operating rule
-Start with four to eight demonstrations. Treat a request for 32 as a possible format, coverage, or diversity problem. For a pure label-copying kernel baseline, all labels that the policy must be able to output need representation. Ordinary transformer classification can use a prior or instruction-specified labels, so $`k`$ need not exceed the number of labels in general. Cluster the pool and cap one example per near-duplicate group unless frequency represents a real prior. Alert when ESS falls below $`\frac{k}{2}`$. Sweep $`k`$ in $`\{2, 4, 8, 16\}`$ and inspect the slope. A curve that is flat from $`k = 2`$ can indicate that the required concept is absent from the pre-training mixture.
+Start with four to eight demonstrations. Treat a request for 32 as a possible format, coverage, or diversity problem. For a pure label-copying kernel baseline, all labels that the policy must be able to output need representation. Ordinary transformer classification can use a prior or instruction-specified labels, so $`k`$ need not exceed the number of labels in general. Cluster the pool and cap one example per near-duplicate group unless frequency represents a real prior. Alert when ESS falls below $`\frac{k}{2}`$. Correction: on the worked block this rule does not fire before the cap, because ESS $`4.4`$ is above $`8/2=4`$, and it fires only after the cap, because $`2.6`$ is below $`6/2=3`$. The rule therefore detects one dominant neighbor and misses duplication. To catch duplicates, also alert when a near-duplicate cluster of two or more examples holds more than half the kernel mass, which flags the three duplicates that hold $`81.6\%`$ before the cap. Sweep $`k`$ in $`\{2, 4, 8, 16\}`$ and inspect the slope. A curve that is flat from $`k = 2`$ can indicate that the required concept is absent from the pre-training mixture.
 ### 7.6 Gradient descent as inference
 #### The algebraic identity
 Remove the softmax from one attention head. For context representation $`x_i`$, the value projection $`W_V x_i`$ and key projection $`W_K x_i`$ form an outer product. Summing across tokens creates a matrix that acts on the query $`q`$. Split ordinary context tokens from demonstration tokens. The demonstration tokens contribute an additive matrix $`\Delta W_{\mathrm{ICL}}`$. Gradient descent on a linear layer under squared error also accumulates error-input outer products. Under the linear-attention identification, the two objects are the same algebraic shape. Irie et al. established the dual form. Dai et al. called the demonstration contribution a meta-gradient produced during the forward pass.
@@ -250,16 +250,18 @@ flowchart TD
 ```
 ```plain text
 (b) ICL accuracy
-high  *  3-shot
-      |\
-      | \        *
-      |  \        \
-      *---\--------*  3-shot
-      |    \        \
-      |     \--------  1-shot
+high  *
+      | \___
+      |     \___
+      |         \___*  3-shot (upper line)
+      *
+      | \___
+      |     \___
+      |         \___*  1-shot (lower line)
 low   +----------------------> fraction of test-input words shuffled
       0                      1
 
+The upper line is 3-shot and the lower line is 1-shot.
 Both trends fall. The magnitudes are schematic.
 ```
 > Figure $`7.2`$: (a) Demonstration selection is retrieve-then-rerank with the generator as the reranker: a cheap similarity stage builds a pool, and one prefill pass per candidate picks the demonstrations that minimize the model’s conditional entropy on the test input. (b) Corrupting only the test input, while holding the demonstrations fixed, degrades ICL accuracy at both 1 and 3 shots - the experiment that locates the bottleneck on the test-input side (Peng et al., 2024). The trend is the finding. The magnitudes here are schematic.
@@ -503,7 +505,7 @@ Keep a house template for maintainability unless a per-model override clears sam
 | Effective cost | $`15.4\,\mathrm{ms}`$ per effective demo | Derived in the worked example |
 | Deduplicated mass | $`\frac{61.99}{91.54} = 67.7\%`$ | Figure ESS becomes $`2.6`$ of 6 |
 | Shot default | $`k`$ from 4 to 8 | Classification-shaped starting range |
-| ESS alert | below $`\frac{k}{2}`$ | Duplicate-concentration threshold |
+| ESS alert | below $`\frac{k}{2}`$ | Single-dominant-neighbor threshold that misses the $`4.4`$-of-8 duplicate case, so pair it with a cluster-mass alert above one half (corrected from duplicate-concentration threshold) |
 | Shot sweep | 2, 4, 8, 16 | Diagnostic slope check |
 | Gradient scenario | $`3{,}000`$ prompt tokens, $`1{,}440`$ demo tokens, $`10{,}000`$ daily queries | Motivation for prompt-to-adapter conversion |
 | Linear-attention output | $`F(q) = \left[\sum_i (W_V x_i)(W_K x_i)^\top\right]q`$ | Context builds the operator applied to the query |

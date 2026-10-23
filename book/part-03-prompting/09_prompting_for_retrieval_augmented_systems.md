@@ -687,7 +687,7 @@ Start with the four prompt rungs. Completion recalls from weights, instruction s
 ### 1. Is RAG just in-context learning with a vector database?
 Mechanically, both condition frozen generator weights on context tokens. Demonstrations can be query-selected just as evidence can; distinguish their role and provenance rather than claiming a universal binding-time difference. A vector database is one retrieval implementation, not the definition of RAG.
 ### 2. Will self-consistency turn 60% grounded question-answering accuracy into 75%?
-No. Majority-of-five reaches $`68.3\%`$, while majority-of-nine reaches $`73.3\%`$. Voting can recover probability mass already present across independent paths, but it cannot correct a wrong or missing passage that biases every sample.
+No. Majority-of-five reaches $`68.3\%`$, while majority-of-nine reaches $`73.3\%`$. Voting can recover probability mass already present across independent paths, but it cannot correct a wrong or missing passage that biases every sample. Correction: under independent errors about $`11`$ samples reach $`75.3\%`$, so the target is reachable in principle, but a wrong or missing passage that biases every sample correlates the errors and can cap the gain well below that.
 ### 3. When does more scaffolding make results worse?
 It gets worse when the scaffold adds many model-executed stages, weak evaluators, irreversible pruning, or systematic comparators. Thirty calls at $`98\%`$ per-call reliability execute together only $`54.5\%`$ of the time. A chance scorer that keeps 2 of 3 branches preserves the correct path through three levels only $`29.6\%`$ of the time.
 ### 4. When does more retrieval make results worse?

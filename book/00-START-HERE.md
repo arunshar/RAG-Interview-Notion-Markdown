@@ -1,4 +1,5 @@
 # The RAG Interview
+Unofficial study notes on *The RAG Interview* by Hao Hoang. No affiliation with or endorsement by the author is claimed, and rights in the source work remain with the author. See [NOTICE.md](../NOTICE.md).
 ## Book index
 This Notion edition links forty-one chapters, nine front-matter units and seven appendices: $`41+9+7=57`$ content units. This start page, Reading Routes and Source Index are three additional navigation pages, making sixty indexed pages. Links open Notion pages; the titles and source page labels do not imply downloadable Markdown files or current Notion page numbers. Use the route guide for selected study and the source index for original-edition spans and declared prose-only reading estimates.
 [01-READING-ROUTES](01-READING-ROUTES.md) · [98-SOURCE-INDEX](98-SOURCE-INDEX.md)

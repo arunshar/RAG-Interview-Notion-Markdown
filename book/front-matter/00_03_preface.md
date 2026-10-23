@@ -10,7 +10,7 @@ This preface explains how the book turns Retrieval-Augmented Generation (RAG) fr
 ## The story
 Imagine a hospital where a physician answers questions from memory and a records clerk fetches patient charts. The physician is the language model. The records clerk is the retriever. Together they form the RAG team.
 A component-only description retrieves the top $`k`$ results and passes them to a generator. A design must also ask whether evidence is needed, which sources are eligible, and whether answering without retrieval is permitted by the product’s support and safety requirements.
-In the cited Mallen et al. setting, retrieval changed roughly $`10\%`$ of otherwise-correct answers into wrong ones. That denominator is the correct closed-book subset, not every user request, and the rate is not universal. Distracting evidence can hurt, while suitable evidence can help; measure the actual model, corpus and task.[\[1\]](../part-01-landscape/01_what_a_rag_interview_actually_tests.md)
+In the cited Mallen et al. setting, retrieval changed roughly $`10\%`$ of otherwise-correct answers into wrong ones. That denominator is the correct closed-book subset, not every user request, and the rate is not universal. Correction: Mallen et al. (2023, arXiv 2212.10511) found that for about $`10\%`$ of PopQA questions, retrieval augmentation made GPT-3 (text-davinci-003) answer incorrectly a question it answered correctly without retrieval. The $`10\%`$ is a share of all questions, not of the correct closed-book subset. Distracting evidence can hurt, while suitable evidence can help; measure the actual model, corpus and task.[\[1\]](../part-01-landscape/01_what_a_rag_interview_actually_tests.md)
 The hospital must diagnose failures across the full care path. A quality drop can begin with the question, the chart search, the ranking, the packet given to the physician, or the final answer. Knowing that the team uses retrieval does not reveal which stage caused an end-to-end accuracy regression, which means a decline in the final measured answer quality.
 The relevant literature spans retrieval, language modeling, databases and system engineering. Individual papers and tools can cross these boundaries; no single source should be assumed either complete or incapable of discussing neighboring stages.
 The source contents enumerate twelve parts, forty-one chapters and 247 main-chapter subsections. The book advocates first-principles explanation, worked arithmetic, practical choices and interview practice. This is a teaching template, not a verified claim that every revised Notion section contains identical blocks.
@@ -116,7 +116,7 @@ The hospital metaphor ends with one operating principle. A fluent description of
 - What it is: Decide whether and how to retrieve under the task’s evidence requirements.
 - Why it exists: External material can help or distract; a model’s apparent confidence is not sufficient proof of truth.
 - Failure without it: The system assumes every retrieval is beneficial or bypasses evidence when citations/current facts are mandatory.
-- Evidence: The roughly ten-percent harm figure is conditional on the cited study’s otherwise-correct subset, not a universal production rate.[\[1\]](../part-01-landscape/01_what_a_rag_interview_actually_tests.md)
+- Evidence: The roughly ten-percent harm figure is conditional on the cited study’s otherwise-correct subset, not a universal production rate.[\[1\]](../part-01-landscape/01_what_a_rag_interview_actually_tests.md) Correction: Mallen et al. (2023, arXiv 2212.10511) found that for about $`10\%`$ of PopQA questions, retrieval augmentation made GPT-3 (text-davinci-003) answer incorrectly a question it answered correctly without retrieval. The figure is a share of all questions, so it is not conditional on an otherwise-correct subset.
 The common recipe embeds documents, searches for nearest neighbors, and places the top k results in the prompt. That recipe names components. It does not state a decision rule.
 The source presents retrieval as common and component-only explanations as insufficient. It supplies no population study establishing that almost every language-model product includes retrieval or a universal date when interview expectations changed.
 Production interviews probe this gap. They ask when not to retrieve. They also ask why more documents can increase hallucination.
@@ -219,7 +219,7 @@ Retrieval-Augmented Generation is not just embed, search, and put the top result
 ### 1. Why is `embed, search, add top k` an incomplete RAG design answer?
 It names components but omits the decision that controls whether the system should retrieve. A strong answer starts with when retrieval helps, when it can hurt, and how the system will make or evaluate that choice.
 ### 2. When would you not retrieve?
-Compare matched retrieval/no-retrieval actions under the product’s evidence policy. The cited roughly $`10\%`$ harm figure concerns an otherwise-correct subset in one study; it is not a rule that every popular fact should bypass retrieval. A current or source-backed answer may require retrieval even when the model seems confident.
+Compare matched retrieval/no-retrieval actions under the product’s evidence policy. The cited roughly $`10\%`$ harm figure concerns an otherwise-correct subset in one study; it is not a rule that every popular fact should bypass retrieval. Correction: Mallen and colleagues (2023, arXiv 2212.10511) found that for about $`10\%`$ of PopQA questions, retrieval augmentation made GPT-3 (text-davinci-003) answer incorrectly a question it answered correctly without retrieval. The $`10\%`$ is a share of all questions, not of an otherwise-correct subset. A current or source-backed answer may require retrieval even when the model seems confident.
 ### 3. Why can adding documents increase hallucination?
 Retrieved text becomes context, not guaranteed truth. Distracting or misleading material can steer the generator away from a supported answer, so the system must evaluate evidence selection and answer grounding.
 ### 4. Why can the HNSW graph dominate after quantization?
@@ -232,7 +232,7 @@ Check corpus/ACL freshness, workload composition, labels, versions and stage tra
 | Number | Context | Meaning |
 | --- | --- | --- |
 | 2023 | Mallen et al. attribution | The year attached to the retrieval-harm result |
-| Roughly $`10\%`$ | Cited otherwise-correct subset | Conditional retrieval harm in a reported setting |
+| Roughly $`10\%`$ | All PopQA questions (corrected from cited otherwise-correct subset) | For this share of questions, retrieval changed a correct GPT-3 (text-davinci-003) answer into a wrong one in the cited measurement (corrected from conditional retrieval harm in a reported setting) |
 | Five stages | Production pipeline | The example asks which stage owns an end-to-end regression |
 | Four percentage points | Illustrative absolute accuracy drop | Different from four percent relative decline |
 | 50 years | Information-retrieval literature | The preface describes this depth in ranking and evaluation |

@@ -195,7 +195,7 @@ The component walk loses because ingest, chunk, embed, index, retrieve, rerank, 
 
 | Decision | What it is | Why it exists | What breaks without it | Stated cost or complexity |
 | --- | --- | --- | --- | --- |
-| 1. When | Compute a gate $`g(x)\in\{0,1\}`$. | Some queries need retrieval and some are harmed by it. | Always retrieving flips roughly 10 percent of otherwise-correct answers to wrong in the cited Mallen et al. (2023) result. | A classifier, generator threshold, or search-token scheme adds control work. |
+| 1. When | Compute a gate $`g(x)\in\{0,1\}`$. | Some queries need retrieval and some are harmed by it. | Always retrieving flips a correct answer to wrong on about 10 percent of all PopQA questions in the cited Mallen et al. (2023) result (corrected from roughly 10 percent of otherwise-correct answers). | A classifier, generator threshold, or search-token scheme adds control work. |
 | 2. Where | Form $`D=D_1\cup\cdots\cup D_m`$, then select $`D_j\subseteq D`$. | Different stores have different authority and freshness. | Conflicting stores give the generator a contradiction that it may resolve silently. | Routing is cheap in the example, but conflict is not. |
 | 3. What | Form $`q=\Phi(x)`$ by compression, expansion, rewriting, or decomposition. | The literal query may omit conversational referents or hide multiple needs. | The correct evidence never enters the candidate set. | Rewriting can require another model decode. |
 | 4. How | Choose scorer $`s(q, d)`$, index, and candidate depth $`k'`$. | The system needs a searchable ranking mechanism. | Recall, memory, and reranking cost become accidental. | Sparse, dense, cross-encoder, and late-interaction families have different compute and storage. |
@@ -431,7 +431,7 @@ A(\rho) = A^{*} - (1-\rho)L_{\text{loss}}
 
 The numerator is only the improvement over the already-best compromise. The denominator includes every wrong route, including closed-book handling of a multi-hop query or an expensive loop on a known fact.
 The source names UAR’s four-criterion tree, Self-RAG’s distilled reflection tokens, and Adaptive-RAG’s silver-label supervision as examples of controller engineering.
-Always retrieve, rerank, and iterate is a legitimate fallback when $`D`$ is small and no buildable router clears break-even. It still pays the most expensive branch on all traffic and inherits the roughly 10 percent retrieval flip rate on identifiable parametric-sufficient queries.
+Always retrieve, rerank, and iterate is a legitimate fallback when $`D`$ is small and no buildable router clears break-even. It still pays the most expensive branch on all traffic and inherits the roughly 10 percent retrieval flip rate on identifiable parametric-sufficient queries. Correction: Mallen et al. (2023, arXiv 2212.10511) measured the 10 percent as a share of all PopQA questions for GPT-3 (text-davinci-003), so treating it as a rate on parametric-sufficient queries is an assumption.
 #### Worked payoff matrix
 
 
@@ -560,7 +560,7 @@ flowchart LR
 I start with five decisions: when to retrieve, where to search, what query to issue, how to rank candidates, and what evidence to present. The last decision often owns the latency because generation pays for every presented token. I name the least connected graph that fixes a measured failure, then choose text, embeddings, or parameters based on citation and update needs. Before selecting an index, I ask for chunk count, peak traffic, and latency. Finally, I segment the workload and route only when the measured dividend exceeds the controller’s misroute penalty.
 ## Interview traps
 ### 1. “Why not begin with the standard ingest, chunk, embed, index, retrieve, rerank pipeline?”
-That walk lists components shared by almost every design, so it does not expose choices. It also has no place for “do not retrieve,” even though retrieval can flip roughly 10 percent of otherwise-correct answers.
+That walk lists components shared by almost every design, so it does not expose choices. It also has no place for “do not retrieve,” even though retrieval can flip roughly 10 percent of otherwise-correct answers. Correction: Mallen and colleagues (2023, arXiv 2212.10511) found that for about 10 percent of PopQA questions, retrieval augmentation made GPT-3 (text-davinci-003) answer incorrectly a question it answered correctly without retrieval. The 10 percent is a share of all questions, not of otherwise-correct answers.
 ### 2. “Why not call every serious production system modular RAG?”
 Modular describes connectivity rather than quality. A loop multiplies control, retrieval, reranking, and intermediate-generation cost by the round count, so use the least connected graph that fixes a measured failure and instrument each added stage.
 ### 3. “Would a single vector per document solve prefill latency?”
@@ -578,7 +578,7 @@ No. The original menu's oracle dividend is $`2.9`$ percentage points. Under equa
 | 38 minutes | Time available in the opening design prompt. |
 | 40 loops | Number of similar loops the staff interviewer has run. |
 | 20 minutes, 6 components, 0 decisions | The weak component-first pattern. |
-| Roughly 10 percent | Correct closed-book answers flipped wrong by retrieval in the cited measurement. |
+| Roughly 10 percent | Share of all PopQA questions on which retrieval flipped a correct closed-book answer to wrong in the cited measurement (corrected from a share of correct closed-book answers). |
 | 5 decisions | When, where, what, how, and present. |
 | 10 million chunks | Worked support corpus size. |
 | 400 tokens | Worked chunk length. |
@@ -750,7 +750,7 @@ No. The original menu's oracle dividend is $`2.9`$ percentage points. Under equa
 | $`0.22`$, $`0.36`$, $`0.38`$ | Tabular or numeric row. |
 | $`0.371`$, $`0.601`$, $`0.631`$ | Fixed-policy column accuracies. |
 | $`0.660`$ and $`0.029`$ | Oracle accuracy and adaptive dividend. |
-| Roughly 10 percent and 100 percent | Retrieval flip rate and traffic share paid by an always-maximal pipeline. |
+| Roughly 10 percent and 100 percent | Retrieval flips as a share of all PopQA questions (corrected from retrieval flip rate) and traffic share paid by an always-maximal pipeline. |
 | $`100{,}000`$ queries per day, 1 week, and 1 quarter | Worked traffic, labeling window, and router-versus-menu decision horizon. |
 | 7 billion parameters and $`14\,\mathrm{GB}`$ | Adaptive generator. |
 | 200 question tokens, $`8\,\mathrm{ms}`$, 60 output tokens, $`252\,\mathrm{ms}`$, $`260\,\mathrm{ms}`$ | No-retrieval path. |

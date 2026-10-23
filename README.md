@@ -2,6 +2,8 @@
 
 A complete, structured study collection for retrieval-augmented generation interviews and system design.
 
+Unofficial study notes on *The RAG Interview* by Hao Hoang. No affiliation with or endorsement by the author is claimed, and rights in the source work remain with the author. See [NOTICE.md](NOTICE.md).
+
 **41 chapters · 9 front-matter pages · 7 appendices · 3 navigation pages**
 
 [Start reading](book/00-START-HERE.md) · [Choose a reading route](book/01-READING-ROUTES.md) · [Full contents](docs/CONTENT_MAP.md) · [Download the Notion import](exports/RAG-Interview-Notion-Markdown.zip?raw=true)
