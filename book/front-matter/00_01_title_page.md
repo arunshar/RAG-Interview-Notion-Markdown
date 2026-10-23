@@ -27,7 +27,7 @@ Think of the title page as the signboard at the entrance to an interview route. 
 | AI/ML | Artificial intelligence and machine learning in this guide | The source focus line remains exact even though its abbreviation is decoded here |
 | Institute mark | `AI Interview Prep` | The lower-right mark repeats the institute name |
 | Tagline | `Ace Your Next Opportunity` | This line accompanies the institute mark |
-| Contact channel | `hao.hoang.ai@gmail.com` | This is the listed email address |
+| Contact route | `https://haohoang.is-a.dev/` | This website is the contact route for the author |
 | Contact channel | `haohoang.is-a.dev` | This is the listed website text |
 | Contact channel | `LinkedIn` | This is a listed platform |
 | Contact channel | `Substack` | This is a listed platform |
@@ -61,7 +61,7 @@ Preserve the edition/year label and quoted focus. Explain AI/ML separately rathe
 **Failure without it.** Omitting the tagline would leave a visible source item uncovered.
 **Cost and complexity.** The mark is unnumbered and has no technical metric.
 ### 6. Contact channels
-**What.** The footer lists `hao.hoang.ai@gmail.com`, `haohoang.is-a.dev`, `LinkedIn`, and `Substack`, separated by dots.
+**What.** The footer lists an email address, the website `https://haohoang.is-a.dev/`, `LinkedIn`, and `Substack`, separated by dots.
 **Why.** Together, these entries make up the listed footer row.
 **Failure without it.** Treating the footer as technical content would misclassify its purpose.
 **Cost and complexity.** The footer contains four channels. It states no technical cost.

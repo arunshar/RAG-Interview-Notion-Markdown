@@ -286,7 +286,7 @@ Approximate study-era labels such as $`4\mathrm{k}`$ mean about four thousand to
 - Let $`d_1,\ldots,d_n`$ be ranked candidates. Descending order places $`d_1`$ first and $`d_n`$ last.
 - Define the outside-in variant used here by $`\mathop{\mathrm{pos}}\nolimits(d_{2j-1})=j`$ and $`\mathop{\mathrm{pos}}\nolimits(d_{2j})=n-j+1`$, for valid ranks. It puts rank one at the start and rank two at the end.
 - For ten items the final rank order is $`(1,3,5,7,9,10,8,6,4,2)`$.
-- LongContextReorder is the chapter’s implementation example, but orientation and surrounding prompt assembly must be checked for the actual library version. The explicitly defined permutation above governs this chapter’s calculations.
+- LongContextReorder is the chapter’s implementation example, but orientation and surrounding prompt assembly must be checked for the actual library version. Correction: LongContextReorder reverses the list and then alternates front inserts and appends, so it fills both ends but puts rank one first only for an odd-length list, and for ten documents it yields $`(2,4,6,8,10,9,7,5,3,1)`$. When primacy beats recency, reverse its output for even lengths or use the explicit mapping above. The explicitly defined permutation above governs this chapter’s calculations.
 - Filling both ends is a heuristic extension of start placement, not a proof of optimal assignment.
 #### Why
 - With two slots at each edge and at least four items, this outside-in variant places ranks one and three in primacy, two and four in recency, and the lower ranks in the trough.
@@ -445,10 +445,10 @@ a_{\mathrm{gold,toy\ calibrated}}&=\frac{e^3}{2e+e^3}\approx0.786986042.
 The gold attention share increases by about $`33.512328`$ percentage points, from $`45.186276\%`$ to $`78.698604\%`$; this is not a measured answer-accuracy gain. The raw distractors share about $`54.813724\%`$. Keep the exponentials unrounded in the normalization: the calibrated sum is about $`25.5221`$, not $`25.53`$ obtained from summing rounded terms. With an estimated bias $`\widehat b`$, the remaining logits are $`c+(b-\widehat b)`$, so exact content recovery requires the additive model and correct bias. Hsieh’s document-attention algorithm above is distinct.
 ### 30.8 Training and architecture fixes
 #### IN2 training
-- The chapter reports An et al. (2024) using IN2 position-rotated fine-tuning: answer-bearing material of roughly $`120`$ tokens is placed at varied locations in contexts of about $`4\mathrm{K}`$ to $`32\mathrm{K}`$ tokens.
+- The chapter reports An et al. (2024) using IN2 position-rotated fine-tuning: answer-bearing material of roughly $`120`$ tokens is placed at varied locations in contexts of about $`4\mathrm{K}`$ to $`32\mathrm{K}`$ tokens. Correction: the IN2 paper uses a segment of about $`128`$ tokens and treats a $`128`$-token segment as the minimum information unit (An et al., 2024, arXiv 2404.16811).
 - The construction should make the designated evidence necessary and sufficient for the labeled answer. Rotation supplies opportunities for evidence at different positions; it does not prove equal effective gradients or perfect utilization at every token.
 - A two-segment variant tests integration across separated evidence. Its piece lengths and sampling dependence must be specified before counting placements.
-- The resulting Mistral-7B-based FILM-7B is reported comparable to GPT-4-Turbo on the cited long-context tasks, not universally equivalent across models, tasks or production conditions.
+- The resulting Mistral-7B-based FILM-7B is reported comparable to GPT-4-Turbo on the cited long-context tasks, not universally equivalent across models, tasks or production conditions. Correction: An et al. report FILM-7B comparable to or better than GPT-4-Turbo on their VaL Probing retrieval probes, but on real-world long-context tasks FILM-7B averages $`39.9`$ against $`44.7`$ for GPT-4-Turbo, a $`4.8`$-point gap (An et al., 2024, arXiv 2404.16811).
 #### DIFF Transformer
 - The chapter reports differential attention using two learned query-key projection groups over the same allowed positions.
 - Distinct learned projections do not make their resulting maps statistically independent.
@@ -483,20 +483,21 @@ The identical common component $`P`$ cancels exactly at $`\lambda=1`$, not for a
 - Evidence rotation does not itself remove a fixed system-role prefix or identify that prefix as the cause of residual primacy.
 - Differential attention needs its required parameterization and training plan, not merely a setting name.
 #### Worked arithmetic
-- As an explicitly simplified counting grid, reserve a $`32{,}000`$-token region entirely for placement and use non-overlapping full $`120`$-token slots. There are $`\lfloor32{,}000/120\rfloor=266`$ slots and $`80`$ unused tokens.
-- This is not the number of all possible contiguous starts, which is $`32{,}000-120+1=31{,}881`$, and is not a reconstruction of the exact IN2 sampling protocol. Instructions, other text and segment boundaries can reduce the usable region.
-- One uniformly selected grid slot has probability $`1/266\approx0.37593985\%`$ of being the designated evidence slot.
+- As an explicitly simplified counting grid, reserve a $`32{,}000`$-token region entirely for placement and use non-overlapping full $`120`$-token slots. There are $`\lfloor32{,}000/120\rfloor=266`$ slots and $`80`$ unused tokens. Correction: with the paper’s $`128`$-token segment, the grid has $`\lfloor32{,}000/128\rfloor=250`$ slots and no unused tokens, or $`256`$ slots for a $`32{,}768`$-token window.
+- This is not the number of all possible contiguous starts, which is $`32{,}000-120+1=31{,}881`$, and is not a reconstruction of the exact IN2 sampling protocol. Instructions, other text and segment boundaries can reduce the usable region. Correction: with the paper’s $`128`$-token segment, all contiguous starts number $`32{,}000-128+1=31{,}873`$.
+- One uniformly selected grid slot has probability $`1/266\approx0.37593985\%`$ of being the designated evidence slot. Correction: with $`250`$ slots, that probability is $`1/250=0.40\%`$.
 - For two distinct full slots sampled without replacement, the number of unordered pairs is:
 
 ```math
 \binom{266}{2}=\frac{266\times265}{2}=35{,}245.
 ```
 
-- Labeled ordered distinct placements instead number $`266\times265=70{,}490`$. Two independent ordered draws with replacement give $`266^2=70{,}756`$, including collisions. These are different experiments.
-- Under two distinct uniformly selected slots, a particular slot is selected with probability $`2/266\approx0.75187970\%`$, not $`1/266`$.
+- Correction: with the paper’s $`128`$-token segment and $`250`$ slots, the unordered count is $`\binom{250}{2}=250\times249/2=31{,}125`$.
+- Labeled ordered distinct placements instead number $`266\times265=70{,}490`$. Two independent ordered draws with replacement give $`266^2=70{,}756`$, including collisions. These are different experiments. Correction: with $`250`$ slots, the ordered distinct count is $`250\times249=62{,}250`$, and ordered draws with replacement give $`250^2=62{,}500`$.
+- Under two distinct uniformly selected slots, a particular slot is selected with probability $`2/266\approx0.75187970\%`$, not $`1/266`$. Correction: with $`250`$ slots, that probability is $`2/250=0.80\%`$.
 - These two-full-slot counts do not apply unchanged if one $`120`$-token segment is split into shorter pieces.
 - A fixed system role occurring in all examples, occupancy of offset $`2{,}000`$, and the event “this slot contains designated answer evidence” are different random events. Their probabilities do not directly measure comparative supervision strength.
-- The numerical ratio between fixed one-slot placement and one-of-$`266`$ evidence placement is $`266`$, or about $`2.425`$ decimal orders, but it is not evidence that gradients or learning are that much flatter.
+- The numerical ratio between fixed one-slot placement and one-of-$`266`$ evidence placement is $`266`$, or about $`2.425`$ decimal orders, but it is not evidence that gradients or learning are that much flatter. Correction: with the paper’s $`250`$ slots, the ratio is $`250`$, or about $`2.398`$ decimal orders.
 #### Stated cost and complexity
 - Budget an actual IN2-style training and evaluation run for the target checkpoint, sampling broadly over valid evidence locations.
 - A production-skewed sampling law trades uniform coverage for frequent-case emphasis; measure both rather than claiming either is automatically best.
@@ -686,12 +687,12 @@ IN2 changes evidence-location sampling during training. Differential attention c
 | Calibrated exponentials and sum | $`e^3\approx20.085537`$; $`e\approx2.718282`$; $`Z\approx25.522101`$ | Derived | Not a sum of rounded terms giving $`25.53`$ |
 | Calibrated gold mass | $`78.698604\%`$ gold; gain $`33.512328`$ points | Exact-bias toy | Neither an empirical accuracy gain nor the original calibration implementation |
 | MS-PoE update cost | No fine-tuning or added learned parameters; default ratios $`1.2`$–$`1.8`$ | Original MS-PoE procedure | Assign during prefill and hold through that decode; not once globally per model |
-| IN2 context and segment | About $`4\mathrm{K}`$–$`32\mathrm{K}`$ contexts and $`120`$-token evidence | Chapter-reported training scale | Sampling opportunities do not guarantee equal effective gradients |
+| IN2 context and segment | About $`4\mathrm{K}`$–$`32\mathrm{K}`$ contexts and about $`128`$-token evidence (corrected from $`120`$-token evidence) | Chapter-reported training scale | Sampling opportunities do not guarantee equal effective gradients |
 | Buried evidence example | Offset $`18{,}000`$ in $`32{,}000`$ tokens | Motivation example | Natural training data need not assign uniform importance there |
-| Non-overlapping IN2 positions | $`266`$ grid slots; $`80`$ unused tokens | Explicit simplified counting grid | All contiguous starts instead number $`31{,}881`$ before other reservations |
-| Per-position occupancy | $`1/266\approx0.37593985\%`$ | One designated evidence slot | Two distinct selected slots give marginal inclusion $`2/266\approx0.75187970\%`$ |
-| Two-position combinations | $`35{,}245`$ unordered distinct; $`70{,}490`$ ordered distinct | Without replacement | Independent ordered draws with replacement instead give $`70{,}756`$, including collisions |
-| Training models | Mistral-7B, FILM-7B, GPT-4-Turbo | Chapter-reported experiment | Comparability is limited to the cited tasks and settings |
+| Non-overlapping IN2 positions | $`250`$ grid slots with no unused tokens (corrected from $`266`$ grid slots; $`80`$ unused tokens) | Explicit simplified counting grid | All contiguous starts instead number $`31{,}873`$ before other reservations (corrected from $`31{,}881`$) |
+| Per-position occupancy | $`1/250=0.40\%`$ (corrected from $`1/266\approx0.37593985\%`$) | One designated evidence slot | Two distinct selected slots give marginal inclusion $`2/250=0.80\%`$ (corrected from $`2/266\approx0.75187970\%`$) |
+| Two-position combinations | $`31{,}125`$ unordered distinct and $`62{,}250`$ ordered distinct (corrected from $`35{,}245`$ unordered distinct; $`70{,}490`$ ordered distinct) | Without replacement | Independent ordered draws with replacement instead give $`62{,}500`$ (corrected from $`70{,}756`$), including collisions |
+| Training models | Mistral-7B, FILM-7B, GPT-4-Turbo | Chapter-reported experiment | FILM-7B is comparable on the VaL Probing tasks but trails GPT-4-Turbo $`39.9`$ to $`44.7`$ on real-world long-context tasks (corrected from comparability is limited to the cited tasks and settings) |
 | Deadline comparison | Six weeks versus multiple months | Planning scenario | Not a demonstrated universal schedule or impossibility of checkpoint adaptation |
 | Study dates | 2021, 2023, 2024 | Source attributions | Method mechanics for MS-PoE and Hsieh calibration checked against the linked originals |
 

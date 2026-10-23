@@ -61,7 +61,7 @@ The better library design uses two shelves. Permanent, low-risk material may tra
 | output-side redaction | A filter that removes detected sensitive strings from responses | It must work on every response and cannot recognize all personal data |
 | release gate | A test that must pass before a model ships | It turns a known extraction method into a repeatable decision point |
 | verbatim continuation | Exact reproduction of a known work after a prefix | It provides strong evidence of memorization, but the chapter does not call it proof of training membership |
-| induction head | A model mechanism that copies what followed a matching earlier token | It helps a model lock onto a known document and continue it |
+| induction head | A model mechanism that copies what followed a matching earlier token | It copies text already in the context, and continuing a known document beyond the prompt relies on memorized weights (corrected from helping a model lock onto a known document and continue it) |
 | lock-on | A state where the model recognizes and follows a specific source text | It creates long exact runs that independent token errors do not predict |
 | $`p`$, $`q`$, and $`\pi(d,k)`$ | Independent next-token accuracy, locked-on accuracy, and document lock-on probability | Together they distinguish rapid independent-error decay from a slower mixture tail |
 | longest exact run | The largest consecutive literal match to a known work | It targets the tail that can become an exhibit |
@@ -219,7 +219,7 @@ The naive model assigns independent probability $`p`$ to each correct next token
 \end{aligned}
 ```
 
-A long exhibit motivates questioning the independence assumption; one observed run alone does not mathematically refute it without a sampling model and attempt count. Each correct token can give more evidence that the context is a specific document. Induction heads can match a token against earlier context and copy what followed it. The schematic model assigns lock-on probability $`\pi(d,k)`$, increasing with duplication count $`d`$ and supplied prefix length $`k`$. Conditional on lock-on, take per-token accuracy $`q=0.999`$. Then the probability of $`300`$ further correct tokens is $`q^{300}\approx0.740707`$.
+A long exhibit motivates questioning the independence assumption; one observed run alone does not mathematically refute it without a sampling model and attempt count. Each correct token can give more evidence that the context is a specific document. Induction heads can match a token against earlier context and copy what followed it. Correction: Induction heads copy only text that is already in the context, so a continuation beyond the supplied prefix comes from training text memorized in the weights, which is the memorization that Carlini et al. (2023, arXiv 2202.07646) measure. The schematic model assigns lock-on probability $`\pi(d,k)`$, increasing with duplication count $`d`$ and supplied prefix length $`k`$. Conditional on lock-on, take per-token accuracy $`q=0.999`$. Then the probability of $`300`$ further correct tokens is $`q^{300}\approx0.740707`$.
 
 ```math
 q^{300}=0.999^{300}\approx0.740707.

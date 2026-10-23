@@ -39,7 +39,7 @@ The supplied profile reports more than $`70{,}000`$ LinkedIn followers and $`16{
 | Deployed most often and understood least well | The author’s personal experience of RAG | Not an industry-wide deployment or comprehension estimate |
 | Competent RAG answer versus a superficial one | The distinction the book’s questions are meant to expose. | It frames the expected depth of interview understanding. |
 | Papers, courses, and production postmortems | The separate places where those questions had been scattered. | It gives the second reason for collecting them in one book. |
-| Email | `hao.hoang.ai@gmail.com` | It is the stated direct contact and correction route. |
+| Contact route | `https://haohoang.is-a.dev/` | This edition uses the website as the direct contact and correction route. |
 | Website | `https://haohoang.is-a.dev/` | It is the stated website contact. |
 | Substack address | `https://aiinterviewprep.substack.com/` | It is the stated publication address. |
 | LinkedIn address | `https://www.linkedin.com/in/hoang-van-hao` | It is the stated LinkedIn route. |
@@ -68,8 +68,8 @@ The profile states no monetary cost. It describes daily writing and researching/
 | Public reach | The profile reports more than $`70{,}000`$ LinkedIn followers and $`16{,}000`$ Substack readers. | Records two source-reported channel measures. | Do not infer a current count or a deduplicated total. | As-of dates, metric definitions and overlap are not given. |
 | Authorship | The profile names Hao as sole original author without co-authors or ghostwriters. | Preserves the supplied authorship claim. | Do not independently certify the original writing process. | Researching/writing every chapter is stated effort, not measured hours. |
 | Book motivation | He sees retrieval-augmented generation as the pattern deployed most often and understood least well. He also found that the questions separating competent RAG answers from superficial ones were scattered across papers, courses, and production postmortems rather than collected anywhere. | The book collects material that he found fragmented. | The reader would not know why he believed the book was needed. | No explicit cost is stated. |
-| Contact routes | The email is `hao.hoang.ai@gmail.com`. The website is `https://haohoang.is-a.dev/`. The Substack address is `https://aiinterviewprep.substack.com/`. The LinkedIn address is `https://www.linkedin.com/in/hoang-van-hao`. | They provide the four stated ways to reach or follow him. | Readers would lack the source-provided contact information. | No explicit cost is stated. |
-| Correction loop | Errata and corrections are welcome at `hao.hoang.ai@gmail.com`. The author calls email the fastest way to improve the next edition. | Reader checks can surface arithmetic mistakes and improve the next edition. | The book would lack a stated feedback route and a connection between correction and its quantitative standard. | A reader checks the arithmetic and finds a mistake. No monetary cost is stated. |
+| Contact routes | The website is `https://haohoang.is-a.dev/`. The Substack address is `https://aiinterviewprep.substack.com/`. The LinkedIn address is `https://www.linkedin.com/in/hoang-van-hao`. The source also lists an email address, which this edition omits. | They provide the four stated ways to reach or follow him. | Readers would lack the source-provided contact information. | No explicit cost is stated. |
+| Correction loop | Errata and corrections are welcome by email. This edition omits the address and routes reports through the website `https://haohoang.is-a.dev/`. The author calls email the fastest way to improve the next edition. | Reader checks can surface arithmetic mistakes and improve the next edition. | The book would lack a stated feedback route and a connection between correction and its quantitative standard. | A reader checks the arithmetic and finds a mistake. No monetary cost is stated. |
 
 
 ## Diagrams
@@ -98,7 +98,7 @@ He says retrieval-augmented generation is the pattern he sees deployed most ofte
 ### 4. What audience scale does the page state?
 The profile reports more than $`70{,}000`$ LinkedIn followers and $`16{,}000`$ Substack readers, without an as-of date. Different metric definitions and possible cross-channel overlap prevent a deduplicated audience total; these are not independently verified live counts.
 ### 5. How should a reader report a correction?
-The page welcomes errata and corrections at `hao.hoang.ai@gmail.com`. It calls email the fastest way to improve the next edition and links arithmetic checking to the book’s rule that numbers should be derived rather than repeated.
+The page welcomes errata and corrections by email, and this edition routes them through `https://haohoang.is-a.dev/`. It calls email the fastest way to improve the next edition and links arithmetic checking to the book’s rule that numbers should be derived rather than repeated.
 ## Key numbers
 
 

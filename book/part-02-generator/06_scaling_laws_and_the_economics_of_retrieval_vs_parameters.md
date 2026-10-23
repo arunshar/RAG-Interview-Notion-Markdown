@@ -73,7 +73,7 @@ Think of the system as a library with a skilled clerk. Model parameters pay for 
 | Proposer | Produces candidate answers | Uses test-time compute to explore |
 | Verifier | Scores passages or answer chains. Pass-at-$`16`$ checks whether any of $`16`$ proposals is correct. | Converts exploration into accuracy |
 | Best-of-$`N`$ | Generate $`m`$ complete answers and select the top score | Default search at larger budgets |
-| Beam search | Prune partial solutions using verifier scores | Stronger at small budgets on easier tasks |
+| Beam search | Prune partial solutions using verifier scores | Stronger at small budgets and on harder questions (corrected from stronger at small budgets on easier tasks) |
 | Lookahead search | Add Monte Carlo rollouts to beam search | Loses at matched budget in the cited result |
 | Process reward model (PRM) | Scores reasoning steps | Stronger signal than final-answer-only scoring |
 | Outcome reward model | Scores only the final answer | Weaker verifier signal in the cited comparison |
@@ -406,7 +406,7 @@ Q^\star=\frac{F_P-F_T}{c_T-c_P},
 
 The specialized expression $`\Delta C_{\mathrm{pre}}/[(m-1)C_{\mathrm{query}}]`$ applies only if one policy's query cost is $`mC_{\mathrm{query}}`$ and the more-pretrained policy's query cost is exactly $`C_{\mathrm{query}}`$. A larger model usually changes that baseline. Quality must also be matched before cost amortization decides the better policy.
 #### Search needs a verifier
-The proposer generates candidate answers. The verifier scores them and selects one. Sampling without a verifier has the same expected accuracy as drawing one answer and choosing at random.
+The proposer generates candidate answers. The verifier scores them and selects one. Sampling without a verifier has the same expected accuracy as drawing one answer and choosing at random. Correction: this holds for random selection, but a majority vote over samples needs no verifier and still raises accuracy when errors are independent and the correct answer is the most common one, as Chapter 9 shows, so the verifier requirement applies to best-of-$`N`$ and tree search.
 The cited reasoning experiments compare best-of-$`N`$, beam search, lookahead and process/outcome reward models in particular budget and difficulty regimes. They are useful candidate policies, not a universal ordering for every RAG task. Selection quality depends on whether proposals contain correct answers and whether the verifier can identify them.
 The source boundary is conditional. Extra test-time compute is the better purchase for easy and moderate problems under modest inference load. Extra pre-training compute wins for genuinely hard problems under large inference load.
 Batch-one decode can be memory-bandwidth limited, while parallel proposals can reuse a prompt and batch their token steps. Sequential revisions depend on earlier outputs and cannot batch across those dependent steps. This can change utilization and latency at equal FLOPs, but does not guarantee that every sequential implementation costs more dollars without a serving benchmark. Shared-prefix KV storage, branch output caches and verifier memory also grow with sampling.

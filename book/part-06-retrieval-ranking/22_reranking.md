@@ -232,7 +232,7 @@ For a $`7`$-billion-parameter reranker under the $`2P`$ rule and the stated thro
 \frac{2(7\times10^9)}{3.4\times10^{14}}\,\mathrm{s/token}\approx0.041176471\,\mathrm{ms/token}.
 ```
 
-With query/instruction preamble $`32+50=82`$ tokens and $`256`$ document tokens, pointwise input is $`338`$ tokens and pairwise input $`594`$, with work proxies $`13.917647`$ and $`24.458824\,\mathrm{ms}`$ per call. Their verdict output tokens are omitted. For $`w=20`$, listwise prefill is $`5{,}202`$ tokens and the assumed identifier output is $`3w=60`$, totaling $`5{,}262`$ and $`216.670588\,\mathrm{ms}`$. This deliberately applies one FLOP rate to prefill and serial decode; actual decode throughput, identifier lengths and formatting differ. Call counts are:
+With query/instruction preamble $`32+50=82`$ tokens and $`256`$ document tokens, pointwise input is $`338`$ tokens and pairwise input $`594`$, with work proxies $`13.917647`$ and $`24.458824\,\mathrm{ms}`$ per call. Their verdict output tokens are omitted. For $`w=20`$, listwise prefill is $`5{,}202`$ tokens and the assumed identifier output is $`3w=60`$, totaling $`5{,}262`$ and $`216.670588\,\mathrm{ms}`$. This deliberately applies one FLOP rate to prefill and serial decode; actual decode throughput, identifier lengths and formatting differ. Correction: decode at batch size one is bound by memory bandwidth, so this total understates the listwise call. Assuming 16-bit weights, the $`7`$-billion-parameter reranker reads $`14\,\mathrm{GB}`$ per decoded token, which takes $`7.0\,\mathrm{ms}`$ at the stated $`B_{\mathrm{mem}}=2.0\times10^{12}\,\mathrm{B\,s^{-1}}`$, so one listwise call takes about $`214.2+60(7.0)=634.2\,\mathrm{ms}`$. Pointwise and pairwise verdicts need about one output token, which the prefill pass already produces, so their omitted decode term is near zero. Call counts are:
 
 ```math
 N_{\text{pointwise}} = k,
@@ -268,7 +268,7 @@ Pointwise scores need validation for ranking and cross-query confidence; a promp
 | Pairwise all-pairs | $`4{,}950`$ | $`2{,}940{,}300`$ input tokens | $`121.071176\,\mathrm s`$ single-device work proxy | One layer, not one call-time on one fixed-throughput device |
 | Pairwise heap top $`10`$ | At most $`340`$ | At most $`201{,}960`$ input tokens | At most $`8.316\,\mathrm s`$ proxy work | Implementation-dependent heap-build/extraction critical path; not a fixed depth of one hundred forty |
 | Pairwise tournament top $`1`$ | $`99`$ | $`58{,}806`$ input tokens | $`2.421424\,\mathrm s`$ single-device work proxy | At most seven rounds; ideal unlimited-resource path $`171.211765\,\mathrm{ms}`$ |
-| Listwise with $`w = 20`$ | $`9`$ | $`47{,}358`$ input/output tokens | $`1.950035\,\mathrm s`$ work proxy | Nine dependent calls; same resource-time sum before request overhead |
+| Listwise with $`w = 20`$ | $`9`$ | $`47{,}358`$ input/output tokens | About $`5.707800\,\mathrm s`$ with the decode floor (corrected from $`1.950035\,\mathrm s`$ work proxy) | Nine dependent calls; same resource-time sum before request overhead |
 
 
 For these specific input/output counting rules and windows, pointwise uses the least modeled LLM work, not universally the cheapest LLM ranking design. Its work is approximately $`71.246125`$ times the fuller BERT proxy. The parameter-and-input-length-only ratio is:
@@ -279,7 +279,7 @@ For these specific input/output counting rules and windows, pointwise uses the l
 
 Dividing that ratio by the full attention correction $`1+3{,}057{,}647{,}616/(6.336\times10^{10})`$ gives approximately $`71.246125`$. Do not explain a difference between rounded inputs as measured overhead. These resource-time totals are neither invoices nor measured response times.
 Independent calls permit concurrency only when hardware and service limits support it. For total work $`W`$ on $`G`$ identical resources, $`W/(GF)`$ is a work-capacity constraint under the assumed rate; the model-call dependency path is another constraint. Giving a hundred pointwise calls one-call wall time implicitly supplies a hundred full-rate workers in this idealization. Batching can improve utilization but cannot increase fixed aggregate capacity without bound.
-A cascade reranks one hundred candidates to twenty with the fuller cross-encoder proxy, then uses one listwise call. Its modeled sum is $`19.534602+216.670588\approx236.205190\,\mathrm{ms}`$ before request overhead, about $`8.255684`$ times below the full nine-window work sum, with nine times fewer LLM tokens. Add a stipulated $`80\,\mathrm{ms}`$ round trip for the LLM call and it becomes $`316.205190\,\mathrm{ms}`$. The cascade may discard candidates the LLM would have rescued. Under the simplified total context budget:
+A cascade reranks one hundred candidates to twenty with the fuller cross-encoder proxy, then uses one listwise call. Its modeled sum is $`19.534602+216.670588\approx236.205190\,\mathrm{ms}`$ before request overhead, about $`8.255684`$ times below the full nine-window work sum, with nine times fewer LLM tokens. Add a stipulated $`80\,\mathrm{ms}`$ round trip for the LLM call and it becomes $`316.205190\,\mathrm{ms}`$. Correction: with the decode floor of about $`7.0\,\mathrm{ms}`$ per decoded token, one listwise call takes about $`634.2\,\mathrm{ms}`$, so the cascade takes about $`653.734602\,\mathrm{ms}`$, or $`733.734602\,\mathrm{ms}`$ with the round trip, against about $`5{,}707.8\,\mathrm{ms}`$ for the full nine-window pass. The cascade is still about $`8.731066`$ times below the full pass. The cascade may discard candidates the LLM would have rescued. Under the simplified total context budget:
 
 ```math
 w_{\max}=\left\lfloor\frac{8{,}192-82}{256+3}\right\rfloor=31.
@@ -413,15 +413,15 @@ The worked budget assumes $`82+256w`$ input tokens and $`3w`$ output identifier 
 T_{\mathrm{call}}=82+259w.
 ```
 
-Add a separately stipulated $`80\,\mathrm{ms}`$ request/queue overhead per call. The windows depend on earlier outputs, so those overheads cannot be hidden by parallelizing windows within the same pass. The compute column remains a work proxy, not measured decode latency.
+Add a separately stipulated $`80\,\mathrm{ms}`$ request/queue overhead per call. The windows depend on earlier outputs, so those overheads cannot be hidden by parallelizing windows within the same pass. The compute column remains a work proxy, not measured decode latency. Correction: the original compute column bills the $`3w`$ decoded tokens at the $`0.041176471\,\mathrm{ms}`$ prefill rate. The corrected values, which come first in each cell, charge about $`7.0\,\mathrm{ms}`$ per decoded token for a 16-bit $`7`$-billion-parameter model at $`2.0\,\mathrm{TB/s}`$.
 
 
 | Schedule | Calls | Modeled tokens | Compute work / rate | With stipulated round trips | Best possible tail rank in this pass |
 | --- | --- | --- | --- | --- | --- |
-| $`w = 10`$, $`s = 5`$ | $`19`$ | $`50{,}768`$ | $`2090.447059\,\mathrm{ms}`$ | $`3610.447059\,\mathrm{ms}`$ | $`1`$ |
-| $`w = 20`$, $`s = 10`$ | $`9`$ | $`47{,}358`$ | $`1950.035294\,\mathrm{ms}`$ | $`2670.035294\,\mathrm{ms}`$ | $`1`$ |
-| $`w = 40`$, $`s = 20`$ | $`4`$ | $`41{,}768`$ | $`1719.858824\,\mathrm{ms}`$ | $`2039.858824\,\mathrm{ms}`$ | $`1`$ |
-| $`w = 20`$, $`s = 20`$ | $`5`$ | $`26{,}310`$ | $`1083.352941\,\mathrm{ms}`$ | $`1483.352941\,\mathrm{ms}`$ | $`81`$ |
+| $`w = 10`$, $`s = 5`$ | $`19`$ | $`50{,}768`$ | $`6056.976471\,\mathrm{ms}`$ (corrected from $`2090.447059\,\mathrm{ms}`$) | $`7576.976471\,\mathrm{ms}`$ (corrected from $`3610.447059\,\mathrm{ms}`$) | $`1`$ |
+| $`w = 20`$, $`s = 10`$ | $`9`$ | $`47{,}358`$ | $`5707.800000\,\mathrm{ms}`$ (corrected from $`1950.035294\,\mathrm{ms}`$) | $`6427.800000\,\mathrm{ms}`$ (corrected from $`2670.035294\,\mathrm{ms}`$) | $`1`$ |
+| $`w = 40`$, $`s = 20`$ | $`4`$ | $`41{,}768`$ | $`5060.094118\,\mathrm{ms}`$ (corrected from $`1719.858824\,\mathrm{ms}`$) | $`5380.094118\,\mathrm{ms}`$ (corrected from $`2039.858824\,\mathrm{ms}`$) | $`1`$ |
+| $`w = 20`$, $`s = 20`$ | $`5`$ | $`26{,}310`$ | $`3171.000000\,\mathrm{ms}`$ (corrected from $`1083.352941\,\mathrm{ms}`$) | $`3571.000000\,\mathrm{ms}`$ (corrected from $`1483.352941\,\mathrm{ms}`$) | $`81`$ |
 
 
 At stride $`\frac{w}{2}`$, document slots total
@@ -430,7 +430,7 @@ At stride $`\frac{w}{2}`$, document slots total
 N_{\mathrm{calls}}w=2k-w\quad\text{only for aligned half-window stride }s=w/2.
 ```
 
-The default uses $`180`$ document slots, $`46{,}080`$ document tokens and $`1{,}278`$ preamble/output tokens, totaling $`47{,}358`$. Changing to $`w=40,s=20`$ gives four calls and $`41{,}768`$ modeled tokens: an $`11.803708\%`$ token saving. With the stipulated round trips, time-proxy saving is $`23.601803\%`$. Wider windows alter both content and the number of hand-offs. Under separate constant-conditional-success assumptions, the tail comparison is:
+The default uses $`180`$ document slots, $`46{,}080`$ document tokens and $`1{,}278`$ preamble/output tokens, totaling $`47{,}358`$. Changing to $`w=40,s=20`$ gives four calls and $`41{,}768`$ modeled tokens: an $`11.803708\%`$ token saving. With the stipulated round trips, time-proxy saving is $`23.601803\%`$. Correction: with the decode floor, the round-trip-aware saving falls to about $`16.299603\%`$, from $`6{,}427.8`$ to $`5{,}380.094118\,\mathrm{ms}`$. Wider windows alter both content and the number of hand-offs. Under separate constant-conditional-success assumptions, the tail comparison is:
 
 ```math
 p_{40}^4 \gt  p_{20}^9,
@@ -442,13 +442,13 @@ or
 p_{40} \gt  p_{20}^{2.25}.
 ```
 
-At $`p_{20}=0.9`$, break-even is $`p_{40}\approx0.788943035`$, an absolute drop about $`11.105697`$ percentage points. This is conditional arithmetic, not proof that wider windows meet that reliability. No-overlap windows save $`44.444444\%`$ of these modeled tokens but disconnect the tail-to-head path. Cutting depth to fifty with the default window/stride gives four calls and $`1{,}186.682353\,\mathrm{ms}`$ including overhead, a $`55.555556\%`$ decrease from $`2{,}670.035294\,\mathrm{ms}`$; recall below the cut is lost. In these scenarios listwise reads $`1.8`$ times the document tokens but $`1.401124`$ times the modeled total tokens of pointwise, which omits its own verdict output. Depth, window size, overlap, output lengths and real decode rates jointly determine actual costs.
+At $`p_{20}=0.9`$, break-even is $`p_{40}\approx0.788943035`$, an absolute drop about $`11.105697`$ percentage points. This is conditional arithmetic, not proof that wider windows meet that reliability. No-overlap windows save $`44.444444\%`$ of these modeled tokens but disconnect the tail-to-head path. Cutting depth to fifty with the default window/stride gives four calls and $`1{,}186.682353\,\mathrm{ms}`$ including overhead, a $`55.555556\%`$ decrease from $`2{,}670.035294\,\mathrm{ms}`$; recall below the cut is lost. Correction: with the decode floor, the depth-fifty schedule takes about $`2{,}856.8\,\mathrm{ms}`$ against about $`6{,}427.8\,\mathrm{ms}`$, which is still a $`55.555556\%`$ decrease. In these scenarios listwise reads $`1.8`$ times the document tokens but $`1.401124`$ times the modeled total tokens of pointwise, which omits its own verdict output. Depth, window size, overlap, output lengths and real decode rates jointly determine actual costs.
 #### Decisions and limits
 - Treat window twenty/half overlap and tail-to-head motion as one practical starting schedule, not the only possible ranking algorithm.
 - Validate integer window boundaries, output reserve, candidate labels and special-token accounting.
 - Measure candidate loss when reducing depth or inserting a cascade; measure window reliability and permutation bias when changing width.
 - Log repair/fallback rates, gold survival by hand-off and final ranking metrics, not only output/input rank correlation.
-- Twenty serial repeated default passes have $`39.000706\,\mathrm s`$ modeled compute and $`53.400706\,\mathrm s`$ including the stipulated round trips, before other overhead. Independent repetitions still need resource capacity if run concurrently.
+- Twenty serial repeated default passes have $`39.000706\,\mathrm s`$ modeled compute and $`53.400706\,\mathrm s`$ including the stipulated round trips, before other overhead. Correction: with the decode floor of about $`7.0\,\mathrm{ms}`$ per decoded token, twenty passes take about $`114.156\,\mathrm s`$ of modeled compute and $`128.556\,\mathrm s`$ with the round trips. Independent repetitions still need resource capacity if run concurrently.
 - A cross-encoder-to-twenty cascade saves modeled LLM work but inherits its upstream omissions; compare it on the same judged queries.
 ### 22.6 Instruction-aware reranking
 #### What
@@ -647,7 +647,7 @@ flowchart TB
     QW --> V
     LW --> V
 ```
-**Figure **$`22.3`$**:** At depth one hundred, the stated prompts give pointwise $`100`$ calls and $`1.391765\,\mathrm s`$ modeled work; all-pairs $`4{,}950`$ calls and $`121.071176\,\mathrm s`$; tournament winner $`99`$ calls, at most seven comparison rounds and $`2.421424\,\mathrm s`$ total work; default listwise nine dependent calls and $`1.950035\,\mathrm s`$ work. The heap bound is at most $`340`$ comparisons, not a full serial depth of $`140`$. Dependency rounds, total work and available throughput all constrain latency. This comparison mixes input-only verdict proxies with explicitly counted list output, as stated in the workload.
+**Figure **$`22.3`$**:** At depth one hundred, the stated prompts give pointwise $`100`$ calls and $`1.391765\,\mathrm s`$ modeled work; all-pairs $`4{,}950`$ calls and $`121.071176\,\mathrm s`$; tournament winner $`99`$ calls, at most seven comparison rounds and $`2.421424\,\mathrm s`$ total work; default listwise nine dependent calls and $`1.950035\,\mathrm s`$ work. Correction: the listwise work is about $`5.7078\,\mathrm s`$, corrected from $`1.950035\,\mathrm s`$, because each window also decodes about sixty identifier tokens at about $`7.0\,\mathrm{ms}`$ per token. The heap bound is at most $`340`$ comparisons, not a full serial depth of $`140`$. Dependency rounds, total work and available throughput all constrain latency. This comparison mixes input-only verdict proxies with explicitly counted list output, as stated in the workload.
 ### Figure 22.4
 
 
@@ -718,7 +718,7 @@ Start with a candidate funnel. A fixed-set ranker cannot recover omitted gold ev
 ### 1. “What rerank depth do you use, and why?”
 Answer: measure first-stage gold inclusion, conditional final-context inclusion, ranking metrics and actual latency on the same query cohorts at several depths. The worked fuller pair proxy is $`0.195346\,\mathrm{ms}`$; the endpoint fits gain $`3.014736`$ dense and $`6.287878`$ BM25 percentage points per doubling. They are not universal slopes. A fixed IID-error toy favors depth $`137`$ without a budget, but the stated $`20\,\mathrm{ms}`$ resource budget allows at most $`102`$ and favors that endpoint within the feasible range. Real heterogeneous or correlated errors need measured distributions; deeper is not inevitably worse.
 ### 2. “Pointwise, pairwise, or listwise for a frozen LLM over 100 candidates?”
-Answer: benchmark frozen pointwise, pairwise and listwise prompts on judged data; prompted scalar scores are not automatically calibrated, but a frozen prompt is not logically incapable of useful pointwise ranking. The example work sums are $`1.391765\,\mathrm s`$ pointwise, $`121.071176\,\mathrm s`$ all-pairs and $`1.950035\,\mathrm s`$ nine-window listwise. Independent calls do not become one-call wall time on one fixed-throughput device. The cross-encoder-to-twenty cascade plus one listwise call is $`236.205190\,\mathrm{ms}`$ of proxy work, or $`316.205190\,\mathrm{ms}`$ with its stipulated round trip, and inherits upstream omissions.
+Answer: benchmark frozen pointwise, pairwise and listwise prompts on judged data; prompted scalar scores are not automatically calibrated, but a frozen prompt is not logically incapable of useful pointwise ranking. The example work sums are $`1.391765\,\mathrm s`$ pointwise, $`121.071176\,\mathrm s`$ all-pairs and $`1.950035\,\mathrm s`$ nine-window listwise. Independent calls do not become one-call wall time on one fixed-throughput device. The cross-encoder-to-twenty cascade plus one listwise call is $`236.205190\,\mathrm{ms}`$ of proxy work, or $`316.205190\,\mathrm{ms}`$ with its stipulated round trip, and inherits upstream omissions. Correction: those listwise figures bill sixty decoded identifier tokens per window at the prefill rate, and a 16-bit $`7`$-billion-parameter model needs about $`7.0\,\mathrm{ms}`$ per decoded token at $`2.0\,\mathrm{TB/s}`$. Nine windows therefore take about $`5.7078\,\mathrm s`$, and the cascade takes about $`653.734602\,\mathrm{ms}`$, or $`733.734602\,\mathrm{ms}`$ with its round trip. The cascade remains the practical comparison and is still about $`8.731066`$ times below the full listwise work.
 ### 3. “Why slide listwise windows from the back, and why overlap them?”
 Answer: in this one-pass schedule, overlap creates a tail-to-head promotion path. A rank-one-hundred candidate needs eight top-ten hand-offs plus a final rank-one win when $`w=20,s=10`$. A head-to-tail single sweep or disjoint blocks can move that candidate no higher than rank eighty-one, but that is not an impossibility claim for other ranking algorithms or repeated passes. Use integer/clamped window counts and log malformed-output repair, fallback, permutation sensitivity and gold loss by hand-off.
 ### 4. “We added an instruction and quality did not change. What failed?”
@@ -747,6 +747,10 @@ Answer: evaluate quality at $`m+1`$ and with a specific stronger ranker at the o
 | Prefill $`100`$ chunks | $`1{,}054.117647\,\mathrm{ms}`$ document-only generator proxy |
 | Prefill removed by reranking $`100`$ to five | $`1{,}001.411765\,\mathrm{ms}`$ modeled difference, not measured end-to-end savings |
 | Prefill-work saving divided by linear rerank work | $`53.737374`$ ratio; excludes attention and other serving work |
+| Attention share of the linear term at $`L=288`$ and $`L=1{,}024`$ | $`4.825833\%`$ and about $`17.158516\%`$ of the linear pair work |
+| Fitted exponent of pair work in sequence length | About $`1.087684`$ from a two-point power-law interpolation, not a universal transformer exponent |
+| Partial sequential proxies: raw top five, rerank $`100`$ to five, send all $`100`$ | $`68.065882`$, $`86.701176`$ and $`1{,}069.477647\,\mathrm{ms}`$, before decode and other serving work |
+| Send all $`100`$ versus rerank to five | About $`12.335215`$ times in the partial-time proxy |
 
 
 ### Depth and recall
@@ -765,6 +769,9 @@ Answer: evaluate quality at $`m+1`$ and with a specific stronger ranker at the o
 | Cross-encoder cost per candidate | $`0.195346\,\mathrm{ms}`$ fuller pair work divided by the assumed rate |
 | IID-toy optimum and resource budget | $`k=137`$ unconstrained; $`26.762405\,\mathrm{ms}`$. A $`20\,\mathrm{ms}`$ budget instead selects feasible $`k=102`$ |
 | Nogueira and Cho $`\mathop{\mathrm{MRR}}\nolimits@10`$ at $`k = 1{,}000`$ | $`0.365`$ reported score; it does not identify a distractor probability |
+| Toy gold inclusion at $`k=100`$ and $`k=200`$ | $`85.119253\%`$ and $`83.918565\%`$ at $`m=5`$ and $`\epsilon=0.01`$, with depth two hundred extrapolating the first-stage fit |
+| Toy gold inclusion at $`k=500`$ and $`k=1{,}000`$ | $`40.783013\%`$ and $`2.754973\%`$ under the same fixed-error toy |
+| BM25 alone, MS MARCO $`\mathop{\mathrm{MRR}}\nolimits@10`$ | $`0.187`$ reported score, against $`0.365`$ for BERT-large reranking at depth one thousand |
 | Distractor-model cross-check | $`\epsilon=0.005`$ yields toy $`\mathop{\mathrm{MRR}}\nolimits@10\approx0.195975`$ at recall one, not $`0.365`$; matching the latter needs about $`0.002519761`$ under that toy |
 
 
@@ -773,19 +780,19 @@ Answer: evaluate quality at $`m+1`$ and with a specific stronger ranker at the o
 
 | Quantity | Value |
 | --- | --- |
-| $`7\,\mathrm{B}`$ reranker token time | $`0.041176471\,\mathrm{ms/token}`$ forward-work proxy |
+| $`7\,\mathrm{B}`$ reranker token time | $`0.041176471\,\mathrm{ms/token}`$ forward-work proxy per prefill token, and about $`7.0\,\mathrm{ms}`$ per decoded token with 16-bit weights at $`2.0\,\mathrm{TB/s}`$ |
 | Pointwise prompt | $`338`$ input tokens; $`13.917647\,\mathrm{ms}`$ proxy per call, verdict output omitted |
 | Pairwise prompt | $`594`$ input tokens; $`24.458824\,\mathrm{ms}`$ proxy per call, verdict output omitted |
-| Listwise $`w = 20`$ call | $`5{,}202`$ input plus $`60`$ output tokens; $`216.670588\,\mathrm{ms}`$ proxy |
+| Listwise $`w = 20`$ call | $`5{,}202`$ input plus $`60`$ output tokens; about $`634.2\,\mathrm{ms}`$ with the decode floor (corrected from $`216.670588\,\mathrm{ms}`$ proxy) |
 | All-pairs at $`k = 100`$ | $`4{,}950`$ calls in one dependency layer; finite throughput still limits completion time |
 | Heap top $`10`$ | At most $`340`$ comparisons; extraction term $`140`$ excludes heap-build dependencies |
 | Tournament top $`1`$ | $`99`$ comparisons, at most seven rounds with suitable workers and byes |
 | Sliding listwise | Nine dependent calls for the aligned default schedule |
 | Pointwise accelerator bill | $`1.391765\,\mathrm s`$ total single-device work proxy, not a quoted invoice |
 | All-pairs accelerator bill | $`121.071176\,\mathrm s`$ total work proxy |
-| Listwise accelerator bill | $`1.950035\,\mathrm s`$ total work proxy |
+| Listwise accelerator bill | About $`5.7078\,\mathrm s`$ with the decode floor (corrected from $`1.950035\,\mathrm s`$ total work proxy) |
 | Least LLM work in the specified comparison versus fuller BERT | $`71.246125`$ ratio for pointwise under the stated token-count conventions |
-| Cross-encoder to $`20`$ plus one listwise window | $`236.205190\,\mathrm{ms}`$ work proxy; $`316.205190\,\mathrm{ms}`$ with one stipulated round trip |
+| Cross-encoder to $`20`$ plus one listwise window | About $`653.734602\,\mathrm{ms}`$ with the decode floor (corrected from $`236.205190\,\mathrm{ms}`$ work proxy); $`733.734602\,\mathrm{ms}`$ (corrected from $`316.205190\,\mathrm{ms}`$) with one stipulated round trip |
 
 
 ### Losses and training
@@ -801,6 +808,7 @@ Answer: evaluate quality at $`m+1`$ and with a specific stronger ranker at the o
 | Penalty ratio | $`80.688215`$ hard/easy loss-increase ratio |
 | Pointwise negative-to-positive ratio at $`k = 20`$ | $`3.8`$ summed unweighted negative/positive logit-gradient magnitude ratio |
 | Pointwise negative-to-positive ratio at $`k = 100`$ | $`19.8`$ under the same probabilities and loss normalization |
+| Negative logit-gradient mass on the top distractor, summed BCE versus softmax list loss | $`71.875\%`$ versus $`96.904557\%`$ in the twenty-document example, not encoder-parameter gradient shares |
 | nDCG swap ratio, head versus ranks $`99`$ and $`100`$ | $`1{,}137.299329`$ only for equal gain differences, common IDCG and a cutoff including both tail ranks |
 | Explicit full encoder-decoder pair scenario | $`60{,}391{,}919{,}616`$ FLOPs; $`0.177623\,\mathrm{ms}`$ proxy, including $`8{,}411{,}910{,}144`$ decoder/head FLOPs |
 | monoT5 equal-query workload scenario | $`500{,}000`$ groups, two candidates each; $`1.81175758848\times10^{17}`$ training-proxy FLOPs, $`532.869879\,\mathrm s`$ |
@@ -820,12 +828,12 @@ Answer: evaluate quality at $`m+1`$ and with a specific stronger ranker at the o
 | Default sliding schedule | $`k=100,w=20,s=10`$ under the clamped-full-window policy |
 | Default calls | Nine calls; general count $`1+\lceil\max(0,k-w)/s\rceil`$ |
 | Default tokens | $`47{,}358`$ modeled input/output tokens; labeling overhead omitted |
-| Default compute | $`1{,}950.035294\,\mathrm{ms}`$ total work proxy |
-| Default with $`80`$ ms round trip per call | $`2{,}670.035294\,\mathrm{ms}`$ under the stipulated sequential overhead model |
+| Default compute | About $`5{,}707.8\,\mathrm{ms}`$ with the decode floor (corrected from $`1{,}950.035294\,\mathrm{ms}`$ total work proxy) |
+| Default with $`80`$ ms round trip per call | About $`6{,}427.8\,\mathrm{ms}`$ (corrected from $`2{,}670.035294\,\mathrm{ms}`$) under the stipulated sequential overhead model |
 | Rank-$`100`$ rescue at $`p_{\text{window}} = 0.9`$ | $`0.387420489`$ only for the common required conditional-event probability $`0.9`$ |
 | Rank-$`10`$ rescue at $`p_{\text{window}} = 0.9`$ | $`0.9`$ for the corresponding single final rank-one event, not a measured rescue rate |
 | Wider-window token saving | $`11.803708\%`$ with $`w=40,s=20`$ |
-| Wider-window round-trip-aware saving | $`23.601803\%`$ under that sequential compute-plus-round-trip model |
+| Wider-window round-trip-aware saving | About $`16.299603\%`$ with the decode floor (corrected from $`23.601803\%`$) under that sequential compute-plus-round-trip model |
 | No-overlap token saving | $`44.444444\%`$ modeled token saving; one-pass tail best rank $`81`$ |
 | Halving depth in the stipulated sequential model | $`55.555556\%`$ time-proxy saving, with possible candidate-recall loss |
 | TART negative mix | $`90\%`$ random/$`10\%`$ mined negatives as reported, not a universal gradient or loss fraction |

@@ -541,7 +541,7 @@ For an idealized causal prefill over $`s`$ tokens, counting both attention matri
 W_{\mathrm{prefill}}\approx2Ns+2L_{\mathrm{layers}}s(s+1)d_{\mathrm{hidden}}.
 ```
 
-The second term is quadratic and approaches $`2L_{\mathrm{layers}}s^2d_{\mathrm{hidden}}`$ for large $`s`$. Full bidirectional attention instead uses approximately $`4L_{\mathrm{layers}}s^2d_{\mathrm{hidden}}`$. Real kernels may exploit masking and attention variants differently. Doubling context adds a superlinear attention component but does not double every serving cost.
+The second term is quadratic and approaches $`2L_{\mathrm{layers}}s^2d_{\mathrm{hidden}}`$ for large $`s`$. Full bidirectional attention instead uses approximately $`4L_{\mathrm{layers}}s^2d_{\mathrm{hidden}}`$. Real kernels may exploit masking and attention variants differently. Doubling context adds a superlinear attention component but does not double every serving cost. Correction: prefill is a linear parameter term plus a quadratic attention term, and in the 8B example below the attention term is about $`3\%`$ of prefill at $`2{,}048`$ tokens. Doubling context to $`4{,}096`$ tokens therefore multiplies that prefill proxy by about $`2.06`$. Section $`6.2`$ shows that, under its $`12L_{\mathrm{layers}}d^2`$ body estimate, the attention term matches the parameter term only near $`s=12d_{\mathrm{hidden}}`$, which is $`49{,}152`$ tokens for $`d_{\mathrm{hidden}}=4{,}096`$. The quadratic term therefore becomes comparable to the linear term only at tens of thousands of tokens.
 #### Memory formulas
 Weight memory is:
 
@@ -639,7 +639,7 @@ The corresponding two full square projections per layer contain $`4{,}096^2\time
 - Size weights, cache and runtime for target concurrency and utilization. There is no universal two-to-three-times conversion from peak to achieved throughput.
 ### A.8 Index memory, end to end
 #### Per-vector and total formulas
-Sections $`16.5`$ and $`15.2`$ derive total index memory and the HNSW link term. Per-vector data bytes are:
+Sections $`16.5`$ and $`15.2`$ derive total index memory and the HNSW link term. Correction: the ten-million-vector table below uses the per-vector layout of Section $`41.1`$, which sets $`M=16`$ with $`2M=32`$ base-layer slots and counts neither coarse centroids nor the PQ codebook. Section $`16.5`$ sets $`M=32`$, counts the expected upper-layer slots, and adds coarse centroids and the PQ codebook to the same eight-byte ID, which gives $`3{,}332\,\mathrm B`$ and $`33.32\,\mathrm{GB}`$ for HNSW-Flat and $`104\,\mathrm B`$, $`1.09\,\mathrm{GB}`$ and a $`30.5`$ times ratio for IVF-PQ96. Per-vector data bytes are:
 
 ```math
 b_{vec}=

@@ -514,7 +514,7 @@ It is 72 times cheaper than pasting the changed subset and $`2{,}400`$ times che
 - Start with small k and stop where relevance falls off.
 - Use long context for whole-document or whole-corpus synthesis.
 - Use adaptive retrieval when the model already knows popular facts.
-- Mallen et al. (2023) found retrieval flipped roughly 10 percent of otherwise-correct answers to wrong, concentrated on high-popularity entities.
+- Mallen et al. (2023) found retrieval flipped roughly 10 percent of otherwise-correct answers to wrong, concentrated on high-popularity entities. Correction: Mallen et al. (2023, arXiv 2212.10511) found that for about 10 percent of PopQA questions, retrieval augmentation made GPT-3 (text-davinci-003) answer incorrectly a question it answered correctly without retrieval. The 10 percent is a share of all questions, not of otherwise-correct answers.
 - Retrieve unconditionally for private or post-cutoff domains with no correct parametric answer to protect.
 - Re-walk the gates when window size, compliance rules, corpus cadence, or another binding constant changes.
 #### How This Shows Up in Interviews
@@ -788,7 +788,7 @@ Walk the cheapest hard gates in order: usable window fit, citability and deletio
 | RAG ratios | $`72`$ and $`2{,}400`$ under the linear token/FLOP proxy | Changed-subset and whole-corpus prompts also require feasible supported windows and attention budgets. |
 | Sprint re-index | $`40.6`$ trillion FLOPs | About one eight-thousandth of one full-corpus query. |
 | Large-model check | 405 billion parameters at two bytes | Needs $`810\,\mathrm{GB}`$, above a $`640\,\mathrm{GB}`$ node. |
-| Adaptive retrieval | Roughly 10 percent of correct answers flipped wrong | Concentrated on high-popularity facts in the cited result. |
+| Adaptive retrieval | Roughly 10 percent of all PopQA questions flipped from correct to wrong (corrected from roughly 10 percent of correct answers) | Concentrated on high-popularity facts in the cited result. |
 | Latency budget | 400 milliseconds p99 | ANN lookup and reranking consume real tens of milliseconds. |
 | Cost shape | Chosen training and replay token budget | Continual and generative update work is not universally independent of the number of changed facts. |
 | Cost shape | Linear in F | Model editing. |

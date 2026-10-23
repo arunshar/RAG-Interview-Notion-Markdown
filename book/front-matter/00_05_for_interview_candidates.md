@@ -155,7 +155,7 @@ The schematic $`y=\mathop{\mathrm{GEN}}\nolimits_\theta(x,\mathop{\mathrm{RET}}\
 Use the five decisions in order. Say the order aloud.
 #### 1. When
 **What it is:** State the retrieval gate $`g(x)`$ and its evidence policy. It decides whether request $`x`$ triggers retrieval; apparent model confidence alone does not establish truth or permit bypassing required sources.
-**Why it exists:** In the cited Mallen et al. setting, retrieval flipped roughly $`10\%`$ of the otherwise-correct closed-book subset to wrong. High-popularity results are model/task-specific, not a universal rate or a rule to bypass retrieval for every familiar fact.[\[7\]](../part-01-landscape/01_what_a_rag_interview_actually_tests.md)
+**Why it exists:** In the cited Mallen et al. setting, retrieval flipped roughly $`10\%`$ of the otherwise-correct closed-book subset to wrong. Correction: Mallen et al. (2023, arXiv 2212.10511) found that for about $`10\%`$ of PopQA questions, retrieval augmentation made GPT-3 (text-davinci-003) answer incorrectly a question it answered correctly without retrieval. The $`10\%`$ is a share of all questions, not of the otherwise-correct closed-book subset. High-popularity results are model/task-specific, not a universal rate or a rule to bypass retrieval for every familiar fact.[\[7\]](../part-01-landscape/01_what_a_rag_interview_actually_tests.md)
 **What fails without it:** Always retrieve becomes an unexamined default. The design cannot express the option that retrieval should not run.
 **Stated cost:** Retrieval can reverse an otherwise-correct answer and consumes work. Price matched retrieval/no-retrieval actions under support and safety requirements; naming a gate alone does not demonstrate production experience.
 #### 2. Where
@@ -294,7 +294,7 @@ A strong RAG answer starts with constraints, not a component list. I first size 
 ### 1. Why is a component walk a weak design answer?
 Many designs include some of ingest, chunk, embed, index, retrieve, rerank and generate, but not every design contains every stage. Reciting a possible chain does not expose constraints, alternatives or when evidence retrieval is required or unnecessary.
 ### 2. When would you not use retrieval?
-In the cited study, roughly $`10\%`$ of otherwise-correct closed-book answers were flipped to wrong by retrieval. Preserve that denominator, task and model; it is not ten percent of every request or a general instruction to bypass evidence for popular facts.[\[7\]](../part-01-landscape/01_what_a_rag_interview_actually_tests.md)
+In the cited study, roughly $`10\%`$ of otherwise-correct closed-book answers were flipped to wrong by retrieval. Preserve that denominator, task and model; it is not ten percent of every request or a general instruction to bypass evidence for popular facts.[\[7\]](../part-01-landscape/01_what_a_rag_interview_actually_tests.md) Correction: Mallen and colleagues (2023, arXiv 2212.10511) found that for about $`10\%`$ of PopQA questions, retrieval augmentation made GPT-3 (text-davinci-003) answer incorrectly a question it answered correctly without retrieval. The denominator is all PopQA questions, not the otherwise-correct closed-book answers.
 ### 3. What should follow any number you state?
 State the source or derivation, symbol definitions, units, scope and omitted terms. When a constraint changes, recompute and check feasibility. Recall of a number and ability to derive it are different skills.
 ### 4. How should you answer “How do you choose top-k?”
@@ -324,7 +324,7 @@ A post-hoc citation can be attached without showing that the cited source shaped
 | Five decisions | Organizing lens | Not an exhaustive free-parameter theorem |
 | Decisions versus components | Interview answer shape | Decisions expose judgment, while a standard component list does not |
 | Retrieve versus do not retrieve | When decision | Retrieval can help, but it is neither free nor neutral |
-| Roughly $`10\%`$ | Cited otherwise-correct subset | Conditional retrieval harm, not all production queries |
+| Roughly $`10\%`$ | All PopQA questions (corrected from cited otherwise-correct subset) | Share of all PopQA questions on which retrieval flipped a correct GPT-3 (text-davinci-003) answer to wrong, not all production queries (corrected from conditional retrieval harm) |
 | Source-selection errors | Where decision | Contradiction, security, expense and latency trade-offs depend on application |
 | $`k^{\prime}`$ to $`k`$ | Candidate versus evidence depth | Different objectives; actual context tokens are separate |
 | Larger $`k`$ | Top-depth trade-off | Nested-set inclusion can improve without improved generated answers |
